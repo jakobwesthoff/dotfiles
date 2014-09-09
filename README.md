@@ -9,3 +9,5 @@ However it might serve as an example for others.
 
 The file structure is supposed to be *installed* using
 [linkIt](https://github.com/jakobwesthoff/linkIt).
+
+Needed dependencies can be installed using the `checkout_dependencies.sh`.
