@@ -24,4 +24,5 @@ checkout_or_update https://github.com/joelthelion/autojump.git .autojump
 echo
 echo "Installing solarized dircolors"
 checkout_or_update https://github.com/seebi/dircolors-solarized.git .dircolors-solarized
+[ ! -f "~/.dircolors" ] && ln -s "${HOME}/.dircolors-solarized/dircolors.ansi-light" "${HOME}/.dircolors"
 popd
