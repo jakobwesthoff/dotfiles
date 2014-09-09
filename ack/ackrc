@@ -1,0 +1,19 @@
+# Proper node files configuration for ack
+--ignore-dir=node_modules
+--type-set=coffee=.coffee
+--type-set=jade=.jade
+--type-set=feature=.feature
+--type-set=json=.json
+
+# Symfony2
+--type-set=twig=.twig
+
+# Puppet
+--type-set=puppet=.pp
+
+# Templates
+--type-set=tpl=.tpl
+--type-set=smarty=.tpl
+
+# Output color definition
+--color-filename=blue
