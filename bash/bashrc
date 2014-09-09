@@ -1,0 +1,195 @@
+# If not running interactively, don't do anything
+[ -z "$PS1" ] && return
+
+# don't put duplicate lines in the history. See bash(1) for more options
+# ... or force ignoredups and ignorespace
+HISTCONTROL=ignoredups:ignorespace
+
+# append to the history file, don't overwrite it
+shopt -s histappend
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=10000
+HISTFILESIZE=50000
+
+# Ensure the histfile ist written after each command
+PROMPT_COMMAND="history -a"
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+
+# make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# Check for color output support
+if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+# We have color support; assume it's compliant with Ecma-48
+# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+# a case would tend to support setf rather than setaf.)
+    color_prompt=yes
+else
+    color_prompt=
+fi
+
+# Load colorizer
+source ~/.colorizer/Library/colorizer.sh
+
+# Activate autojump
+source ~/.autojump/bin/autojump.bash
+
+
+function ps1_prompt_command() {
+    local last_exit_code=$?
+
+    if [ $last_exit_code -ne 0 ]; then
+        last_exit_code=" err: ${last_exit_code}"
+    else
+        last_exit_code=""
+    fi
+
+    local gitbranch="$(__git_ps1)"
+
+    local current_directory="$(env pwd | perl -pe "s@^$HOME@~@g; s@/([0-9_-]*)([^/])[^/]*(?=/)@/\$1\$2@g")"
+
+    PS1="\[\033[0;32m\]\u@\h\[\033[0m\]:\[\033[0;34m\]${current_directory}\[\033[0;31m\]${last_exit_code}\[\033[0m\]\[\033[0;33m\]${gitbranch}\[\033[0m\]\$ "
+}
+
+PS1='\u@\h:\w\$ '
+if [ "$color_prompt" = yes ]; then
+    # The ps1_prompt_command function needs to be the first one called using
+    # prompt command. Otherwise the last exitcode part won't work.
+    PROMPT_COMMAND="ps1_prompt_command; ${PROMPT_COMMAND:-:}"
+fi
+unset color_prompt
+
+# If this is an xterm set the title to user@host:dir
+case "$TERM" in
+xterm*|rxvt*)
+    PS1="\[\e]0;\u@\h: \w\a\]$PS1"
+    ;;
+*)
+    ;;
+esac
+
+# Unmap Ctrl-S to be the stop sequence. This allows for forward search in bash
+# using Ctrl-S
+# This is a gnome-terminal "problem" see the given link for details:
+# https://bugs.launchpad.net/ubuntu/+source/gnome-terminal/+bug/48880
+stty stop undef
+
+# Alias definitions.
+# You may want to put all your additions into a separate file like
+# ~/.bash_aliases, instead of adding them here directly.
+# See /usr/share/doc/bash-doc/examples in the bash-doc package.
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
+    . /etc/bash_completion
+fi
+if [ -f `brew --prefix`/etc/bash_completion ]; then
+    . `brew --prefix`/etc/bash_completion
+  fi
+
+# Set the editor to vim
+export EDITOR=/usr/local/bin/vim
+
+# Include $HOME/{bin,sbin} in the execpath
+export PATH="$PATH:$HOME/bin:$HOME/sbin"
+
+# Include bin path of ruby gems to PATH
+export PATH="$PATH:/var/lib/gems/1.8/bin"
+
+# If mactex is installed include its bin path
+if [ -d "/usr/texbin" ] && [ "${PATH%%/usr/texbin}" == "${PATH}" ]; then
+    export PATH="${PATH}:/usr/texbin"
+fi
+
+# Include npm executables in the searchpath
+export PATH="/usr/local/share/npm/bin:${PATH}"
+
+# Make sure /usr/local/bin has priority over everything else
+export PATH="/usr/local/sbin:/usr/local/bin:${PATH}"
+
+# Make gnu coreutils have priority over the bsd ones
+PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
+#
+# enable color support of ls and also add handy aliases
+if which -s dircolors; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+source ~/.nvm/nvm.sh
+
+# Golang
+export GOROOT="/usr/local/opt/go/libexec"
+export PATH="$PATH:${GOROOT}//bin"
+export GOPATH="${HOME}/devel/go"
+
+archey -c
+
+# Display running vagrant vms once a shell is spawned
+# The result is "intelligently" cached and defered, as the retrieval takes
+# quite some time, which is kind of annoying upon each new shell instantiation.
+
+VAGRANT_RUNNING_CACHE="${HOME}/.vagrant_running_cache"
+
+function vagrant_update_cache() {
+    "$(which "vagrant")" global-status 2>&1 >"${VAGRANT_RUNNING_CACHE}"
+}
+
+function vagrant_read_cache() {
+    VAGRANT_GLOBAL_STATUS="$(cat "${VAGRANT_RUNNING_CACHE}")"
+    VAGRANT_GLOBAL_STATUS_CACHE_TIME="$(stat --printf=%Y "${VAGRANT_RUNNING_CACHE}")"
+}
+
+function vagrant_clear_cache() {
+    if [ -f "${VAGRANT_RUNNING_CACHE}" ]; then
+        rm -f "${VAGRANT_RUNNING_CACHE}"
+    fi
+}
+
+function vagrant_get_status() {
+    if [ ! -f "${VAGRANT_RUNNING_CACHE}" ]; then
+        vagrant_update_cache
+    fi
+    vagrant_read_cache
+
+    # Defer a cache update in case we missed a vagrant command ;)
+    vagrant_update_cache &
+
+    echo -e "${VAGRANT_GLOBAL_STATUS}"
+}
+
+function vagrant() {
+    vagrant_clear_cache
+    "$(which "vagrant")" "$@"
+}
+
+echo -ne "Scanning for running Vagrant VMs..."
+RUNNING_VMS="$(vagrant_get_status|sed -e '/^\s*$/q'|grep --color=never 'running')"
+echo -ne "\\r                                                                               \\r"
+if [ "$(echo -e "${RUNNING_VMS}"|wc -c)" -gt "1" ]; then
+    echo "id       name    provider   state    directory"
+    echo "----------------------------------------------------------------------------------------"
+    echo -e "$RUNNING_VMS"
+    echo
+fi
+
+# Utillity functions should have access to everything defined before :)
+# Therefore they need to be sourced last
+# Load utillity bash functions
+if [ -f ~/.bash_functions ]; then
+    . ~/.bash_functions
+fi
+
