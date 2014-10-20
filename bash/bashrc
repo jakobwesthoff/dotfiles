@@ -38,6 +38,7 @@ source ~/.colorizer/Library/colorizer.sh
 # Activate autojump
 source ~/.autojump/bin/autojump.bash
 
+source ~/.git-prompt.sh
 
 function ps1_prompt_command() {
     local last_exit_code=$?

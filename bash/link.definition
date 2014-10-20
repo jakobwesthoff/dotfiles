@@ -1,3 +1,4 @@
 bashrc => ~/.bashrc
 bash_aliases => ~/.bash_aliases
 bash_functions => ~/.bash_functions
+git-prompt.sh => ~/.git-prompt.sh
