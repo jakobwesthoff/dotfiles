@@ -62,6 +62,26 @@ vm() {
     popd >/dev/null
 }
 
+docker() {
+    local DOCKER="$(which docker)"
+
+    # Make sure the boot2docker environment is up, before running a docker
+    # command
+    local boot2dockerState="$(boot2docker status)"
+
+    if [ "${boot2dockerState}" != "running" ]; then
+        boot2docker up
+    fi
+
+    # Ensure the proper environment is set to run docker commands on the
+    # boot2docker vm
+    if [ -z "${DOCKER_HOST}" ]; then
+        eval "$(boot2docker shellinit)"
+    fi
+
+    $DOCKER "$@"
+}
+
 # Define a more convinient way of extracting colums using awk
 # Usage column <colnumber> [<optional_column seperator>] < infile
 column() {
