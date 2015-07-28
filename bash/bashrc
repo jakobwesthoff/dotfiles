@@ -203,3 +203,6 @@ if [ -f ~/.bash_functions ]; then
     . ~/.bash_functions
 fi
 
+
+# added by travis gem
+[ -f /Users/jakob/.travis/travis.sh ] && source /Users/jakob/.travis/travis.sh
