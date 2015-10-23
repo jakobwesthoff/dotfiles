@@ -140,6 +140,7 @@ if which -s dircolors; then
 fi
 
 source ~/.nvm/nvm.sh
+source /Users/jakob/.phpbrew/bashrc
 
 # Golang
 export GOROOT="/usr/local/opt/go/libexec"
@@ -204,5 +205,7 @@ if [ -f ~/.bash_functions ]; then
 fi
 
 
-# added by travis gem
-[ -f /Users/jakob/.travis/travis.sh ] && source /Users/jakob/.travis/travis.sh
+# Allow usage of travis cli
+if [ -f /Users/jakob/.travis/travis.sh ]; then
+    source /Users/jakob/.travis/travis.sh
+fi
