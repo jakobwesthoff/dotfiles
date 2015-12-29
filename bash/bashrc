@@ -209,3 +209,6 @@ fi
 if [ -f /Users/jakob/.travis/travis.sh ]; then
     source /Users/jakob/.travis/travis.sh
 fi
+
+# Set proper ulimit
+ulimit -n 65536 65536
