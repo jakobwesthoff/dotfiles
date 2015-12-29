@@ -21,6 +21,9 @@ echo
 echo "Installing autojump"
 checkout_or_update https://github.com/joelthelion/autojump.git .autojump
 
+echo "Installing r9e-bashrc"
+checkout_or_update https://github.com/jakobwesthoff/r9e-bashrc.git .r9e-bashrc
+
 echo
 echo "Installing solarized dircolors"
 checkout_or_update https://github.com/seebi/dircolors-solarized.git .dircolors-solarized
