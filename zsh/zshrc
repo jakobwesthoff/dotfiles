@@ -1,0 +1,12 @@
+_R9E_BASHRC_SOURCE_DEFAULT_ALIASES=false
+_R9E_BASHRC_SOURCE_DEFAULT_FUNCTIONS=false
+
+source ~/.colorizer/Library/colorizer.sh
+
+source ~/.r9e-bashrc/src/init.sh
+
+source ~/.autojump/bin/autojump.zsh
+
+archey -c
+
+_vagrant_show_status
