@@ -16,5 +16,5 @@ export PATH="/usr/local/share/npm/bin:${PATH}"
 export PATH="/usr/local/sbin:/usr/local/bin:${PATH}"
 
 # Make gnu coreutils have priority over the bsd ones
-PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
-MANPATH="$(brew --prefix coreutils)/libexec/gnuman:$MANPATH"
+PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
