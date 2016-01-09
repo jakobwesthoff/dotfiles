@@ -40,7 +40,7 @@ parse_git_state() {
     git_branch_tracking="${git_branch_tracking} ${GIT_PROMPT_MERGING}"
   fi
 
-  local untracked_count="$(git ls-files --others --exclude-standard | wc -l)"
+  local untracked_count="$(git status --porcelain|grep '^??'|wc -l)"
   if [ "${untracked_count}" -gt 0 ]; then
     git_local_status="${git_local_status} ${GIT_PROMPT_UNTRACKED//NUM/${untracked_count}}"
   fi
