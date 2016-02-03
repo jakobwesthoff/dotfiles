@@ -15,12 +15,10 @@ if ! zgen saved; then
     zgen save
 fi
 source "${HOME}/.zgen/init.zsh"
+zgen apply
 
 HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='bg=green,fg=white,bold'
 
-# Activate all loaded autocompletions
-autoload -U compinit && compinit
-
-archey -c
+#archey -c
 
 _vagrant_show_status
