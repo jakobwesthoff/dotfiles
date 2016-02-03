@@ -9,6 +9,7 @@ source ~/.colorizer/Library/colorizer.sh
 source ~/.r9e-bashrc/src/init.sh
 
 source ~/.autojump/bin/autojump.zsh
+fpath=(~/.autojump/bin ${fpath})
 
 if ! zgen saved; then
     zgen save
@@ -16,6 +17,9 @@ fi
 source "${HOME}/.zgen/init.zsh"
 
 HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='bg=green,fg=white,bold'
+
+# Activate all loaded autocompletions
+autoload -U compinit && compinit
 
 archey -c
 
