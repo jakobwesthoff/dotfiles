@@ -3,22 +3,31 @@ source ~/.zgen/zgen.zsh
 
 _R9E_BASHRC_SOURCE_DEFAULT_ALIASES=false
 _R9E_BASHRC_SOURCE_DEFAULT_FUNCTIONS=false
+_R9E_BASHRC_ZSH_BREW_COMPLETION=false
+_R9E_BASHRC_ZSH_COMPINIT=false
 
 source ~/.colorizer/Library/colorizer.sh
 
 source ~/.r9e-bashrc/src/init.sh
 
-source ~/.autojump/bin/autojump.zsh
-fpath=(~/.autojump/bin ${fpath})
+#_r9e_source ~/.autojump/bin/autojump.zsh
+#fpath=(~/.autojump/bin ${fpath})
 
 if ! zgen saved; then
     zgen save
 fi
-source "${HOME}/.zgen/init.zsh"
-zgen apply
+_r9e_source "${HOME}/.zgen/init.zsh"
+
+_r9e_profiling_timer_start "zgen apply"
+    zgen apply
+_r9e_profiling_timer_end
 
 HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='bg=green,fg=white,bold'
 
-_archey_show
+_r9e_profiling_timer_start "_archey_show"
+    _archey_show
+_r9e_profiling_timer_end
 
-_vagrant_show_status
+_r9e_profiling_timer_start "_vagrant_show_status"
+    _vagrant_show_status
+_r9e_profiling_timer_end
