@@ -18,10 +18,6 @@ echo "Installing bash configuration dependencies"
 checkout_or_update https://github.com/jakobwesthoff/colorizer.git .colorizer
 
 echo
-echo "Installing autojump"
-checkout_or_update https://github.com/joelthelion/autojump.git .autojump
-
-echo
 echo "Installing r9e-bashrc"
 checkout_or_update https://github.com/jakobwesthoff/r9e-bashrc.git .r9e-bashrc
 
