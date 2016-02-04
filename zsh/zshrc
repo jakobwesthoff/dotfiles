@@ -19,6 +19,6 @@ zgen apply
 
 HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='bg=green,fg=white,bold'
 
-#archey -c
+_archey_show
 
 _vagrant_show_status
