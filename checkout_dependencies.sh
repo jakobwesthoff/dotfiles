@@ -16,6 +16,7 @@ function checkout_or_update() {
 pushd "${HOME}" 2>&1 >/dev/null
 echo "Installing bash configuration dependencies"
 checkout_or_update https://github.com/jakobwesthoff/colorizer.git .colorizer
+checkout_or_update https://github.com/jakobwesthoff/prettytable.sh.git .prettytable
 
 echo
 echo "Installing r9e-bashrc"
