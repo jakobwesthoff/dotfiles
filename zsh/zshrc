@@ -10,17 +10,9 @@ source ~/.colorizer/Library/colorizer.sh
 
 source ~/.r9e-bashrc/src/init.sh
 
-#_r9e_source ~/.autojump/bin/autojump.zsh
-#fpath=(~/.autojump/bin ${fpath})
-
 if ! zgen saved; then
     zgen save
 fi
-_r9e_source "${HOME}/.zgen/init.zsh"
-
-_r9e_profiling_timer_start "zgen apply"
-    zgen apply
-_r9e_profiling_timer_end
 
 HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='bg=green,fg=white,bold'
 
