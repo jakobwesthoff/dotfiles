@@ -43,9 +43,11 @@ function _vagrant_show_status() {
     _VAGRANT_RUNNING_VMS="$(_vagrant_get_status|sed -e '/^\s*$/q'|grep --color=never 'running')"
     echo -ne "\\r                                                                               \\r"
     if [ "$(echo -e "${_VAGRANT_RUNNING_VMS}"|wc -c)" -gt "1" ]; then
-        echo "id       name    provider   state    directory"
-        echo "----------------------------------------------------------------------------------------"
-        echo -e "${_VAGRANT_RUNNING_VMS}"
-        echo
+        colorize "<green>Running vagrant vms:</green>"
+        {
+            echo -e  "id\tname\tprovider\tstate\tdirectory"
+            echo -e "${_VAGRANT_RUNNING_VMS}" | sed -e "s@^\\([^\s]\\+\\)\\s\\+\\([^\s]\\+\\)\\s\\+\\([^\s]\\+\\)\\s\\+\\([^\s]\\+\\)\\s\\(.\\+\\)\$@\\1	\\2	\\3	\\4	\\5@"
+        } | prettytable 5 "yellow"
+        echo ""
     fi
 }
