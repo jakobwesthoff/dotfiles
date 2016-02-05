@@ -9,14 +9,13 @@ function _archey_update_cache() {
 function _archey_show() {
     if [ ! -f "${_ARCHEY_CACHE}" ]; then
         _archey_update_cache
-        return
-    fi
+    else 
+        local cache_time="$(stat --printf=%Y "${_ARCHEY_CACHE}")"
+        local now="$(date +%s)"
 
-    local cache_time="$(stat --printf=%Y "${_ARCHEY_CACHE}")"
-    local now="$(date +%s)"
-
-    if [ $((now - cache_time)) -ge ${_ARCHEY_CACHE_TIMEOUT} ]; then
-        _archey_update_cache
+        if [ $((now - cache_time)) -ge ${_ARCHEY_CACHE_TIMEOUT} ]; then
+            _archey_update_cache
+        fi
     fi
 
     cat "${_ARCHEY_CACHE}"
