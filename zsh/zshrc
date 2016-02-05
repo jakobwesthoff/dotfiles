@@ -7,6 +7,7 @@ _R9E_BASHRC_ZSH_BREW_COMPLETION=false
 _R9E_BASHRC_ZSH_COMPINIT=false
 
 source ~/.colorizer/Library/colorizer.sh
+source ~/.prettytable/prettytable.sh
 
 source ~/.r9e-bashrc/src/init.sh
 
