@@ -30,4 +30,9 @@ echo
 echo "Installing solarized dircolors"
 checkout_or_update https://github.com/seebi/dircolors-solarized.git .dircolors-solarized
 [ ! -f "${HOME}/.dircolors" ] && ln -s "${HOME}/.dircolors-solarized/dircolors.ansi-light" "${HOME}/.dircolors"
+
+echo
+echo "Installing nvm"
+checkout_or_update https://github.com/creationix/nvm.git .nvm
+
 popd 2>&1 >/dev/null
