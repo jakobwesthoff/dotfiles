@@ -7,3 +7,6 @@ if which -s dircolors 2>&1 >/dev/null; then
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
 fi
+
+# Update completion colors
+zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
