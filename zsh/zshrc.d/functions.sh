@@ -30,7 +30,7 @@ mkcd() {
 
 # Define a more convinient way of extracting colums using awk
 # Usage column <colnumber> [<optional_column seperator>] < infile
-column() {
+col() {
     eval awk ${2:+"-F $2"} "'{print \$$1}'";
 }
 
