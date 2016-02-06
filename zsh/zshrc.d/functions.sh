@@ -74,3 +74,75 @@ gitmvcase() {
     git mv "${source}" "${source}.${uuid}"
     git mv "${source}.${uuid}" "${destination}"
 }
+
+wait_for()
+{
+    if [ ${#} -ne 1 ]; then
+        _r9e_print_message "usage: ${FUNCNAME} <hostname>"
+        return 1
+    fi
+
+    local host="${1}"
+
+    local wait_option='-w'
+    if [ "$(uname)" = "Darwin" ]; then
+        wait_option='-t'
+    fi
+
+
+    local nl=''
+    while ! ping -qc1 "${wait_option}2" "${host}" >/dev/zero 2>&1; do
+        # make sure we have a chance to cancel the loop:
+        sleep 0.5
+
+        _r9e_print_message -n '.'
+        nl='\n'
+    done
+
+    _r9e_print_message "${nl}Host %s is now available" "${host}"
+}
+_r9e_set_completion_function wait_for _hosts
+_r9e_set_completion_function wait_for _known_hosts
+
+wait_for_port()
+{
+    if [ ${#} -ne 2 ]; then
+        _r9e_print_message "usage: ${FUNCNAME} <hostname> <port>"
+        return 1
+    fi
+
+    local host="${1}"
+    local port="${2}"
+
+    local nl=''
+    while ! nc -zG 2 "${host}" "${port}" >/dev/zero; do
+        # make sure we have a chance to cancel the loop:
+        sleep 0.5
+
+        _r9e_print_message -n '.'
+        nl='\n'
+    done
+
+    _r9e_print_message "${nl}port %s on %s is now available" "${port}" "${host}"
+}
+_r9e_set_completion_function wait_for_port _hosts
+_r9e_set_completion_function wait_for_port _known_hosts
+
+wait_for_ssh()
+{
+    local host="$(ssh -G "${@}" | grep '^hostname ' | sed 's/^hostname //')"
+    local port="$(ssh -G "${@}" | grep '^port ' | sed 's/^port //')"
+
+    wait_for_port "${host}" "${port}"
+    ssh "${@}"
+}
+
+if _r9e_is_shell_function '_ssh'; then
+    _wait_for_ssh()
+    {
+        local service='ssh'
+        _ssh
+    }
+
+    _r9e_set_completion_function wait_for_ssh _wait_for_ssh
+fi

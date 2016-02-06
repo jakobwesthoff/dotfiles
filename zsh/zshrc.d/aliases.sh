@@ -21,3 +21,5 @@ alias syncolor="pygmentize -f console256"
 
 # atom
 alias a="atom"
+
+alias wssh="wait_for_ssh"
