@@ -4,7 +4,7 @@ source ~/.zgen/zgen.zsh
 _R9E_BASHRC_SOURCE_DEFAULT_ALIASES=false
 _R9E_BASHRC_SOURCE_DEFAULT_FUNCTIONS=false
 _R9E_BASHRC_ZSH_BREW_COMPLETION=false
-_R9E_BASHRC_ZSH_COMPINIT=false
+_R9E_BASHRC_ZSH_COMPINIT=true
 
 source ~/.colorizer/Library/colorizer.sh
 source ~/.prettytable/prettytable.sh
