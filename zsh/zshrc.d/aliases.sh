@@ -23,3 +23,7 @@ alias syncolor="pygmentize -f console256"
 alias a="atom"
 
 alias wssh="wait_for_ssh"
+
+# Learn to use rg instead of ack or ag
+alias ack="colorize '<red>Try <yellow>rg</yellow> (ripgrep) instead of ack. It is faster and more modern!</red>'; echo; ack"
+alias ag="colorize '<red>Try <yellow>rg</yellow> (ripgrep) instead of ag. It is faster and more modern!</red>'; echo; ag"
