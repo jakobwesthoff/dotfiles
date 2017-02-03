@@ -1,9 +1,10 @@
 _ARCHEY_CACHE="${HOME}/.archey_cache"
-_ARCHEY_CACHE_TIMEOUT=1800
+#_ARCHEY_CACHE_TIMEOUT=1800
+_ARCHEY_CACHE_TIMEOUT=60
 _ARCHEY_EXECUTABLE="$(which archey)"
 
 function _archey_update_cache() {
-    "${_ARCHEY_EXECUTABLE}" -c 2>&1 >"${_ARCHEY_CACHE}"
+    "${_ARCHEY_EXECUTABLE}" -o -c 2>&1 >"${_ARCHEY_CACHE}"
 }
 
 function _archey_show() {
