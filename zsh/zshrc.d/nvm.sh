@@ -1,20 +1,26 @@
 # Lazy load nvm
-nvm() {
+_nvm_lazy_load_unset() {
     unset -f nvm
+    unset -f node
+    unset -f npm
+}
+
+nvm() {
+    _nvm_lazy_load_unset
     export NVM_DIR="${HOME}/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
     nvm "$@"
 }
  
 node() {
-    unset -f node
+    _nvm_lazy_load_unset
     export NVM_DIR="${HOME}/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
     node "$@"
 }
  
 npm() {
-    unset -f npm
+    _nvm_lazy_load_unset
     export NVM_DIR="${HOME}/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
     npm "$@"
