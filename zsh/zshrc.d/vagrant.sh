@@ -22,8 +22,7 @@ function _vagrant_get_boottime() {
 }
 
 function _vagrant_update_cache() {
-    "${_VAGRANT_EXECUTABLE}" global-status --prune 2>&1 >/dev/null
-    "${_VAGRANT_EXECUTABLE}" global-status 2>&1 >"${_VAGRANT_RUNNING_CACHE}"
+    "${_VAGRANT_EXECUTABLE}" global-status --prune 2>&1 >"${_VAGRANT_RUNNING_CACHE}"
     _vagrant_get_boottime >"${_VAGRANT_RUNNING_CACHE_BOOTTIME}"
 }
 
