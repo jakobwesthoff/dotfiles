@@ -3,6 +3,7 @@
 	email = jakob@westhoffswelt.de
 [alias]
     ci = commit
+    st = status
 [color]
     branch = auto
     diff = auto
