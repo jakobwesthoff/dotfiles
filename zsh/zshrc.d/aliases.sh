@@ -22,6 +22,9 @@ alias syncolor="pygmentize -f console256"
 # atom
 alias a="atom"
 
+# vim instead of vi
+alias vi="vim"
+
 alias wssh="wait_for_ssh"
 
 # Learn to use rg instead of ack or ag
