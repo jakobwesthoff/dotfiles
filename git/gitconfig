@@ -2,11 +2,7 @@
 	name = Jakob Westhoff
 	email = jakob@westhoffswelt.de
 [alias]
-    st = status
     ci = commit
-    co = checkout
-    br = branch
-    di = diff
 [color]
     branch = auto
     diff = auto
