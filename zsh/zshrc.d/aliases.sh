@@ -19,9 +19,6 @@ alias pprofile="php -d 'xdebug.profiler_enable=1' -d 'xdebug.profiler_output_dir
 alias syn="pygmentize"
 alias syncolor="pygmentize -f console256"
 
-# atom
-alias a="atom"
-
 # vim instead of vi
 alias vi="vim"
 
@@ -30,3 +27,6 @@ alias wssh="wait_for_ssh"
 # Learn to use rg instead of ack or ag
 alias ack="colorize '<red>Try <yellow>rg</yellow> (ripgrep) instead of ack. It is faster and more modern!</red>'; echo; ack"
 alias ag="colorize '<red>Try <yellow>rg</yellow> (ripgrep) instead of ag. It is faster and more modern!</red>'; echo; ag"
+
+# VS Code
+alias vscode="code"
