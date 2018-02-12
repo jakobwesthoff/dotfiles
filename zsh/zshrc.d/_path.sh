@@ -23,3 +23,6 @@ export PATH="/usr/local/sbin:/usr/local/bin:${PATH}"
 # Make gnu coreutils have priority over the bsd ones
 PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
 MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
+
+# Prefer gnu find, locate and xargs over bsd tools
+PATH="/usr/local/opt/findutils/libexec/gnubin:$PATH"
