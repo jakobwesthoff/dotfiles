@@ -4,7 +4,7 @@
 ##
 
 # Include $HOME/{bin,sbin} in the execpath
-export PATH="$PATH:$HOME/bin:$HOME/sbin"
+export PATH="$PATH:$HOME/bin:$HOME/sbin:$HOME/.local/bin"
 
 # Include bin path of ruby gems to PATH
 export PATH="$PATH:/var/lib/gems/1.8/bin"
