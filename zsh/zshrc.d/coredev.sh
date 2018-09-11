@@ -1,1 +1,1 @@
-source <(coredev environment:start-coredev:zsh)
+source <(~/.local/bin/coredev environment:start-coredev:zsh)
