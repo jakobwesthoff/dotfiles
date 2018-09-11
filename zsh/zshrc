@@ -24,3 +24,7 @@ _r9e_profiling_timer_end
 _r9e_profiling_timer_start "_vagrant_show_status"
     _vagrant_show_status
 _r9e_profiling_timer_end
+
+# tabtab source for electron-forge package
+# uninstall by removing these lines or running `tabtab uninstall electron-forge`
+[[ -f /Users/jakob/Development/legacy/js/jwpres/Code/04-electron-forge/node_modules/tabtab/.completions/electron-forge.zsh ]] && . /Users/jakob/Development/legacy/js/jwpres/Code/04-electron-forge/node_modules/tabtab/.completions/electron-forge.zsh
