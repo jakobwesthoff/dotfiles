@@ -3,10 +3,10 @@ windows:
     root: ~/Customers/crosscan/core
     layout: tiled
     panes:
-      - start_coredev && clear && oc logs dc/service-node-e2etest-eventbroker --follow=true
-      - start_coredev && clear &&  oc logs dc/service-node-e2etest-hal --follow=true
-      - start_coredev && clear &&  oc logs dc/service-node-e2etest-mujsconnector -c openshift-imagestream-e2etest-mujssandbox --follow=true
-      - start_coredev && clear &&  oc logs dc/service-node-e2etest-mujsconnector -c service-node-mujsconnector --follow=true
-      - start_coredev && clear &&  oc logs dc/service-node-e2etest-commandsendevent --follow=true
-      - start_coredev && clear &&  oc logs dc/service-node-e2etest-commandsetvalues --follow=true
-      - start_coredev && clear &&  oc logs dc/service-node-e2etest-commandgetvalues --follow=true
+      - start_coredev && oc logs dc/service-node-e2etest-eventbroker --follow=true
+      - start_coredev && oc logs dc/service-node-e2etest-hal --follow=true
+      - start_coredev && oc logs dc/service-node-e2etest-mujsconnector -c openshift-imagestream-e2etest-mujssandbox --follow=true
+      - start_coredev && oc logs dc/service-node-e2etest-mujsconnector -c service-node-mujsconnector --follow=true
+      - start_coredev && oc logs dc/service-node-e2etest-commandsendevent --follow=true
+      - start_coredev && oc logs dc/service-node-e2etest-commandsetvalues --follow=true
+      - start_coredev && oc logs dc/service-node-e2etest-commandgetvalues --follow=true
