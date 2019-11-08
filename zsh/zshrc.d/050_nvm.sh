@@ -26,6 +26,13 @@ npm() {
     npm "$@"
 }
 
+npx() {
+    _nvm_lazy_load_unset
+    export NVM_DIR="${HOME}/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+    npx "$@"
+}
+
 ## $ npm completion
 
 ###-begin-npm-completion-###
