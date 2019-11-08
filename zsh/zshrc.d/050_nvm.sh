@@ -3,6 +3,7 @@ _nvm_lazy_load_unset() {
     unset -f nvm
     unset -f node
     unset -f npm
+    unset -f npx
 }
 
 nvm() {
