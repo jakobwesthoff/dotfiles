@@ -4,7 +4,7 @@
 
 _VAGRANT_RUNNING_CACHE="${HOME}/.vagrant_running_cache"
 _VAGRANT_RUNNING_CACHE_BOOTTIME="${HOME}/.vagrant_running_cache_boottime"
-_VAGRANT_EXECUTABLE="$(which vagrant)"
+_VAGRANT_EXECUTABLE="/usr/local/bin/vagrant"
 
 function _vagrant_get_cached_boottime() {
     local boottime="0"
