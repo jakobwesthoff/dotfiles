@@ -4,7 +4,6 @@ _nvm_lazy_load_unset() {
     unset -f node
     unset -f npm
     unset -f npx
-    unset -f git
 }
 
 nvm() {
@@ -33,14 +32,6 @@ npx() {
     export NVM_DIR="${HOME}/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
     npx "$@"
-}
-
-# Node is used by some of my git hooks
-git() {
-    _nvm_lazy_load_unset
-    export NVM_DIR="${HOME}/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
-    git "$@"
 }
 
 ## $ npm completion
