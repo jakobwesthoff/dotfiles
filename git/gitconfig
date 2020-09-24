@@ -21,3 +21,5 @@
 	clean = git-lfs clean -- %f
 [hub]
 	host = github.crosscan.com
+[pull]
+	rebase = false
