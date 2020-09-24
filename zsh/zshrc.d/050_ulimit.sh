@@ -1,2 +1,2 @@
 # Set proper ulimit
-ulimit -n 65536 65536
+ulimit -n 10240 10240
