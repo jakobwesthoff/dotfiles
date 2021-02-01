@@ -19,6 +19,7 @@ __kubectl_select_container() {
 ##
 # Public
 ##
+alias kubectl="kubecolor"
 alias k="kubectl"
 
 kns() {
