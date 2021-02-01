@@ -22,5 +22,6 @@ _r9e_profiling_timer_start "_archey_show"
 _r9e_profiling_timer_end
 
 _r9e_profiling_timer_start "_vagrant_show_status"
-    _vagrant_show_status
+# Disabled while not using vagrant any more
+#    _vagrant_show_status
 _r9e_profiling_timer_end
