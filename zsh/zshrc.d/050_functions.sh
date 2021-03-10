@@ -146,3 +146,15 @@ if _r9e_is_shell_function '_ssh'; then
 
     _r9e_set_completion_function wait_for_ssh _wait_for_ssh
 fi
+
+retag() {
+    if [ "$#" -ne "1" ]; then
+        echo "Provide a tag name!"
+        return 1
+    fi
+    local TAG="$1"
+    git push --delete origin "$TAG"
+    git tag -d "$TAG";
+    git tag "$TAG";
+    git push --tags;
+ }
