@@ -30,4 +30,5 @@ alias ag="colorize '<red>Try <yellow>rg</yellow> (ripgrep) instead of ag. It is 
 
 # VS Code
 alias vscode="code"
+alias vsc="code"
 
