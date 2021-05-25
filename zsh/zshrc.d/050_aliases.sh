@@ -32,3 +32,14 @@ alias ag="colorize '<red>Try <yellow>rg</yellow> (ripgrep) instead of ag. It is 
 alias vscode="code"
 alias vsc="code"
 
+# Git shortcuts
+alias gp="git pull"
+alias gcm="git checkout master"
+alias gco="git checkout"
+alias gpo="git push -u origin \$(git branch --show-current)"
+alias gci="git commit"
+alias gst="git status"
+alias gap="git add -p"
+alias gdi="git diff"
+alias gs="git stash"
+alias gsp="git stash pop"
