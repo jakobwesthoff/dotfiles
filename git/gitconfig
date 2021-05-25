@@ -23,3 +23,5 @@
 	host = github.crosscan.com
 [pull]
 	rebase = false
+[init]
+	defaultBranch = main
