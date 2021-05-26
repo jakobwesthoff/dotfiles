@@ -158,3 +158,14 @@ retag() {
     git tag "$TAG";
     git push --tags;
  }
+
+rmtag() {
+    if [ "$#" -ne "1" ]; then
+        echo "Provide a tag name!"
+        return 1
+    fi
+    local TAG="$1"
+
+    git tag -d "$TAG"
+    git push --delete origin "$TAG"
+}
