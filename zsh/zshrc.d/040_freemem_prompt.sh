@@ -39,15 +39,16 @@ freemem_printSizeHumanReadable() {
 _r9e_prompt_function_freemem_prompt() {
   local base=''
   local ramfree=0
+  local pagesize
   # macOS Specific
   # Available = Free + Inactive
   # See https://support.apple.com/en-us/HT201538
   ramfree=$(vm_stat | grep "Pages free" | grep -o -E '[0-9]+')
   ramfree=$((ramfree + $(vm_stat | grep "Pages inactive" | grep -o -E '[0-9]+')))
   # Convert pages into Bytes
-  ramfree=$(( ramfree * 4096 ))
+  pagesize="$(vm_stat|grep "page size of"|grep -o -E '[0-9]+')"
+  ramfree=$(( ramfree * pagesize ))
 
   echo "${FREEMEM_PROMPT_PREFIX}%{$fg[blue]%}$(freemem_printSizeHumanReadable ${ramfree} $base)%{$reset_color%}${FREEMEM_PROMPT_SUFFIX}"
 }
 _r9e_prompt_register_volatile_command 'freemem_prompt'
-
