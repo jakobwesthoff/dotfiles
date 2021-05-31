@@ -17,12 +17,15 @@ fi
 # Include npm executables in the searchpath
 export PATH="/usr/local/share/npm/bin:${PATH}"
 
-# Make sure /usr/local/bin has priority over everything else
-export PATH="/usr/local/sbin:/usr/local/bin:${PATH}"
+##
+# Homebrew configuration
+##
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Make gnu coreutils have priority over the bsd ones
-PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
-MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
+PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
+MANPATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH"
 
 # Prefer gnu find, locate and xargs over bsd tools
-PATH="/usr/local/opt/findutils/libexec/gnubin:$PATH"
+PATH="$HOMEBREW_PREFIX/opt/findutils/libexec/gnubin:$PATH"
+
