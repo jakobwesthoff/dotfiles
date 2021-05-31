@@ -20,7 +20,14 @@ export PATH="/usr/local/share/npm/bin:${PATH}"
 ##
 # Homebrew configuration
 ##
-eval "$(/opt/homebrew/bin/brew shellenv)"
+if [ -e "/usr/local/bin/brew" ]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
+# Maybe eval both versions (Apple Silicon and intel, but always eval Apple
+# Silicon last, if both is installed))
+if [ -e "/opt/homebrew/bin/brew" ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
 
 # Make gnu coreutils have priority over the bsd ones
 PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
