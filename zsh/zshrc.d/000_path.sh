@@ -21,11 +21,13 @@ export PATH="/usr/local/share/npm/bin:${PATH}"
 # Homebrew configuration
 ##
 if [ -e "/usr/local/bin/brew" ]; then
+    export HOMEBREW_SHELLENV_PREFIX=""
     eval "$(/usr/local/bin/brew shellenv)"
 fi
 # Maybe eval both versions (Apple Silicon and intel, but always eval Apple
 # Silicon last, if both is installed))
 if [ -e "/opt/homebrew/bin/brew" ]; then
+    export HOMEBREW_SHELLENV_PREFIX=""
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
