@@ -21,15 +21,17 @@ __kubectl_select_container() {
 ##
 alias kubectl="kubecolor"
 alias k="kubectl"
+alias kns="kubens"
+alias kctx="kubectx"
 
-kns() {
-    if [ $# -ne 1 ]; then
-        echo "Please provide a new namespace to switch to."
-        return 1
-    fi
-
-    kubectl config set-context "$(kubectl config current-context)" --namespace="$1"
-}
+# kns() {
+#     if [ $# -ne 1 ]; then
+#         echo "Please provide a new namespace to switch to."
+#         return 1
+#     fi
+#
+#     kubectl config set-context "$(kubectl config current-context)" --namespace="$1"
+# }
 
 krsh() {
     if [ $# -ne 1 ]; then
