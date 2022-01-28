@@ -1,5 +1,21 @@
 # Kubernetes
 
+## Completion taken from and modified:
+## https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/kubectl/kubectl.plugin.zsh
+
+KUBECTL_COMPLETION_CACHEDIR="${XDG_CACHE_HOME:-$HOME/.cache}/kubectl/completions"
+mkdir -p "$KUBECTL_COMPLETION_CACHEDIR" >/dev/null 2>&1
+
+# Generate and source if not existant or source and regenerate in the
+# background
+if [[ ! -f "$KUBECTL_COMPLETION_CACHEDIR/_kubectl" ]]; then
+  kubectl completion zsh >| "$KUBECTL_COMPLETION_CACHEDIR/_kubectl"
+  source "$KUBECTL_COMPLETION_CACHEDIR/_kubectl"
+else
+  source "$KUBECTL_COMPLETION_CACHEDIR/_kubectl"
+  kubectl completion zsh >| "$KUBECTL_COMPLETION_CACHEDIR/_kubectl" &|
+fi
+
 ##
 # Internals
 ##
@@ -224,4 +240,5 @@ if (( ${+_comps[kubectl]} )); then
   compdef kj=kubectl
   compdef kjx=kubectl
   compdef ky=kubectl
+  compdef kubecolor=kubectl
 fi
