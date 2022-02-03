@@ -242,3 +242,10 @@ if (( ${+_comps[kubectl]} )); then
   compdef ky=kubectl
   compdef kubecolor=kubectl
 fi
+
+## Watch kubecolor commands with color
+kw(){
+  watch -n1 -d --color -- kubecolor --force-colors $@
+}
+
+alias kwp="kw get pods"
