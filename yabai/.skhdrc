@@ -173,5 +173,5 @@ shift + lctrl + alt - k : yabai -m window --insert north
 shift + lctrl + alt - l : yabai -m window --insert east
 
 # Change spaces
-alt + cmd - right : yabai -m space --focus next
-alt + cmd - left  : yabai -m space --focus prev
+lctrl - right : yabai -m space --focus next
+lctrl - left  : yabai -m space --focus prev
