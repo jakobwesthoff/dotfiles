@@ -169,3 +169,16 @@ rmtag() {
     git tag -d "$TAG"
     git push --delete origin "$TAG"
 }
+
+push_nexus() {
+    if [ "$#" -ne "2" ]; then
+        echo "Provide a image name and tag name!"
+        return 1
+    fi
+    local image="$1"
+    local tag="$2"
+
+    docker pull registry.gitlab.com/ekkogmbh/artifacts/${image}:${tag} && \
+    docker image tag registry.gitlab.com/ekkogmbh/artifacts/${image}:${tag} lpitdnexus01.bmwgroup.net:16052/epaper/${image}:${tag}  && \
+    docker push lpitdnexus01.bmwgroup.net:16052/epaper/${image}:${tag}
+}
