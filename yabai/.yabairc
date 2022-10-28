@@ -17,6 +17,7 @@
 sudo yabai --load-sa
 yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
 
+
 # global settings
 yabai -m config mouse_follows_focus          off
 yabai -m config focus_follows_mouse          off
@@ -29,7 +30,14 @@ yabai -m config window_opacity_duration      0.0
 yabai -m config active_window_opacity        1.0
 yabai -m config normal_window_opacity        0.9
 yabai -m config window_border                on
-yabai -m config window_border_width          4
+yabai -m config window_border_width          2
+# Draw border in high resolution mode; for High Dots Per Inch ("Retina")
+# displays. HiDPI uses significantly more memory.
+#yabai -m config window_border_hidpi true
+# Blur border allowing it to act as a backdrop for transparent windows.
+#yabai -m config window_border_blur true
+# Radius of window border.
+# yabai -m config window_border_radius 2
 yabai -m config active_window_border_color   0xffFFBF29
 yabai -m config normal_window_border_color   0xaaE4E4E4
 yabai -m config insert_feedback_color        0xffd75f5f
@@ -44,8 +52,17 @@ yabai -m config mouse_drop_action            swap
 yabai -m config layout                       bsp
 yabai -m config top_padding                  12
 yabai -m config bottom_padding               12
+# yabai -m config bottom_padding               80
 yabai -m config left_padding                 12
 yabai -m config right_padding                12
 yabai -m config window_gap                   06
+
+# Video recording
+# yabai -m config left_padding                 1524
+# yabai -m config bottom_padding              344
+# yabai -m rule --add manage=off app='^.*Zoom.*$'
+# yabai -m rule --add manage=off app='^.*Webcam Settings Panel.*$'
+# yabai -m rule --add manage=off app='^.*OBS.*$'
+# yabai -m rule --add manage=off app='^.*Doom Like Engine.*$'
 
 echo "yabai configuration loaded.."
