@@ -30,12 +30,12 @@ yabai -m config window_opacity_duration      0.0
 yabai -m config active_window_opacity        1.0
 yabai -m config normal_window_opacity        0.9
 yabai -m config window_border                on
-yabai -m config window_border_width          2
+yabai -m config window_border_width          4
 # Draw border in high resolution mode; for High Dots Per Inch ("Retina")
 # displays. HiDPI uses significantly more memory.
 #yabai -m config window_border_hidpi true
 # Blur border allowing it to act as a backdrop for transparent windows.
-#yabai -m config window_border_blur true
+yabai -m config window_border_blur false
 # Radius of window border.
 # yabai -m config window_border_radius 2
 yabai -m config active_window_border_color   0xffFFBF29
