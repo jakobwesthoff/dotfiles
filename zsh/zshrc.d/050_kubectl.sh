@@ -249,3 +249,5 @@ kw(){
 }
 
 alias kwp="kw get pods"
+
+alias jsonstream='while read line; do eline="${line//\\/\\\\}"; if jq '.' <<< "${eline}" >/dev/null 2>&1; then jq '.'<<<"${eline}"; else echo ${eline}; fi; done'
