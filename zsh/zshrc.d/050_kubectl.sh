@@ -245,7 +245,7 @@ fi
 
 ## Watch kubecolor commands with color
 kw(){
-  hwatch -n 1 --color -t -- kubecolor --light-background --force-colors $@
+  hwatch -n 1 --color -t -d -- kubecolor --light-background --force-colors $@
 }
 
 alias kwp="kw get pods"
