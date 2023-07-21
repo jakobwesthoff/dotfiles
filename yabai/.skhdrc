@@ -139,7 +139,7 @@
 # alt - e : yabai -m window --toggle split
 
 # float / unfloat window
-alt - t : yabai -m window --toggle float
+ctrl + alt - t : yabai -m window --toggle float
 
 # toggle sticky(+float), topmost, picture-in-picture
 # alt - p : yabai -m window --toggle sticky;\
