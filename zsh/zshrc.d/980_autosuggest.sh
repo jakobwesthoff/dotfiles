@@ -3,6 +3,6 @@ if ! zgen saved; then
 fi
 
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#d33682"
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_STRATEGY=(completion history)
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=30
 
