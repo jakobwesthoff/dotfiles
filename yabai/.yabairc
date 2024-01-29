@@ -92,7 +92,7 @@ yabai -m config                                 \
     bottom_padding               12             \
     left_padding                 12             \
     right_padding                12             \
-    window_gap                   06             \
+    window_gap                   10             \
     layout                       bsp            \
     mouse_modifier               fn             \
     mouse_action1                move           \
@@ -100,3 +100,6 @@ yabai -m config                                 \
     mouse_drop_action            swap
 
 echo "yabai configuration loaded.."
+
+borders active_color=0xffFFBF29 inactive_color=0x00000000 width=8.0 hidpi=on &
+echo "borders activated"
