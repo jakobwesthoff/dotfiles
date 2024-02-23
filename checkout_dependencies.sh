@@ -19,6 +19,10 @@ checkout_or_update https://github.com/jakobwesthoff/colorizer.git .colorizer
 checkout_or_update https://github.com/jakobwesthoff/prettytable.sh.git .prettytable
 
 echo
+echo "Installing r9e-bashrc"
+checkout_or_update https://github.com/jakobwesthoff/r9e-bashrc.git .r9e-bashrc
+
+echo
 echo "Installing zgen"
 checkout_or_update https://github.com/tarjoilija/zgen.git .zgen
 
