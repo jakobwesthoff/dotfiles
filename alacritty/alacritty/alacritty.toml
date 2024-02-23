@@ -13,3 +13,5 @@ padding={x = 6, y=6}
 #opacity = 0.8
 #blur = true
 
+[selection]
+save_to_clipboard = true
