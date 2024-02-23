@@ -1,0 +1,15 @@
+import = [
+    "~/.config/alacritty/themes/solarized_light.toml"
+]
+[font]
+size = 14
+#normal = { family = "MesloLGS NF", style = "Regular" }
+normal = { family = "FiraCode Nerd Font", style = "Regular" }
+
+[window]
+decorations = "Buttonless"
+dynamic_padding = true
+padding={x = 6, y=6}
+#opacity = 0.8
+#blur = true
+
