@@ -2,7 +2,7 @@
 #
 # Usage: "flait logfile"
 railf() {
-    while true;do 
+    while true;do
         clear
         tail -n $(($LINES-1)) $1 \
         | tac \
@@ -78,7 +78,7 @@ gitmvcase() {
 wait_for()
 {
     if [ ${#} -ne 1 ]; then
-        _r9e_print_message "usage: ${FUNCNAME} <hostname>"
+        echo "usage: ${FUNCNAME[0]} <hostname>"
         return 1
     fi
 
@@ -95,19 +95,19 @@ wait_for()
         # make sure we have a chance to cancel the loop:
         sleep 0.5
 
-        _r9e_print_message -n '.'
+        echo -n '.'
         nl='\n'
     done
 
-    _r9e_print_message "${nl}Host %s is now available" "${host}"
+    echo "${nl}Host %s is now available" "${host}"
 }
-_r9e_set_completion_function wait_for _hosts
-_r9e_set_completion_function wait_for _known_hosts
+compdef _hosts wait_for
+compdef _known_hosts wait_for
 
 wait_for_port()
 {
     if [ ${#} -ne 2 ]; then
-        _r9e_print_message "usage: ${FUNCNAME} <hostname> <port>"
+        echo "usage: ${FUNCNAME[0]} <hostname> <port>"
         return 1
     fi
 
@@ -119,14 +119,14 @@ wait_for_port()
         # make sure we have a chance to cancel the loop:
         sleep 0.5
 
-        _r9e_print_message -n '.'
+        echo -n '.'
         nl='\n'
     done
 
-    _r9e_print_message "${nl}port %s on %s is now available" "${port}" "${host}"
+    echo "${nl}port %s on %s is now available" "${port}" "${host}"
 }
-_r9e_set_completion_function wait_for_port _hosts
-_r9e_set_completion_function wait_for_port _known_hosts
+compdef _hosts wait_for_port
+compdef _known_hosts wait_for_port
 
 wait_for_ssh()
 {
@@ -137,15 +137,13 @@ wait_for_ssh()
     ssh "${@}"
 }
 
-if _r9e_is_shell_function '_ssh'; then
-    _wait_for_ssh()
-    {
-        local service='ssh'
-        _ssh
-    }
+_wait_for_ssh()
+{
+    local service='ssh'
+    _ssh
+}
 
-    _r9e_set_completion_function wait_for_ssh _wait_for_ssh
-fi
+compdef _wait_for_ssh wait_for_ssh
 
 retag() {
     if [ "$#" -ne "1" ]; then
