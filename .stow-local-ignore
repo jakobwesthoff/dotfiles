@@ -1,3 +1,4 @@
+\.DS_Store
 ^/macos/.*$
 ^/iterm2/.*$
 ^/README\..*$

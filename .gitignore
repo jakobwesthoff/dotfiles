@@ -1,3 +1,2 @@
-.idea/
 .DS_Store
-stow/.config/karabiner/automatic_backups/
+.config/karabiner/automatic_backups/
