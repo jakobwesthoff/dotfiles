@@ -15,8 +15,6 @@
 	default = simple
 [credential]
 	helper = osxkeychain
-[hub]
-	host = github.crosscan.com
 [pull]
 	rebase = false
 [init]
