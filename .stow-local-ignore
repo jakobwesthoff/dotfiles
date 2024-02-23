@@ -1,5 +1,28 @@
+# Defaults
+RCS
+.+,v
+
+CVS
+\.\#.+       # CVS conflict files / emacs lock files
+\.cvsignore
+
+\.svn
+_darcs
+\.hg
+
+\.git
+\.gitignore
+
+.+~          # emacs backup files
+\#.*\#       # emacs autosave files
+
+^/README.*
+^/LICENSE.*
+^/COPYING
+
+
+# Custom stuff
 \.DS_Store
 ^/macos.*$
 ^/iterm2.*$
-^/README\..*$
 ^/checkout_dependencies\.sh$
