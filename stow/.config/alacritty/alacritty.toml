@@ -15,3 +15,9 @@ padding={x = 6, y=6}
 
 [selection]
 save_to_clipboard = true
+
+[keyboard]
+bindings = [
+  { key = "Right", mods = "Command", chars = "\u001BF" },
+  { key = "Left",  mods = "Command", chars = "\u001BB" },
+]
