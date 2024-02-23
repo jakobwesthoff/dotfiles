@@ -1,5 +1,5 @@
 \.DS_Store
-^/macos/.*$
-^/iterm2/.*$
+^/macos.*$
+^/iterm2.*$
 ^/README\..*$
 ^/checkout_dependencies\.sh$
