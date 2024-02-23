@@ -1,0 +1,4 @@
+^/macos/.*$
+^/iterm2/.*$
+^/README\..*$
+^/checkout_dependencies\.sh$
