@@ -3,6 +3,10 @@ source ~/.zgen/zgen.zsh
 source ~/.colorizer/Library/colorizer.sh
 source ~/.prettytable/prettytable.sh
 
+# Enabled interactive comments
+# https://apple.stackexchange.com/questions/405246/zsh-comment-character
+setopt interactive_comments
+
 # Source .zshrc.d
 while read -rd $'\0' file; do
     source "${file}"
