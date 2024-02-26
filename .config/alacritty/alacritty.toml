@@ -16,6 +16,7 @@ save_to_clipboard = true
 
 [keyboard]
 # Macos quality of life keybindings
+# https://github.com/alacritty/alacritty/issues/474#issuecomment-338803299
 bindings = [
   { key = "Left", mods = "Alt", chars = "\u001bb" },                           # Skip word left
   { key = "Right", mods = "Alt", chars = "\u001bf" },                          # Skip word right
