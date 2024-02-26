@@ -1,6 +1,4 @@
-import = [
-    "~/.config/alacritty/themes/solarized_light.toml"
-]
+import = ["~/.config/alacritty/themes/solarized_light.toml"]
 [font]
 size = 14
 #normal = { family = "MesloLGS NF", style = "Regular" }
@@ -9,7 +7,7 @@ normal = { family = "FiraCode Nerd Font", style = "Regular" }
 [window]
 decorations = "Buttonless"
 dynamic_padding = true
-padding={x = 6, y=6}
+padding = { x = 6, y = 6 }
 #opacity = 0.8
 #blur = true
 
@@ -17,7 +15,12 @@ padding={x = 6, y=6}
 save_to_clipboard = true
 
 [keyboard]
+# Macos quality of life keybindings
 bindings = [
-  { key = "Right", mods = "Command", chars = "\u001BF" },
-  { key = "Left",  mods = "Command", chars = "\u001BB" },
+  { key = "Left", mods = "Alt", chars = "\u001bb" },                           # Skip word left
+  { key = "Right", mods = "Alt", chars = "\u001bf" },                          # Skip word right
+  { key = "Left", mods = "Command", chars = "\u001bOH", mode = "AppCursor" },  # Home
+  { key = "Right", mods = "Command", chars = "\u001bOF", mode = "AppCursor" }, # End
+  { key = "Back", mods = "Command", chars = "\u0015" },                        # Delete line
+  { key = "Back", mods = "Alt", chars = "\u001b\u007f" },                      # Delete word
 ]
