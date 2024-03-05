@@ -83,3 +83,7 @@ macOS:
 To comment or uncomment a specific line in visual mode press `gc`.
 
 **Taken from:** [https://vi.stackexchange.com/a/41874]
+
+## Manage further language Servers
+
+Use the `:Mason` command to manage further language servers and corresponding language based plugins
