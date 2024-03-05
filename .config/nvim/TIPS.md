@@ -77,3 +77,9 @@ macOS:
 ```sh
   brew install neovim --HEAD
 ```
+
+## Comment/Uncomment line/block
+
+To comment or uncomment a specific line in visual mode press `gc`.
+
+**Taken from:** [https://vi.stackexchange.com/a/41874]
