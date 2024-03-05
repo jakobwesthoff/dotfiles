@@ -7,6 +7,8 @@ vim.g.mapleader = ","
 
 local opt = vim.opt
 
+opt.background = "light"
+
 vim.g.autoformat = false
 
 -- Seperate vim registers and system clipboard
