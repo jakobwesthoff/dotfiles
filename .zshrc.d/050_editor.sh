@@ -1,4 +1,4 @@
 # Set the editor to vim
 if [ -z "$EDITOR" ]; then
-    export EDITOR=$(which vim)
+    export EDITOR=$(which nvim)
 fi

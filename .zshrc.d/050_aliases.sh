@@ -20,7 +20,8 @@ alias syn="pygmentize"
 alias syncolor="pygmentize -f console256"
 
 # vim instead of vi
-alias vi="vim"
+alias vi="nvim"
+alias vim="nvim"
 
 alias wssh="wait_for_ssh"
 
