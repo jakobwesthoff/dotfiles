@@ -1,8 +1,8 @@
 return {
-  --  { "shaunsingh/solarized.nvim" },
-  --  { "LazyVim/LazyVim", opts = {
-  --    colorscheme = "solarized",
-  --  } },
+  { "shaunsingh/solarized.nvim" },
+  { "LazyVim/LazyVim", opts = {
+    colorscheme = "solarized",
+  } },
   --  { "overcache/NeoSolarized" },
   --  { "LazyVim/LazyVim", opts = {
   --    colorscheme = "NeoSolarized",
@@ -15,8 +15,8 @@ return {
   -- { "LazyVim/LazyVim", opts = {
   --   colorscheme = "gruvbox",
   -- } },
-  { "ishan9299/nvim-solarized-lua" },
-  { "LazyVim/LazyVim", opts = {
-    colorscheme = "solarized-high",
-  } },
+  --  { "ishan9299/nvim-solarized-lua" },
+  --  { "LazyVim/LazyVim", opts = {
+  --    colorscheme = "solarized-high",
+  --  } },
 }

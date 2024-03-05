@@ -49,7 +49,8 @@ vim.api.nvim_create_user_command(
 ## Wrapping to textwidth
 
 **Taken from:** [https://vi.stackexchange.com/a/39800]
-It seems the usual `gq` in VisualMode doesn't work anymore in NeoVim. There are however two different ways of fixing that:
+It seems the usual `gq` in VisualMode doesn't work anymore in NeoVim. There are
+however two different ways of fixing that:
 
 1. Use `gw` instead
 2. Use the following autocmd (no idea if that has other implications)
@@ -61,4 +62,18 @@ It seems the usual `gq` in VisualMode doesn't work anymore in NeoVim. There are 
      vim.bo[args.buf].formatexpr = nil 
    end, 
  })
+```
+
+## Wrong treesitter highlighting
+
+If it seems the treesitter highlighting is kind of *off*, or even less good,
+then the original highlighting, then you are most likely using the 0.9.x
+version of neovim instead of the Nightly.
+
+**Solution:** Use nightly version.
+
+macOS:
+
+```sh
+  brew install neovim --HEAD
 ```
