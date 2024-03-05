@@ -1,7 +1,14 @@
 source ~/.zgen/zgen.zsh
 
 source ~/.colorizer/Library/colorizer.sh
-source ~/.prettytable/prettytable.sh
+if [ -f "~/.prettytable/prettytable" ]; then
+  # New version
+  source ~/.prettytable/prettytable
+else
+  # Old version
+  source ~/.prettytable/prettytable.sh
+fi
+
 
 # Enabled interactive comments
 # https://apple.stackexchange.com/questions/405246/zsh-comment-character
