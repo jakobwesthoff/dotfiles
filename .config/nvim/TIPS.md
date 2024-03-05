@@ -86,4 +86,11 @@ To comment or uncomment a specific line in visual mode press `gc`.
 
 ## Manage further language Servers
 
-Use the `:Mason` command to manage further language servers and corresponding language based plugins
+Use the `:Mason` command to manage further language servers and corresponding
+language based plugins
+
+## Ctrl + Space is not working
+
+In macOS a default keyboard shortcut is hogging Ctrl+Space (Select the previous
+input source). Disable it in configuration "Keyboard Shortcuts" -> "Input
+Sources".

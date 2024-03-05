@@ -26,6 +26,9 @@ return {
       local luasnip = require("luasnip")
       local cmp = require("cmp")
 
+      -- Disable automatic popup of completions
+      -- opts.completion.autocomplete = false
+
       -- This is reaaaally not easy to setup :D
       opts.mapping = vim.tbl_extend("force", opts.mapping, {
         ["<Tab>"] = cmp.mapping(function(fallback)
