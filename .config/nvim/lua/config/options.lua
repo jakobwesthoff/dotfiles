@@ -22,3 +22,5 @@ opt.listchars = { tab = "▸ ", eol = "¬" }
 -- opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"
 opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:block"
 -- opt.guicursor = ""
+
+opt.conceallevel = 0
