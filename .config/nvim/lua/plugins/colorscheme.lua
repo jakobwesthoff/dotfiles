@@ -1,7 +1,7 @@
 return {
   { "shaunsingh/solarized.nvim" },
   { "LazyVim/LazyVim", opts = {
-    colorscheme = "solarized",
+    colorscheme = "solarized"
   } },
   --  { "overcache/NeoSolarized" },
   --  { "LazyVim/LazyVim", opts = {

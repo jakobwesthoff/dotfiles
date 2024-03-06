@@ -9,6 +9,8 @@ local opt = vim.opt
 
 opt.background = "light"
 
+opt.spelllang = { "en", "de" }
+
 vim.g.autoformat = false
 
 -- Seperate vim registers and system clipboard
