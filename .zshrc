@@ -1,7 +1,7 @@
 source ~/.zgen/zgen.zsh
 
 source ~/.colorizer/Library/colorizer.sh
-if [ -f "~/.prettytable/prettytable" ]; then
+if [ -e ~/.prettytable/prettytable ]; then
   # New version
   source ~/.prettytable/prettytable
 else
