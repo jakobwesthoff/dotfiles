@@ -26,4 +26,3 @@ fi
 HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='bg=green,fg=white,bold'
 
 fastfetch
-
