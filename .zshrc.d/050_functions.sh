@@ -99,7 +99,7 @@ wait_for()
         nl='\n'
     done
 
-    echo "${nl}Host %s is now available" "${host}"
+    printf "${nl}Host %s is now available\n" "${host}"
 }
 compdef _hosts wait_for
 compdef _known_hosts wait_for
@@ -123,7 +123,7 @@ wait_for_port()
         nl='\n'
     done
 
-    echo "${nl}port %s on %s is now available" "${port}" "${host}"
+   printf "${nl}port %s on %s is now available\n" "${port}" "${host}"
 }
 compdef _hosts wait_for_port
 compdef _known_hosts wait_for_port
