@@ -1,2 +1,3 @@
 .DS_Store
 .config/karabiner/automatic_backups/
+.config/nvim/lazy-lock.json
