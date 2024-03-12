@@ -17,7 +17,22 @@ awk -v bytes="$bytes" '
         '
 }
 
+usage() {
+  echo "$(basename "${0}") <max size in bytes> <src dir> <target dir> [<start at filename>]"
+  echo "Created directories in target dir a relative to CWD."
+}
+
 main() {
+  if [ $# -eq 1 ] && [ "$1" == "--help" ]; then
+    usage
+    exit
+  fi
+
+  if [ $# -lt 3 ]; then
+    usage
+    exit 1
+  fi
+
   local size_limit="$1"
   local src="$2"
   local dst="$3"
@@ -27,13 +42,15 @@ main() {
     start="${4}"
   fi
 
-  local list_tmp="$(mktemp)"
+  local list_tmp
+  list_tmp="$(mktemp)"
 
   echo "Scanning files..."
   find -s "${src}" -type f -not -iname ".*" |sort -Vs >"${list_tmp}"
   
   if [ -n "$start" ]; then
-    local filtered_list_tmp="$(mktemp)"
+    local filtered_list_tmp
+    filtered_list_tmp="$(mktemp)"
 
     local escaped_start
     escaped_start="$(_escape_for_regexp "$start")"
@@ -70,7 +87,9 @@ main() {
       mkdir -p "${full_dst}"
     fi
 
-    local filename_only="$(basename "$file")"
+    local filename_only
+    filename_only="$(basename "$file")"
+
     echo 
     echo "($(_human_readable "$bytecounter")) [$(_human_readable "$file_size")] -- $file"
     pv "$file" >"${full_dst}/${filename_only}"
