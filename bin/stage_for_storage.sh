@@ -10,7 +10,7 @@ _human_readable() {
   local bytes="${1}"
 awk -v bytes="$bytes" '
             function human(x) {
-                if (x<1000) {return x} else {s="kMGTEPZY"; while (x>=1000 && length(s)>1) {x/=1024; s=substr(s,2)}}
+                s="bkMGTEPZY"; while (x>=1000 && length(s)>1) {x/=1024; s=substr(s,2)}
                 return sprintf("%.2f%s", x, substr(s,1,1))
             }
             BEGIN {print human(bytes)}
