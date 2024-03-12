@@ -5,22 +5,16 @@ _escape_for_regexp() {
   gsed 's/\[\|\]\|[/.|${}*^]/\\&/g' <<<"$*"
 }
 
+# Make human readable with two decimals
 _human_readable() {
-    local bytes=$1
-    local units=('B' 'KB' 'MB' 'GB' 'TB' 'PB' 'EB' 'ZB' 'YB')
-    local unit='B'
-    local i=0
-
-    while (( bytes > 1024 )); do
-        bytes=$(( bytes / 1024 ))
-        ((i++))
-    done
-
-    if (( i > 0 )); then
-        unit=${units[i]}
-    fi
-
-    echo "${bytes} ${unit}"
+  local bytes="${1}"
+awk -v bytes="$bytes" '
+            function human(x) {
+                if (x<1000) {return x} else {s="kMGTEPZY"; while (x>=1000 && length(s)>1) {x/=1024; s=substr(s,2)}}
+                return sprintf("%.2f%s", x, substr(s,1,1))
+            }
+            BEGIN {print human(bytes)}
+        '
 }
 
 main() {
