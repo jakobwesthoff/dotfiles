@@ -31,6 +31,6 @@ bindings = [
 history = 0
 
 [shell]
-program = "/opt/homebrew/bin/tmux"
+program = "/usr/local/bin/tmux"
 # Use only one shared session
 #args = ["new-session", "-A", "-D", "-s", "main"]
