@@ -2,8 +2,25 @@
 set -ueo pipefail
 
 _escape_for_regexp() {
-  # shellcheck disable=SC2001,SC2016
-  sed 's/[][\.|$(){}?+*^]/\\&/g' <<<"$*"
+  gsed 's/\[\|\]\|[/.|${}*^]/\\&/g' <<<"$*"
+}
+
+_human_readable() {
+    local bytes=$1
+    local units=('B' 'KB' 'MB' 'GB' 'TB' 'PB' 'EB' 'ZB' 'YB')
+    local unit='B'
+    local i=0
+
+    while (( bytes > 1024 )); do
+        bytes=$(( bytes / 1024 ))
+        ((i++))
+    done
+
+    if (( i > 0 )); then
+        unit=${units[i]}
+    fi
+
+    echo "${bytes} ${unit}"
 }
 
 main() {
@@ -24,8 +41,10 @@ main() {
   if [ -n "$start" ]; then
     local filtered_list_tmp="$(mktemp)"
 
-    echo "$start" >"$filtered_list_tmp"
-    sed '0,/^'"$(_escape_for_regexp "$start")"'$/d' "${list_tmp}" >>"${filtered_list_tmp}"
+    local escaped_start
+    escaped_start="$(_escape_for_regexp "$start")"
+    gsed -n "/^${escaped_start}/,\$p" "${list_tmp}" >"${filtered_list_tmp}"
+#    gsed '0,/^'"$(_escape_for_regexp "$start")"'$/d' "${list_tmp}" >>"${filtered_list_tmp}"
     
     rm "${list_tmp}"
     list_tmp="$filtered_list_tmp"
@@ -41,7 +60,7 @@ main() {
 
     if [[ "$bytecounter_after_increment" -gt "$size_limit" ]]; then
       echo ""
-      echo "Size limit reached. Collected bytes: ${bytecounter}"
+      echo "Size limit reached. Collected bytes: ${bytecounter} ($(_human_readable "$bytecounter"))"
       echo "Last file which did not fit anymore:"
       echo "$file"
       exit 0
@@ -59,7 +78,7 @@ main() {
 
     local filename_only="$(basename "$file")"
     echo 
-    echo "($bytecounter) [$file_size] -- $file"
+    echo "($(_human_readable "$bytecounter")) [$(_human_readable "$file_size")] -- $file"
     pv "$file" >"${full_dst}/${filename_only}"
   done < "${list_tmp}"
 
