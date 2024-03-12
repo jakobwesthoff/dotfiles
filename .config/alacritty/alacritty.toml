@@ -7,7 +7,7 @@ normal = { family = "FiraCode Nerd Font", style = "Regular" }
 [window]
 decorations = "Buttonless"
 dynamic_padding = true
-padding = { x = 6, y = 6 }
+padding = { x = 5, y = 3 }
 #opacity = 0.8
 #blur = true
 
@@ -25,3 +25,12 @@ bindings = [
   { key = "Back", mods = "Command", chars = "\u0015" },                        # Delete line
   { key = "Back", mods = "Alt", chars = "\u001b\u007f" },                      # Delete word
 ]
+
+[scrolling]
+# Using tmux instead
+history = 0
+
+[shell]
+program = "/opt/homebrew/bin/tmux"
+# Use only one shared session
+#args = ["new-session", "-A", "-D", "-s", "main"]
