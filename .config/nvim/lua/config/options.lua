@@ -28,3 +28,6 @@ opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:block"
 -- opt.guicursor = ""
 
 opt.conceallevel = 0
+
+-- Create W command
+vim.cmd("command! -nargs=0 W SudaWrite()")
