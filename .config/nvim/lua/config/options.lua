@@ -28,3 +28,8 @@ opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:block"
 -- opt.guicursor = ""
 
 opt.conceallevel = 0
+
+-- Create W and w!! command
+vim.cmd("command! -nargs=0 W SudaWrite")
+-- Does not work yet
+-- vim.cmd("cnoreabbrev <expr> w!! SudaWrite")
