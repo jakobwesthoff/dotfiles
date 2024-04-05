@@ -10,6 +10,7 @@ if [ -n "${ENABLE_TMUX_STARTUP}" ] && [ -z "${MUX}" ]; then
   done
 
   fzf_options=("--no-sort" "--layout=reverse-list" "--border=sharp" "--color=light")
+  initial_tmux_session="main"
   
   if [ -z "$fzf_bin" ]; then
     tmux new-session
@@ -17,7 +18,7 @@ if [ -n "${ENABLE_TMUX_STARTUP}" ] && [ -z "${MUX}" ]; then
     unset ENABLE_TMUX_STARTUP
     if ! tmux list-sessions; then
       # No active sessions, start a new one
-      tmux new-session
+      tmux new-session -s "${initial_tmux_session}"
     else
       # Active sessions available allow selection
       sessions="$(tmux list-sessions)"
@@ -27,7 +28,7 @@ if [ -n "${ENABLE_TMUX_STARTUP}" ] && [ -z "${MUX}" ]; then
       elif [ "${selected_session}" = "NEW SESSION" ]; then
         tmux new-session
       else
-        session_id="$(echo "$selected_session" | sed -e 's@^\([^:]\):.*$@\1@g')"
+        session_id="$(echo "$selected_session" | sed -e 's@^\([^:]*\):.*$@\1@g')"
         tmux attach-session -t "${session_id}"
       fi
     fi
