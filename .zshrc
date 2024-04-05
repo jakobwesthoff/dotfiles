@@ -1,3 +1,23 @@
+# Startup with tmux if selected and allow for session selection
+if [ -n "${ENABLE_TMUX_STARTUP}" ] && [ -z "${MUX}" ]; then
+  unset ENABLE_TMUX_STARTUP
+  if ! tmux list-sessions; then
+    # No active sessions, start a new one
+    tmux new-session
+  else
+    # Active sessions available allow selection
+    sessions="$(tmux list-sessions)"
+    selected_session="$(printf "NEW SESSION\n%s" "${sessions}" | /opt/homebrew/bin/fzf)"
+    if [ "${selected_session}" = "NEW SESSION" ]; then
+      tmux new-session
+    else
+      session_id="$(echo "$selected_session" | sed -e 's@^\([^:]\):.*$@\1@g')"
+      tmux attach-session -t "${session_id}"
+    fi
+  fi
+  exit
+fi
+
 source ~/.zgen/zgen.zsh
 
 source ~/.colorizer/Library/colorizer.sh
