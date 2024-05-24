@@ -1,4 +1,5 @@
-import = ["~/.config/alacritty/themes/solarized_light.toml"]
+# import = ["~/.config/alacritty/themes/solarized_light.toml"]
+import = ["~/.config/alacritty/themes/gruvbox_material_medium_dark.toml"]
 [font]
 size = 14
 #normal = { family = "MesloLGS NF", style = "Regular" }

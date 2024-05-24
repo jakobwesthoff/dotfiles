@@ -101,5 +101,7 @@ yabai -m config                                 \
 
 echo "yabai configuration loaded.."
 
-borders active_color=0xffFFBF29 inactive_color=0x00000000 width=8.0 hidpi=on &
+#borders active_color=0xffFFBF29 inactive_color=0x00000000 width=8.0 hidpi=on &
+#borders active_color=0xFFD0A863 inactive_color=0x00000000 width=8.0 hidpi=on &
+borders active_color=0xFFF3B23E inactive_color=0x00000000 width=8.0 hidpi=on &
 echo "borders activated"
