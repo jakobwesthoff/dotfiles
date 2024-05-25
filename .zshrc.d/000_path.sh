@@ -32,9 +32,18 @@ if [ -e "/opt/homebrew/bin/brew" ]; then
 fi
 
 # Make gnu coreutils have priority over the bsd ones
-PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
-MANPATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH"
+if [ -d $HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin ]; then
+    export PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
+    export MANPATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH"
+fi
 
 # Prefer gnu find, locate and xargs over bsd tools
-PATH="$HOMEBREW_PREFIX/opt/findutils/libexec/gnubin:$PATH"
+if [ -d $HOMEBREW_PREFIX/opt/findutils/libexec/gnubin ]; then
+  export PATH="$HOMEBREW_PREFIX/opt/findutils/libexec/gnubin:$PATH"
+fi
+
+# Use snap bin folder if available
+if [ -d "/snap/bin" ]; then
+  export PATH="/snap/bin:$PATH"
+fi
 
