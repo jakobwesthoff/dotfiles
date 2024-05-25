@@ -5,4 +5,6 @@ return {
   { "rcarriga/nvim-notify", enabled = false },
   -- Disable strange pseudo markup headline rendering in eg. markdown
   { "lukas-reineke/headlines.nvim", enabled = false },
+  -- Disable the "tabs" which always only confuse me ;)
+  { "akinsho/bufferline.nvim", enabled = false },
 }
