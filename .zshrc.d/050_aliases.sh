@@ -1,6 +1,8 @@
 # Just some shortcuts
 alias tailf="tail -f"
-alias sed="gsed"
+if which gsed &>/dev/null; then
+  alias sed="gsed"
+fi
 alias tree="tree -AC"
 alias mtail=multitail
 

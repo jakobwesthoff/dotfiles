@@ -1,3 +1,6 @@
+# INCLUDE GUARD END
+if which kubectl &>/dev/null; then
+
 # Kubernetes
 
 ## Completion taken from and modified:
@@ -250,3 +253,5 @@ kw(){
 
 alias kwp="kw get pods"
 
+# INCLUDE GUARD END
+fi
