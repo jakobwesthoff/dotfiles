@@ -7,6 +7,7 @@ vim.g.mapleader = ","
 
 local opt = vim.opt
 
+-- AUTO CHANGE MARKER: LIGHT/DARK
 opt.background = "dark"
 
 opt.spelllang = { "en", "de" }
