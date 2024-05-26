@@ -30,6 +30,9 @@ opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:block"
 
 opt.conceallevel = 0
 
+-- Disable diagnostics by default
+vim.diagnostic.enable(false)
+
 -- Create W and w!! command
 vim.cmd("command! -nargs=0 W SudaWrite")
 -- Does not work yet
