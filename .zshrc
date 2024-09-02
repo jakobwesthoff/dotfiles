@@ -16,21 +16,38 @@ if [ -n "${ENABLE_TMUX_STARTUP}" ] && [ -z "${MUX}" ]; then
     tmux new-session
   else 
     unset ENABLE_TMUX_STARTUP
-    if ! tmux list-sessions; then
-      # No active sessions, start a new one
-      tmux new-session -s "${initial_tmux_session}"
-    else
-      # Active sessions available allow selection
+    local no_session=""
+    if ! tmux list-sessions &>/dev/null; then
+      no_session="true"
+    fi
+
+    # Active sessions available allow selection
+    local sessions=""
+    if [ -z "${no_session}" ]; then
       sessions="$(tmux list-sessions)"
-      selected_session="$(printf "NEW SESSION\n%s" "${sessions}" | "${fzf_bin}" "${fzf_options[@]}")"
-      if [ -z "${selected_session}"]; then
-        exit
-      elif [ "${selected_session}" = "NEW SESSION" ]; then
-        tmux new-session
+    fi
+
+
+    local selected_session=""
+    if [ -z "${sessions}" ]; then
+      selected_session="$(printf "NEW SESSION\nNO TMUX" | "${fzf_bin}" "${fzf_options[@]}")"
+    else
+      selected_session="$(printf "NEW SESSION\n%s\nNO TMUX" "${sessions}" | "${fzf_bin}" "${fzf_options[@]}")"
+    fi
+    if [ -z "${selected_session}" ]; then
+      exit
+    elif [ "${selected_session}" = "NEW SESSION" ]; then
+      if [ -n "${no_session}" ]; then
+        tmux new-session -s "${initial_tmux_session}"
       else
-        session_id="$(echo "$selected_session" | sed -e 's@^\([^:]*\):.*$@\1@g')"
-        tmux attach-session -t "${session_id}"
+        tmux new-session
       fi
+    elif [ "${selected_session}" = "NO TMUX" ]; then
+      export ENABLE_TMUX_STARTUP=""
+      zsh
+    else
+      session_id="$(echo "$selected_session" | sed -e 's@^\([^:]*\):.*$@\1@g')"
+      tmux attach-session -t "${session_id}"
     fi
   fi
   exit

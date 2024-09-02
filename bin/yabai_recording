@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -ueo pipefail
+
+# Base Configuration
+REC_WIDTH=1920
+REC_HEIGHT=1080
+
+REC_PADDING=10
+REC_MENUBAR=24
+
+# Get currently active display config
+YDISPLAY="$(yabai -m query --displays|jq 'map(select(.["has-focus"] == true))|.[0].index')"
+YWIDTH="$(yabai -m query --displays|jq 'map(select(.["has-focus"] == true))|.[0].frame.w'|xargs printf "%.0f")"
+YHEIGHT="$(yabai -m query --displays|jq 'map(select(.["has-focus"] == true))|.[0].frame.h'|xargs printf "%.0f")"
+YSPACE="$(yabai -m query --spaces|jq 'map(select(.display == '"$YDISPLAY"' and .["has-focus"] == true)) | .[0].index')"
+YTOP="$(yabai -m config top_padding)"
+YRIGHT="$(yabai -m config right_padding)"
+YBOTTOM="$(yabai -m config bottom_padding)"
+YLEFT="$(yabai -m config left_padding)"
+
+if [ $# -ge 1 ] && [ $1 == "reset" ]; then
+  echo "Resetting padding (on DISPLAY $YDISPLAY SPACE $YSPACE) to defaults (${YTOP}:${YRIGHT}:${YBOTTOM}:${YLEFT})"
+
+  TOP_PADDING="${YTOP}"
+  RIGHT_PADDING="${YRIGHT}"
+  BOTTOM_PADDING="${YBOTTOM}"
+  LEFT_PADDING="${YLEFT}"
+else
+  echo "Adjusting padding (on DISPLAY $YDISPLAY SPACE $YSPACE) for recording of ${REC_WIDTH}x${REC_HEIGHT} (from ${YWIDTH}x${YHEIGHT})"
+
+  TOP_PADDING="${REC_PADDING}"
+  RIGHT_PADDING="${REC_PADDING}"
+  BOTTOM_PADDING="$((YHEIGHT - REC_HEIGHT - REC_MENUBAR + REC_PADDING))"
+  LEFT_PADDING="$((YWIDTH - REC_WIDTH + REC_PADDING))"
+fi
+
+yabai -m config --space $YSPACE top_padding $TOP_PADDING
+yabai -m config --space $YSPACE right_padding $RIGHT_PADDING
+yabai -m config --space $YSPACE bottom_padding $BOTTOM_PADDING
+yabai -m config --space $YSPACE left_padding $LEFT_PADDING
