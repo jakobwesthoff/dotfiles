@@ -3,11 +3,15 @@
 set -ueo pipefail
 
 # Base Configuration
+
+EXPECTED_SCREEN_WIDTH=3360
+EXPECTED_SCREEN_HEIGHT=1418
+
 REC_WIDTH=1920
 REC_HEIGHT=1080
 
 REC_PADDING=10
-REC_MENUBAR=24
+REC_MENUBAR=0
 
 # Get currently active display config
 YDISPLAY="$(yabai -m query --displays|jq 'map(select(.["has-focus"] == true))|.[0].index')"
@@ -18,6 +22,11 @@ YTOP="$(yabai -m config top_padding)"
 YRIGHT="$(yabai -m config right_padding)"
 YBOTTOM="$(yabai -m config bottom_padding)"
 YLEFT="$(yabai -m config left_padding)"
+
+if [ $YWIDTH -ne $EXPECTED_SCREEN_WIDTH ] || [ $YHEIGHT -ne $EXPECTED_SCREEN_HEIGHT ]; then
+  echo "WARNING: Expected a resolution of ${EXPECTED_SCREEN_WIDTH}x${EXPECTED_SCREEN_HEIGHT} but detected ${YWIDTH}x${YHEIGHT}. If this is unexpected please press CTRL-C and change your screen resolution first. Otherwise just press ENTER to continue."
+  read
+fi
 
 if [ $# -ge 1 ] && [ $1 == "reset" ]; then
   echo "Resetting padding (on DISPLAY $YDISPLAY SPACE $YSPACE) to defaults (${YTOP}:${YRIGHT}:${YBOTTOM}:${YLEFT})"
