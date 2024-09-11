@@ -54,7 +54,14 @@ jsonstream() {
       done
 
       if jq . <<<"${buffer}" >/dev/null 2>&1; then
-        jq . <<<"${buffer}"
+        if jq -e '.metadata | has("timestamp")' <<<"${buffer}" >/dev/null 2>&1; then
+          timestamp=$(jq -r '.metadata.timestamp' <<<"${buffer}")
+          formatted_timestamp=$(date -d "@${timestamp}" "+[%Y-%m-%d %H:%M:%S]")
+          echo -n "$formatted_timestamp "
+          jq . <<<"${buffer}"
+        else
+          jq . <<<"${buffer}"
+        fi
       else
         echo "${buffer}"
       fi
