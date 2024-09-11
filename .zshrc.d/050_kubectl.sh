@@ -38,7 +38,7 @@ __kubectl_select_container() {
 ##
 # Public
 ##
-alias kubectl="kubecolor --light-background"
+alias kubectl="kubecolor"
 alias k="kubectl"
 alias kns="kubens"
 alias kctx="kubectx"
@@ -248,7 +248,7 @@ fi
 
 ## Watch kubecolor commands with color
 kw(){
-  hwatch -n 1 --color -t -d -- kubecolor --light-background --force-colors $@
+  hwatch -n 1 --color -t -d -- kubecolor --force-colors $@
 }
 
 alias kwp="kw get pods"
