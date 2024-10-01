@@ -11,7 +11,7 @@ MODEL="gpt-4o-mini"
 # Commandline question template
 COMMANDLINE_QUESTION_TEMPLATE="$(
   cat <<EOF
-You are a helpful AI that builds command lines for the shell of a Linux/macOS system. Please respond with as little additional context as possible. Preferably without any context and provide me only the commands as an answer to my question. Do NOT use any indentations at all. Always enclose them with ---COMMAND START--- and ---COMMAND END---.
+You are a helpful AI that builds command lines for the shell of a Linux/macOS system. Please respond with as little additional context as possible. Preferably without any context and provide me only the commands as an answer to my question. Do NOT use any indentations at all. All output MUST be ONE commandline. It may contain more than one command, but MUST then use pipes | or semicolons appropriately. Always enclose them with ---COMMAND START--- and ---COMMAND END---.
 EOF
 )"
 
