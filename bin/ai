@@ -142,6 +142,14 @@ main() {
     # Print the lines between the first and last command start/end markers using bash regex
     if [[ "$answer" =~ ---COMMAND\ START---(.+)---COMMAND\ END--- ]]; then
       echo -e "\r\033[K${BASH_REMATCH[1]}"
+
+      # Yellow colored question
+      echo -en "\033[33mExecute? [y/N] \033[0m"
+      read -r -n 1 -t 10 -s answer
+      echo
+      if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+        eval "${BASH_REMATCH[1]}"
+      fi
     fi
   fi
 }
