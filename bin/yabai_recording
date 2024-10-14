@@ -8,10 +8,11 @@ EXPECTED_SCREEN_WIDTH=3360
 EXPECTED_SCREEN_HEIGHT=1418
 
 REC_WIDTH=1920
-REC_HEIGHT=1080
+#REC_HEIGHT=1080
+REC_HEIGHT=1056
 
-REC_PADDING=10
-REC_MENUBAR=0
+REC_PADDING=48
+REC_MENUBAR=24
 
 # Get currently active display config
 YDISPLAY="$(yabai -m query --displays|jq 'map(select(.["has-focus"] == true))|.[0].index')"
