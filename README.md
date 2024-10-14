@@ -15,4 +15,8 @@ cd dotfiles
 stow .
 ```
 
-Needed dependencies can be installed using the `checkout_dependencies.sh`.
+Most of the needed dependencies can be installed using the `checkout_dependencies.sh`.
+
+[Scriptisto](https://github.com/igor-petruk/scriptisto) is needed for some
+of the scripts in this repository. Please install it in conjunction with
+[Rust](https://rustup.rs) if you want to use them.
