@@ -1,0 +1,4 @@
+#!/bin/sh
+
+defaults write com.apple.finder CreateDesktop false
+pkill Finder
