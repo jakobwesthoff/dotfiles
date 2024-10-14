@@ -1,5 +1,5 @@
 #!/usr/bin/env scriptisto
- 
+
 // scriptisto-begin
 // script_src: src/main.rs
 // build_cmd: cargo build --release && strip ./target/release/script
@@ -7,159 +7,151 @@
 // files:
 //  - path: Cargo.toml
 //    content: |
-//      package = { name = "script", version = "0.1.0", edition = "2018"}
-//      [dependencies]
-//      clap={version="4", features=["derive"]}
-//      anyhow="*"
-//      cmd_lib = "1.9.5"
+//     package = { name = "script", version = "0.1.0", edition = "2018"}
+//     [dependencies]
+//     clap={version="4", features=["derive"]}
+//     anyhow = "1"
+//     cmd_lib = "1.9"
 // scriptisto-end
-
 
 use anyhow::{Context, Result};
 use cmd_lib::*;
 use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Write};
+
 use clap::{Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "theme.rs",
-    about = "A quite specific and opionated dark/light theme changer utility"
+    name = "theme",
+    about = "A very specific and opnionated script to change between light and dark themes"
 )]
 struct Opt {
+    /// Example input
     #[command(subcommand)]
-    mode: Option<ThemeMode>,
+    mode: Option<Mode>,
 }
 
-#[derive(Debug, Clone, Copy, Subcommand)]
-enum ThemeMode {
-    Dark,
+#[derive(Clone, Copy, Debug, Subcommand)]
+enum Mode {
     Light,
+    Dark,
     Toggle,
 }
 
 trait ThemeChanger {
-    fn apply(&self, theme_mode: ThemeMode) -> Result<()>;
+    fn apply(&self, mode: Mode) -> Result<()>;
 }
 
-struct MarkerLineChanger {
-    filepaths: Vec<String>,
+struct Marker {
+    filepath: String,
 }
 
-impl MarkerLineChanger {
-    pub fn new(filepaths: Vec<String>) -> Self {
-        Self { filepaths }
+impl Marker {
+    pub fn new(filepath: String) -> Self {
+        Self { filepath }
     }
 }
 
-impl ThemeChanger for MarkerLineChanger {
-    fn apply(&self, theme_mode: ThemeMode) -> Result<()> {
+impl ThemeChanger for Marker {
+    fn apply(&self, mode: Mode) -> Result<()> {
         let marker = "AUTO CHANGE MARKER: LIGHT/DARK";
 
-        for filepath in self.filepaths.iter() {
-            let reader =
-                BufReader::new(File::open(filepath).context(format!("Open file {}", filepath))?);
+        // Open file
+        let reader = BufReader::new(
+            File::open(&self.filepath).context(format!("open {} for reading", self.filepath))?,
+        );
 
-            let mut lines = reader.lines();
-            let mut new_lines = vec![];
-            while let Some(Ok(line)) = lines.next() {
-                if line.contains(marker) {
-                    new_lines.push(line);
-                    if let Some(Ok(mut next_line)) = lines.next() {
-                        match theme_mode {
-                            ThemeMode::Dark => {
-                                if next_line.contains("light") {
-                                    next_line = next_line.replace("light", "dark");
-                                }
-                            }
-                            ThemeMode::Light => {
-                                if next_line.contains("dark") {
-                                    next_line = next_line.replace("dark", "light");
-                                }
-                            }
-                            ThemeMode::Toggle => {
-                                if next_line.contains("dark") {
-                                    next_line = next_line.replace("dark", "light");
-                                } else {
-                                    next_line = next_line.replace("light", "dark");
-                                }
+        let mut new_lines = vec![];
+
+        // Scan file line by line for marker
+        let mut lines = reader.lines();
+        while let Some(Ok(line)) = lines.next() {
+            if line.contains(marker) {
+                // Change lines AFTER marker
+                new_lines.push(line);
+                if let Some(Ok(theme_line)) = lines.next() {
+                    let new_line = match mode {
+                        Mode::Light => theme_line.replace("dark", "light"),
+                        Mode::Dark => theme_line.replace("light", "dark"),
+                        Mode::Toggle => {
+                            if theme_line.contains("dark") {
+                                theme_line.replace("dark", "light")
+                            } else {
+                                theme_line.replace("light", "dark")
                             }
                         }
-                        new_lines.push(next_line);
-                    }
-                } else {
-                    new_lines.push(line);
+                    };
+
+                    new_lines.push(new_line);
                 }
-            }
-
-            let mut writer = BufWriter::new(
-                File::create(filepath).context(format!("Open file for writing {}", filepath))?,
-            );
-
-            for line in new_lines {
-                writer.write_all(line.as_bytes()).context("Write line")?;
-                writer
-                    .write_all(b"\n")
-                    .context("Writing newline character")?;
+            } else {
+                new_lines.push(line);
             }
         }
+        // Write file with changed line(s)
+        let mut writer = BufWriter::new(
+            File::create(&self.filepath)
+                .context(format!("truncate {} for replacing", self.filepath))?,
+        );
+
+        for line in new_lines {
+            writer
+                .write_all(line.as_bytes())
+                .context("write line to replaced configuration")?;
+            writer.write_all(b"\n").context("write newline character")?;
+        }
+
         Ok(())
     }
 }
 
-struct TmuxThemeChanger {
+struct TMux {
     filepath: String,
-    marker_changer: MarkerLineChanger,
+    marker: Marker,
 }
 
-impl TmuxThemeChanger {
+impl TMux {
     pub fn new(filepath: String) -> Self {
         Self {
             filepath: filepath.clone(),
-            marker_changer: MarkerLineChanger::new(vec![filepath]),
+            marker: Marker::new(filepath),
         }
     }
 }
 
-impl ThemeChanger for TmuxThemeChanger {
-    fn apply(&self, theme_mode: ThemeMode) -> Result<()> {
-        self.marker_changer.apply(theme_mode)?;
+impl ThemeChanger for TMux {
+    fn apply(&self, mode: Mode) -> Result<()> {
+        self.marker.apply(mode)?;
         let filepath = &self.filepath;
         run_cmd!(
-            tmux source "$filepath"
+            tmux source "${filepath}"
         )
-        .context("Calling tmux to source new configuration")?;
+        .context("Reload tmux configuration")?;
         Ok(())
     }
 }
 
 fn main() -> Result<()> {
     let opt = Opt::parse();
+    let mode = opt.mode.unwrap_or(Mode::Toggle);
 
-    let mode = if opt.mode.is_some() {
-        opt.mode.unwrap()
-    } else {
-        // Allow for linking the executable to different names to set the theme_mode
-        match env::current_exe()?.file_name().unwrap().to_str().unwrap() {
-            "dark" => ThemeMode::Dark,
-            "light" => ThemeMode::Light,
-            _ => ThemeMode::Toggle,
-        }
-    };
-
-    let home = env::var("HOME").context("Read HOME environment variable")?;
-
+    let home = env::var("HOME").context("retrieve home directory using HOME env")?;
     let changers: Vec<Box<dyn ThemeChanger>> = vec![
-        Box::new(MarkerLineChanger::new(vec![
-            format!("{}/.config/alacritty/alacritty.toml", home),
-            format!("{}/.config/nvim/lua/config/options.lua", home),
-        ])),
-        Box::new(TmuxThemeChanger::new(format!("{}/.tmux.conf", home))),
+        Box::new(Marker::new(format!(
+            "{}/.config/alacritty/alacritty.toml",
+            home
+        ))),
+        Box::new(Marker::new(format!(
+            "{}/.config/nvim/lua/config/options.lua",
+            home
+        ))),
+        Box::new(TMux::new(format!("{}/.tmux.conf", home))),
     ];
 
     for changer in changers {
-        changer.apply(mode)?
+        changer.apply(mode)?;
     }
 
     Ok(())

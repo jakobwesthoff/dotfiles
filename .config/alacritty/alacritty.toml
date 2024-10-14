@@ -1,5 +1,6 @@
 # AUTO CHANGE MARKER: LIGHT/DARK
 import = ["~/.config/alacritty/themes/gruvbox_material_hard_dark.toml"]
+
 [font]
 size = 14
 #normal = { family = "MesloLGS NF", style = "Regular" }

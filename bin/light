@@ -1,1 +1,2 @@
-theme.rs
+#!/bin/sh
+theme.rs light
