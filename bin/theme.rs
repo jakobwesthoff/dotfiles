@@ -155,7 +155,9 @@ impl ThemeChanger for VSCode {
             File::open(&self.filepath).context(format!("open {} for reading", self.filepath))?,
         );
         let mut data = String::new();
-        reader.read_to_string(&mut data).context("read settings.json")?;
+        reader
+            .read_to_string(&mut data)
+            .context("read settings.json")?;
         let mut document: serde_json::Value =
             json5::from_str(&data).context("deserialize settings.json")?;
 
@@ -202,12 +204,12 @@ impl ThemeChanger for VSCode {
                         default_light_theme
                     }
                 } else {
-                    if let Some(preferred_light_theme) =
-                        document.get("workbench.preferredLightColorTheme")
+                    if let Some(preferred_dark_theme) =
+                        document.get("workbench.preferredDarkColorTheme")
                     {
-                        preferred_light_theme.as_str().unwrap()
+                        preferred_dark_theme.as_str().unwrap()
                     } else {
-                        default_light_theme
+                        default_dark_theme
                     }
                 }
             }
