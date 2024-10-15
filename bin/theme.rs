@@ -144,7 +144,7 @@ fn main() -> Result<()> {
             home
         ))),
         Box::new(Marker::new(format!(
-            "{}/.config/nvim/lua/config/options.lua",
+            "{}/.config/nvim/lua/plugins/colorscheme.lua",
             home
         ))),
         Box::new(TMux::new(format!("{}/.tmux.conf", home))),

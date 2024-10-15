@@ -29,6 +29,8 @@ return {
       vim.g.gruvbox_material_background = "hard"
       vim.g.gruvbox_material_enable_italic = true
       vim.cmd.colorscheme('gruvbox-material')
+      -- AUTO CHANGE MARKER: LIGHT/DARK
+      vim.opt.background = "dark"
     end
   }
 }
