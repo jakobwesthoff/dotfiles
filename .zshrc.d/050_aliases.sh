@@ -46,3 +46,8 @@ alias gap="git add -p"
 alias gdi="git diff"
 alias gs="git stash"
 alias gsp="git stash pop"
+
+# Theme changing shortcuts
+alias light="theme.rs light"
+alias dark="theme.rs dark"
+alias toggle="theme.rs toggle"
