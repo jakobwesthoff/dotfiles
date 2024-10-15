@@ -12,13 +12,15 @@
 //     clap={version="4", features=["derive"]}
 //     anyhow = "1"
 //     cmd_lib = "1.9"
+//     serde_json = "1"
+//     json5 = "0.4"
 // scriptisto-end
 
 use anyhow::{Context, Result};
 use cmd_lib::*;
 use std::env;
 use std::fs::File;
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 
 use clap::{Parser, Subcommand};
 
@@ -133,6 +135,97 @@ impl ThemeChanger for TMux {
     }
 }
 
+struct VSCode {
+    filepath: String,
+}
+
+impl VSCode {
+    pub fn new(filepath: String) -> Self {
+        Self { filepath }
+    }
+}
+
+impl ThemeChanger for VSCode {
+    fn apply(&self, mode: Mode) -> Result<()> {
+        let default_light_theme = "Default Light Modern";
+        let default_dark_theme = "Default Dark Modern";
+
+        // Open and deserialize settings.json
+        let mut reader = BufReader::new(
+            File::open(&self.filepath).context(format!("open {} for reading", self.filepath))?,
+        );
+        let mut data = String::new();
+        reader.read_to_string(&mut data).context("read settings.json")?;
+        let mut document: serde_json::Value =
+            json5::from_str(&data).context("deserialize settings.json")?;
+
+        let current_theme = document.get("workbench.colorTheme");
+
+        if current_theme.is_none() {
+            // We can't change the theme if it's not set. We don't want to
+            // destroy the config, therefore we skip this here.
+            return Ok(());
+        }
+
+        let new_theme = match mode {
+            Mode::Light => {
+                if let Some(preferred_light_theme) =
+                    document.get("workbench.preferredLightColorTheme")
+                {
+                    preferred_light_theme.as_str().unwrap()
+                } else {
+                    default_light_theme
+                }
+            }
+            Mode::Dark => {
+                if let Some(preferred_dark_theme) =
+                    document.get("workbench.preferredDarkColorTheme")
+                {
+                    preferred_dark_theme.as_str().unwrap()
+                } else {
+                    default_dark_theme
+                }
+            }
+            Mode::Toggle => {
+                if current_theme
+                    .unwrap()
+                    .as_str()
+                    .unwrap()
+                    .to_lowercase()
+                    .contains("dark")
+                {
+                    if let Some(preferred_light_theme) =
+                        document.get("workbench.preferredLightColorTheme")
+                    {
+                        preferred_light_theme.as_str().unwrap()
+                    } else {
+                        default_light_theme
+                    }
+                } else {
+                    if let Some(preferred_light_theme) =
+                        document.get("workbench.preferredLightColorTheme")
+                    {
+                        preferred_light_theme.as_str().unwrap()
+                    } else {
+                        default_light_theme
+                    }
+                }
+            }
+        };
+
+        document["workbench.colorTheme"] = serde_json::Value::String(new_theme.to_string());
+
+        // Write settings.json
+        let writer = BufWriter::new(
+            File::create(&self.filepath)
+                .context(format!("truncate {} for replacing", self.filepath))?,
+        );
+        serde_json::to_writer_pretty(writer, &document).context("serialize settings.json")?;
+
+        Ok(())
+    }
+}
+
 fn main() -> Result<()> {
     let opt = Opt::parse();
     let mode = opt.mode.unwrap_or(Mode::Toggle);
@@ -148,6 +241,10 @@ fn main() -> Result<()> {
             home
         ))),
         Box::new(TMux::new(format!("{}/.tmux.conf", home))),
+        Box::new(VSCode::new(format!(
+            "{}/Library/Application Support/Code/User/settings.json",
+            home
+        ))),
     ];
 
     for changer in changers {
