@@ -27,6 +27,16 @@ mkcd() {
     fi
     cd "${1}"
 }
+#
+# make a directory with prefixed date and cd to it
+mkcdd() {
+    local name
+    name="$(date "+%Y_%m_%d")_${1}"
+    if [ ! -d "${name}" ]; then
+        mkdir -p "${name}"
+    fi
+    cd "${name}"
+}
 
 # Define a more convinient way of extracting colums using awk
 # Usage column <colnumber> [<optional_column seperator>] < infile
