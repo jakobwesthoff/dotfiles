@@ -1,0 +1,16 @@
+[metadata]
+name = "Gruvbox Material Hard light"
+author = "sainnhe"
+origin_url = "https://github.com/sainnhe/gruvbox-material"
+
+[colors]
+foreground = "#654735"
+background = "#f9f5d7"
+cursor_bg = "#654735"
+cursor_border = "#654735"
+cursor_fg = "#f9f5d7"
+selection_bg = "#654735"
+selection_fg = "#f2e5bc"
+
+ansi = ["#f9f5d7", "#c14a4a", "#6c782e", "#b47109", "#45707a", "#945e80", "#4c7a5d", "#654735"]
+brights = ["#a89984", "#c14a4a", "#6c782e", "#b47109", "#45707a", "#945e80", "#4c7a5d", "#654735"]

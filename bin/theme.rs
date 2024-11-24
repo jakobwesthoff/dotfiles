@@ -239,6 +239,10 @@ fn main() -> Result<()> {
             home
         ))),
         Box::new(Marker::new(format!(
+            "{}/.config/wezterm/wezterm.lua",
+            home
+        ))),
+        Box::new(Marker::new(format!(
             "{}/.config/nvim/lua/plugins/colorscheme.lua",
             home
         ))),
