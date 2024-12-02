@@ -81,6 +81,15 @@ config.keys = {
   }
 }
 
+-- Left and right alt should behave the same
+config.send_composed_key_when_left_alt_is_pressed = true
+config.send_composed_key_when_right_alt_is_pressed = true
+
+-- Use Alt-N as tilde without being a deadkey
+config.keys = {
+  { key='n', mods='OPT', action=wezterm.action.SendString("~") },
+}
+
 -- Scrolling deactivated, as we are using tmux for that.
 config.scrollback_lines = 0
 
