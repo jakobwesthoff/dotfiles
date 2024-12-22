@@ -55,6 +55,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
           elseif #items == 1 then
             vim.lsp.buf[method:match("textDocument/(.+)")](params)
           else
+            print(vim.inspect(items))
             require("fzf-lua")[fzf_command]()
           end
         end)
@@ -77,16 +78,15 @@ vim.api.nvim_create_autocmd("LspAttach", {
     vim.keymap.set(
       "n",
       "gI",
-      create_smart_goto("textDocument/implementation", "lsp_implementations"),
-      { desc = "[G]oto [I]mplementations" }
+      create_smart_goto("textDocument/declaration", "lsp_declarations"),
+      { desc = "[G]oto [D]mplementations" }
     )
-
-    -- Find references for the word under your cursor.
-    vim.keymap.set("n", "gr", require("fzf-lua").lsp_references, { desc = "[G]oto [R]eferences" })
-
-    -- Jump to the implementation of the word under your cursor.
-    --  Useful when your language has ways of declaring types without an actual implementation.
-    vim.keymap.set("n", "gI", require("fzf-lua").lsp_implementations, { desc = "[G]oto [I]mplementation" })
+    vim.keymap.set(
+      "n",
+      "gI",
+      create_smart_goto("textDocument/declaration", "lsp_declarations"),
+      { desc = "[G]oto [D]eclarations" }
+    )
 
     -- Jump to the type of the word under your cursor.
     --  Useful when you're not sure what type a variable is and you want to see
@@ -108,10 +108,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
     -- Execute a code action, usually your cursor needs to be on top of an error
     -- or a suggestion from your LSP for this to activate.
     vim.keymap.set({ "n", "x" }, "<leader>ca", vim.lsp.buf.code_action, { desc = "[C]ode [A]ction" })
-
-    -- WARN: This is not Goto Definition, this is Goto Declaration.
-    --  For example, in C this would take you to the header.
-    vim.keymap.set("n", "gD", vim.lsp.buf.declaration, { desc = "[G]oto [D]eclaration" })
   end,
 })
 
