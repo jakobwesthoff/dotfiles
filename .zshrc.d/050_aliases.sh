@@ -51,3 +51,6 @@ alias gsp="git stash pop"
 alias light="theme.rs light"
 alias dark="theme.rs dark"
 alias toggle="theme.rs toggle"
+
+# Allow to "Yoink" something directly from my commandline
+alias yoink="open -a Yoink"
