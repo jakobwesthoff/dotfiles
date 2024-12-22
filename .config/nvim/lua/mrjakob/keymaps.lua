@@ -78,8 +78,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
     vim.keymap.set(
       "n",
       "gI",
-      create_smart_goto("textDocument/declaration", "lsp_declarations"),
-      { desc = "[G]oto [D]mplementations" }
+      create_smart_goto("textDocument/implementations", "lsp_implementations"),
+      { desc = "[G]oto [I]mplementations" }
     )
     vim.keymap.set(
       "n",
