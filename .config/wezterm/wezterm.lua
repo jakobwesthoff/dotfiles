@@ -73,12 +73,6 @@ config.keys = {
 		mods = "CMD",
 		action = wezterm.action.SendString("\x15"),
 	},
-	-- Alt + Backspace: Delete a word
-	{
-		key = "Backspace",
-		mods = "OPT",
-		action = wezterm.action.SendString("\x1b\x7f"),
-	},
 	-- Use Alt-N as tilde without being a deadkey
 	{
 		key = "n",
