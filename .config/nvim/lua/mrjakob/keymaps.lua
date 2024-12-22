@@ -38,54 +38,102 @@ vim.api.nvim_create_autocmd("LspAttach", {
     --  This is where a variable was first declared, or where a function is defined, etc.
     --  To jump back, press <C-t>.
 
-    -- Function to create the smart LSP goto behavior which directly moves if
-    -- only one "target" exists
-    local function create_smart_goto(method, fzf_command)
-      return function()
-        local params = vim.lsp.util.make_position_params()
-        vim.lsp.buf_request(0, method, params, function(_, result)
-          -- Handle both direct results and results wrapped in a table
-          local items = result
-          if type(result) == "table" and result.result then
-            items = result.result
-          end
+    --
+    -- All of the follwoing gX keybindings are a little more
+    -- involved, as we are checking first if there is only one
+    -- match. If there is we directly go there. Otherwise we open
+    -- fzf-lua for the results.
+    --
 
-          if not items or vim.tbl_isempty(items) then
-            vim.notify("No " .. method:match("textDocument/(.+)") .. " found", vim.log.levels.ERROR)
-          elseif #items == 1 then
-            vim.lsp.buf[method:match("textDocument/(.+)")](params)
-          else
-            require("fzf-lua")[fzf_command]()
-          end
-        end)
+    -- [G]oto [D]efinition(s)
+    vim.keymap.set("n", "gd", function()
+      local params = vim.lsp.util.make_position_params()
+      vim.lsp.buf_request(0, "textDocument/definition", params, function(_, result)
+        local items = result
+        if type(result) == "table" and result.result then
+          items = result.result
+        end
+
+        if not items or vim.tbl_isempty(items) then
+          vim.notify("No definition found", vim.log.levels.ERROR)
+        elseif #items == 1 then
+          vim.lsp.buf.definition(params)
+        else
+          require("fzf-lua").lsp_definitions()
+        end
+      end)
+    end, { desc = "[G]oto [D]efinition(s)" })
+
+    -- [G]oto [R]eference(s)
+    vim.keymap.set("n", "gr", function()
+      local params = vim.lsp.util.make_position_params()
+      params.context = { includeDeclaration = true }
+      vim.lsp.buf_request(0, "textDocument/references", params, function(_, result)
+        local items = result
+        if type(result) == "table" and result.result then
+          items = result.result
+        end
+
+        if not items or vim.tbl_isempty(items) then
+          vim.notify("No references found", vim.log.levels.ERROR)
+        else
+          require("fzf-lua").lsp_references()
+        end
+      end)
+    end, { desc = "[G]oto [R]eference(s)" })
+
+    -- [G]oto [I]mplementation(s)
+    vim.keymap.set("n", "gI", function()
+      local params = vim.lsp.util.make_position_params()
+      vim.lsp.buf_request(0, "textDocument/implementation", params, function(_, result)
+        local items = result
+        if type(result) == "table" and result.result then
+          items = result.result
+        end
+
+        if not items or vim.tbl_isempty(items) then
+          vim.notify("No implementation found", vim.log.levels.ERROR)
+        elseif #items == 1 then
+          vim.lsp.buf.implementation(params)
+        else
+          require("fzf-lua").lsp_implementations()
+        end
+      end)
+    end, { desc = "[G]oto [I]mplementation(s)" })
+
+    -- [G]oto [D]eclaration
+    vim.keymap.set("n", "gD", function()
+      -- Check if declaration is supported
+      local clients = vim.lsp.get_active_clients({ bufnr = 0 })
+      local has_support = false
+      for _, client in ipairs(clients) do
+        if client.supports_method("textDocument/declaration") then
+          has_support = true
+          break
+        end
       end
-    end
 
-    -- Set up the keymaps
-    vim.keymap.set(
-      "n",
-      "gd",
-      create_smart_goto("textDocument/definition", "lsp_definitions"),
-      { desc = "[G]oto [D]efinition" }
-    )
-    vim.keymap.set(
-      "n",
-      "gr",
-      create_smart_goto("textDocument/reference", "lsp_references"),
-      { desc = "[G]oto [R]references" }
-    )
-    vim.keymap.set(
-      "n",
-      "gI",
-      create_smart_goto("textDocument/implementation", "lsp_implementations"),
-      { desc = "[G]oto [I]mplementations" }
-    )
-    vim.keymap.set(
-      "n",
-      "gD",
-      create_smart_goto("textDocument/declaration", "lsp_declarations"),
-      { desc = "[G]oto [D]eclarations" }
-    )
+      if not has_support then
+        vim.notify("LSP method textDocument/declaration not supported", vim.log.levels.ERROR)
+        return
+      end
+
+      local params = vim.lsp.util.make_position_params()
+      vim.lsp.buf_request(0, "textDocument/declaration", params, function(_, result)
+        local items = result
+        if type(result) == "table" and result.result then
+          items = result.result
+        end
+
+        if not items or vim.tbl_isempty(items) then
+          vim.notify("No declaration found", vim.log.levels.ERROR)
+        elseif #items == 1 then
+          vim.lsp.buf.declaration(params)
+        else
+          require("fzf-lua").lsp_declarations()
+        end
+      end)
+    end, { desc = "[G]oto [D]eclaration" })
 
     -- Jump to the type of the word under your cursor.
     --  Useful when you're not sure what type a variable is and you want to see
