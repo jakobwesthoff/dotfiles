@@ -55,7 +55,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
           elseif #items == 1 then
             vim.lsp.buf[method:match("textDocument/(.+)")](params)
           else
-            print(vim.inspect(items))
             require("fzf-lua")[fzf_command]()
           end
         end)
@@ -72,13 +71,13 @@ vim.api.nvim_create_autocmd("LspAttach", {
     vim.keymap.set(
       "n",
       "gr",
-      create_smart_goto("textDocument/references", "lsp_references"),
+      create_smart_goto("textDocument/reference", "lsp_references"),
       { desc = "[G]oto [R]references" }
     )
     vim.keymap.set(
       "n",
       "gI",
-      create_smart_goto("textDocument/implementations", "lsp_implementations"),
+      create_smart_goto("textDocument/implementation", "lsp_implementations"),
       { desc = "[G]oto [I]mplementations" }
     )
     vim.keymap.set(
