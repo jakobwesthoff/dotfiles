@@ -3,10 +3,15 @@ return {
   -- use a release tag to download pre-built binaries
   version = "v0.7.6",
 
+  dependencies = {
+    "giuxtaposition/blink-cmp-copilot",
+  },
+
   ---@module 'blink.cmp'
   ---@type blink.cmp.Config
   opts = {
-    impersonate_nvim_cmp = true,
+    impersonate_nvim_cmp = false,
+
     keymap = {
       preset = "default",
       -- Map C-Z in conjunction with C-Y for completion, as we are on a QWRTZ
@@ -46,8 +51,22 @@ return {
         },
       },
     },
+
     sources = {
-      default = { "lsp", "path", "snippets", "buffer" },
+      completion = {
+        enabled_providers = { "copilot", "lsp", "path", "snippets", "buffer" },
+      },
+      providers = {
+        copilot = {
+          enabled = function()
+            return vim.g.copilot_completion_enabled
+          end,
+          name = "copilot",
+          module = "blink-cmp-copilot",
+          score_offset = 100,
+          should_show_items = true,
+        },
+      },
     },
   },
 
