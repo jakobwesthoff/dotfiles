@@ -10,8 +10,6 @@ return {
   ---@module 'blink.cmp'
   ---@type blink.cmp.Config
   opts = {
-    impersonate_nvim_cmp = false,
-
     keymap = {
       preset = "default",
       -- Map C-Z in conjunction with C-Y for completion, as we are on a QWRTZ
@@ -31,10 +29,10 @@ return {
       ghost_text = {
         enabled = true,
       },
-      trigger = {
-        -- Disable if preset super-tab is used
-        show_in_snippet = true,
-      },
+      -- trigger = {
+      --   -- Disable if preset super-tab is used
+      --   show_in_snippet = true,
+      -- },
 
       documentation = {
         auto_show = true,
@@ -51,6 +49,8 @@ return {
         },
       },
     },
+
+    signature = { enabled = true },
 
     sources = {
       completion = {
