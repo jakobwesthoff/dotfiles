@@ -190,3 +190,15 @@ push_nexus() {
     docker image tag registry.gitlab.com/ekkogmbh/artifacts/${image}:${tag} lpitdnexus01.bmwgroup.net:16052/epaper/${image}:${tag}  && \
     docker push lpitdnexus01.bmwgroup.net:16052/epaper/${image}:${tag}
 }
+
+# Allow to "Yoink" something directly from my commandline either by specifying it or using fzf in the current directory
+yoink() {
+    if [ "$#" -gt 0 ]; then
+        open -a Yoink "$@"
+    else
+        local result="$(fzf)"
+        if [ -n "${result}" ]; then
+            open -a Yoink "${result}"
+        fi
+    fi
+}
