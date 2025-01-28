@@ -140,14 +140,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
     --  the definition of its *type*, not where it was *defined*.
     vim.keymap.set("n", "<leader>D", require("fzf-lua").lsp_typedefs, { desc = "Type [D]efinition" })
 
-    -- Fuzzy find all the symbols in your current document.
-    --  Symbols are things like variables, functions, types, etc.
-    vim.keymap.set("n", "<leader>ds", require("fzf-lua").lsp_document_symbols, { desc = "[D]ocument [S]ymbols" })
-
-    -- Fuzzy find all the symbols in your current workspace.
-    --  Similar to document symbols, except searches over your entire project.
-    vim.keymap.set("n", "<leader>ws", require("fzf-lua").lsp_workspace_symbols, { desc = "[W]orkspace [S]ymbols" })
-
     -- Rename the variable under your cursor.
     --  Most Language Servers support renaming across files, etc.
     vim.keymap.set("n", "<leader>cr", vim.lsp.buf.rename, { desc = "[R]ename" })
@@ -174,6 +166,9 @@ vim.keymap.set("n", "<leader>fr", fzf.resume, { desc = "[F]ind [R]esume" })
 vim.keymap.set("n", "<leader>fo", fzf.oldfiles, { desc = "[F]ind [O]ld Files" })
 vim.keymap.set("n", "<leader><leader>", fzf.buffers, { desc = "[,] Find existing buffers" })
 vim.keymap.set("n", "<leader>/", fzf.lgrep_curbuf, { desc = "[/] Live grep the current buffer" })
+vim.keymap.set("n", "<leader>fs", require("fzf-lua").lsp_workspace_symbols, { desc = "[F]ind Workspace [S]ymbols" })
+-- This one I usually use more seldom, than the workspace one, therefore it is mapped to shift-s
+vim.keymap.set("n", "<leader>fS", require("fzf-lua").lsp_document_symbols, { desc = "[F]ind Document [S]ymbols" })
 -- Search in neovim config
 vim.keymap.set("n", "<leader>fc", function()
   fzf.files({ cwd = vim.fn.stdpath("config") })
