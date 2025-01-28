@@ -163,6 +163,12 @@ return {
         ts_ls = {},
         -- TOML
         taplo = {},
+        -- PHP
+        -- intelephense = {},
+        phpactor = {},
+        -- Bash/Shell
+        shellcheck = {},
+        bashls = {},
 
         -- Rust
         -- Handled by rustacean.vim
