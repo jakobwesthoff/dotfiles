@@ -173,6 +173,17 @@ vim.keymap.set("n", "<leader>fS", require("fzf-lua").lsp_document_symbols, { des
 vim.keymap.set("n", "<leader>fc", function()
   fzf.files({ cwd = vim.fn.stdpath("config") })
 end, { desc = "[F]ind Neovim [C]onfig files" })
+-- Search in TODOs, FIXMEs, HACKs, via todo-comments.nvim
+vim.keymap.set("n", "<leader>ft", function()
+  require("todo-comments.fzf").todo()
+end, { desc = "[F]ind [T]odos, Fixmes, Hacks, ..." })
+-- Navigate between TODOs and such
+vim.keymap.set("n", "]t", function()
+  require("todo-comments").jump_next()
+end, { desc = "Next todo comment" })
+vim.keymap.set("n", "[t", function()
+  require("todo-comments").jump_prev()
+end, { desc = "Previous todo comment" })
 
 -- Toggle undotree
 -- FIXME: Maybe there is a faster more current way of showing this undo history?
