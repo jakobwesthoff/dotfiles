@@ -169,6 +169,9 @@ return {
         -- Bash/Shell
         shellcheck = {},
         bashls = {},
+        -- Docker
+        dockerls = {},
+        docker_compose_language_service = {},
 
         -- Rust
         -- Handled by rustacean.vim
