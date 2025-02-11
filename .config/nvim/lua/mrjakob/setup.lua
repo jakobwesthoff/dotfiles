@@ -1,5 +1,5 @@
 -- Map the leader key as it is needed by lazy
-vim.g.mapleader = ','
+vim.g.mapleader = ","
 
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
@@ -27,6 +27,6 @@ require("lazy").setup({
 })
 
 -- Loading additional configs
-require('mrjakob.options')
+require("mrjakob.options")
 require("mrjakob.keymaps")
 require("mrjakob.lastpos")
