@@ -172,6 +172,25 @@ return {
         -- Docker
         dockerls = {},
         docker_compose_language_service = {},
+        -- Helm
+        helm_ls = {},
+        yamlls = {
+          -- FIXME: yamlls produces a lot of false positives for helm files
+          -- due to template syntax at the moment. It is loaded nevertheless.
+          -- Therefore we need to ensure it is not attached for those files
+          filetypes = { "yaml" },
+          on_attach = function(client, bufnr)
+            local patterns = { "*/templates/*.yaml", "*/templates/*.tpl", "values.yaml", "Chart.yaml" }
+            local fname = vim.fn.expand("%:p")
+            for _, pattern in ipairs(patterns) do
+              local lua_pattern = pattern:gsub("*", ".*"):gsub("/", "/.*")
+              if fname:match(lua_pattern) then
+                vim.lsp.buf_detach_client(bufnr, client.id)
+                return
+              end
+            end
+          end,
+        },
 
         -- Rust
         -- Handled by rustacean.vim
