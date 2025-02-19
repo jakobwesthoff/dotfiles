@@ -172,5 +172,6 @@ shift + lctrl + alt - k : yabai -m window --insert north
 shift + lctrl + alt - l : yabai -m window --insert east
 
 # Change spaces
+# Does work faster (without animation) and without the "backflip" due to disabled desktop. (Requires scripting additions though)
 lctrl - right : yabai -m space --focus next
 lctrl - left  : yabai -m space --focus prev
