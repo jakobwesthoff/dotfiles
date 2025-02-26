@@ -28,12 +28,16 @@ REC_VERTICAL_HEIGHT=1920
 
 # shellcheck disable=SC2034
 REC_HORIZONTAL_PADDING_LEFT=48
+# REC_HORIZONTAL_PADDING_LEFT=0
 # shellcheck disable=SC2034
 REC_HORIZONTAL_PADDING_TOP=48
+# REC_HORIZONTAL_PADDING_TOP=0
 # shellcheck disable=SC2034
 REC_HORIZONTAL_PADDING_RIGHT=48
+# REC_HORIZONTAL_PADDING_RIGHT=0
 # shellcheck disable=SC2034
 REC_HORIZONTAL_PADDING_BOTTOM=48
+# REC_HORIZONTAL_PADDING_BOTTOM=0
 
 # shellcheck disable=SC2034
 REC_VERTICAL_PADDING_LEFT=48
@@ -94,9 +98,14 @@ echo "Adjusting padding (on DISPLAY $YDISPLAY SPACE $YSPACE) for recording of ${
 LEFT_PADDING="$((YWIDTH - REC_WIDTH + REC_PADDING_LEFT))"
 TOP_PADDING="${REC_PADDING_TOP}"
 RIGHT_PADDING="${REC_PADDING_RIGHT}"
-BOTTOM_PADDING="$((YHEIGHT - REC_HEIGHT + REC_PADDING_BOTTOM))"
+BOTTOM_PADDING="$((YHEIGHT - REC_HEIGHT + REC_PADDING_BOTTOM - REC_MENUBAR))"
 
 yabai -m config --space "$YSPACE" top_padding "$TOP_PADDING"
 yabai -m config --space "$YSPACE" right_padding "$RIGHT_PADDING"
 yabai -m config --space "$YSPACE" bottom_padding "$BOTTOM_PADDING"
 yabai -m config --space "$YSPACE" left_padding "$LEFT_PADDING"
+
+# echo yabai -m config --space "$YSPACE" top_padding "$TOP_PADDING"
+# echo yabai -m config --space "$YSPACE" right_padding "$RIGHT_PADDING"
+# echo yabai -m config --space "$YSPACE" bottom_padding "$BOTTOM_PADDING"
+# echo yabai -m config --space "$YSPACE" left_padding "$LEFT_PADDING"
