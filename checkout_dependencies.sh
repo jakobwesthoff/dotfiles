@@ -24,13 +24,4 @@ echo
 echo "Installing zgen"
 checkout_or_update https://github.com/tarjoilija/zgen.git .zgen
 
-echo
-echo "Installing solarized dircolors"
-checkout_or_update https://github.com/seebi/dircolors-solarized.git .dircolors-solarized
-[ ! -f "${HOME}/.dircolors" ] && ln -s "${HOME}/.dircolors-solarized/dircolors.ansi-light" "${HOME}/.dircolors"
-
-echo
-echo "Installing nvm"
-checkout_or_update https://github.com/nvm-sh/nvm.git .nvm
-
 popd &>/dev/null

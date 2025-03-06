@@ -1,3 +1,4 @@
+export NVM_DIR="/opt/homebrew/opt/nvm"
 # Lazy load nvm
 _nvm_lazy_load_unset() {
     unset -f nvm
@@ -8,28 +9,24 @@ _nvm_lazy_load_unset() {
 
 nvm() {
     _nvm_lazy_load_unset
-    export NVM_DIR="${HOME}/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
     nvm "$@"
 }
  
 node() {
     _nvm_lazy_load_unset
-    export NVM_DIR="${HOME}/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
     node "$@"
 }
  
 npm() {
     _nvm_lazy_load_unset
-    export NVM_DIR="${HOME}/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
     npm "$@"
 }
 
 npx() {
     _nvm_lazy_load_unset
-    export NVM_DIR="${HOME}/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
     npx "$@"
 }
