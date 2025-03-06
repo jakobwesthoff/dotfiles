@@ -14,6 +14,7 @@ end, { desc = "Toggle [D]iagnostics" })
 
 -- Delete words with CTRL-Backspace/Alt-Backspace in insert mode
 vim.keymap.set("i", "<C-BS>", "<C-w>", { noremap = true, silent = true })
+vim.keymap.set("x", "<C-BS>", "<C-w>", { noremap = true, silent = true })
 vim.keymap.set("i", "<M-BS>", "<C-w>", { noremap = true, silent = true })
 
 -- Jump to windows based on their window number using <Leader>number
