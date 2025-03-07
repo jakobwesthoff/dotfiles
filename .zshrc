@@ -13,22 +13,30 @@ if [ -n "${ENABLE_TMUX_STARTUP}" ] && [ -z "${MUX}" ]; then
     fi
   done
 
+  tmux_candidates=("/opt/homebrew/bin" "/usr/local/bin/" "/bin" "/usr/bin")
+  tmux_bin=""
+  for candidate in "${tmux_candidates[@]}"; do
+    if [ -f "${candidate}/tmux" ]; then
+      tmux_bin="${candidate}/tmux"
+    fi
+  done
+
   fzf_options=("--no-sort" "--layout=reverse-list" "--border=sharp" "--color=light")
   initial_tmux_session="main"
   
   if [ -z "$fzf_bin" ]; then
-    tmux new-session
+    "${tmux_bin}" new-session
   else 
     unset ENABLE_TMUX_STARTUP
     local no_session=""
-    if ! tmux list-sessions &>/dev/null; then
+    if ! "${tmux_bin}" list-sessions &>/dev/null; then
       no_session="true"
     fi
 
     # Active sessions available allow selection
     local sessions=""
     if [ -z "${no_session}" ]; then
-      sessions="$(tmux list-sessions)"
+      sessions="$("${tmux_bin}" list-sessions)"
     fi
 
 
@@ -42,16 +50,16 @@ if [ -n "${ENABLE_TMUX_STARTUP}" ] && [ -z "${MUX}" ]; then
       exit
     elif [ "${selected_session}" = "NEW SESSION" ]; then
       if [ -n "${no_session}" ]; then
-        tmux new-session -s "${initial_tmux_session}"
+        "${tmux_bin}" new-session -s "${initial_tmux_session}"
       else
-        tmux new-session
+        "${tmux_bin}" new-session
       fi
     elif [ "${selected_session}" = "NO TMUX" ]; then
       export ENABLE_TMUX_STARTUP=""
       zsh
     else
       session_id="$(echo "$selected_session" | sed -e 's@^\([^:]*\):.*$@\1@g')"
-      tmux attach-session -t "${session_id}"
+      "${tmux_bin}" attach-session -t "${session_id}"
     fi
   fi
   exit
