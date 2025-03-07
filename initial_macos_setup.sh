@@ -5,7 +5,7 @@ set -ueo pipefail
 echo "---------------------------------------------------------------------"
 echo "This is a QUITE SPECIFIC and OPINIONATED base setup for macOS by "
 echo "Jakob Westhoff. It most likely will NOT WORK for you right out of "
-ecoh "the box!"
+echo "the box!"
 echo "---------------------------------------------------------------------"
 echo
 echo "PRESS ENTER TO CONTINUE"
@@ -27,44 +27,32 @@ read -r
 ssh-add -K
 
 # Install homebrew
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-eval "$(/opt/homebrew/bin/brew shellenv)"
+if ! which brew; then
+	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+	eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
 
 cd "$HOME"
 
 # Create folders
-mkdir -p "$HOME/Development/github/jakobwesthoff"
+if [ ! -d "$HOME/Development/github/jakobwesthoff" ]; then
+	mkdir -p "$HOME/Development/github/jakobwesthoff"
+fi
 
 # Install base prerequisites
-brew install gnu-sed
-brew install coreutils
 brew install git
-brew install python
-brew install zsh
-brew install wget
-brew install fasd
-brew install stow
-brew install fastfetch
-brew install alacritty
-brew install neovim
-
-brew tap homebrew/cask-fonts
-brew info font-fira-code-nerd-font
-brew info font-fira-code
-brew install font-jetbrains-mono
-
-brew tap FelixKratz/formulae
-brew install borders
-brew tap koekeishiya/formulae
-brew install skhd
-brew install yabai
 
 # Checkout and install dotfiles
-git clone git@github.com:jakobwesthoff/dotfiles.git dotfiles
-pushd "$HOME/dotfiles"
-./checkout_dependencies.sh
-stow .
-popd
+if [ ! -d "$HOME/dotfiles" ]; then
+	git clone git@github.com:jakobwesthoff/dotfiles.git dotfiles
+	pushd "$HOME/dotfiles"
+	./checkout_dependencies.sh
+	stow .
+	popd
+fi
+
+
+brew bundle install
 
 # Set sensible keyboard repeat values
 # normal minimum is 15 (225 ms)
@@ -72,92 +60,6 @@ defaults write -g InitialKeyRepeat -int 12
 # normal minimum is 2 (30 ms)
 defaults write -g KeyRepeat -int 2
 # Needs relogin to take effect.
-
-brew install 1password
-brew install bartender
-brew install alfred
-brew install appcleaner
-brew install arc
-
-brew install mas
-
-while ! mas account &>/dev/null; do
-    echo "Please login to the appstore and press ENTER when ready"
-    read -r
-done
-
-# yoink
-mas install 457622435
-
-brew install karabiner-elements
-echo "Configure karabiner-elements to your likings"
-echo
-echo "You will most likely want to map Ctrl -> Capslock"
-echo "and install the following 'complex modifications':"
-echo "- PC-Style Home/End"
-echo
-echo "PRESS ENTER TO WHEN DONE"
-read -r
-
-brew install visual-studio-code
-echo "Run Visual Studio and enable Settings Sync"
-echo
-echo "PRESS ENTER WHEN DONE"
-read -r
-
-brew install rocket
-echo "Launch and configure Rocket"
-echo
-echo "PRESS ENTER WHEN DONE"
-read -r
-
-brew install mtr
-brew install ripgrep
-
-# brew install hammerspoon
-# TODO Checkout and install hammerspoon configuration
-
-# CopyQueue
-mas install 711074010
-
-# WebCam Settings
-mas install 533696630
-
-# Affinity Photo/Designer
-mas install 824183456
-mas install 824171161
-
-# Bear
-mas install 1091189122
-
-# Gif Brewery 3
-# mas install 1081413713
-
-# Shush
-mas install 496437906
-
-# droplr
-mas install 498672703
-
-# Airmail 5
-mas install 918858936
-
-# Amphetamine
-mas install 937984704
-
-# Fantastical
-mas install 975937182
-
-# Kaleidoscope
-mas install 587512244
-brew install ksdiff
-
-# The Unarchiver
-mas install 425424353
-
-# Daisy Disk
-mas install 411643860
-
 
 # Unlock with Apple Watch
 echo "Enable Unlock with Apple Watch:"
@@ -180,13 +82,6 @@ read -r
 # echo "PRESS ENTER TO WHEN DONE"
 # read -r
 
-echo "Starting yabai"
-skhd --install-service
-skhd --start-service
-yabai --install-service
-yabai --start-service
-
-
 ## Further setup borrowed from ~/.macos — https://mths.be/macos
 
 # Close any open System Preferences panes, to prevent them from overriding
@@ -197,7 +92,7 @@ osascript -e 'tell application "System Preferences" to quit'
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
 # Disable the sound effects on boot
-sudo nvram SystemAudioVolume=" "
+#sudo nvram SystemAudioVolume=" "
 
 # Expand save panel by default
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
@@ -287,7 +182,7 @@ defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 defaults write com.apple.finder WarnOnEmptyTrash -bool false
 
 # Show the ~/Library folder
-chflags nohidden ~/Library && xattr -d com.apple.FinderInfo ~/Library
+# chflags nohidden ~/Library && xattr -d com.apple.FinderInfo ~/Library
 
 # Show the /Volumes folder
 sudo chflags nohidden /Volumes
@@ -325,13 +220,13 @@ defaults write com.apple.dock show-recents -bool false
 # Disable Spotlight indexing for any volume that gets mounted and has not yet
 # been indexed before.
 # Use `sudo mdutil -i off "/Volumes/foo"` to stop indexing any volume.
-sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Volumes"
+#sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Volumes"
 
 # Prevent Time Machine from prompting to use new hard drives as backup volume
 defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 
 # Disable local Time Machine backups
-hash tmutil &> /dev/null && sudo tmutil disablelocal
+# hash tmutil &> /dev/null && sudo tmutil disablelocal
 
 # Show the main window when launching Activity Monitor
 defaults write com.apple.ActivityMonitor OpenMainWindow -bool true
@@ -376,7 +271,7 @@ for app in "Activity Monitor" \
 	"Tweetbot" \
 	"Twitter" \
 	"iCal"; do
-	killall "${app}" &> /dev/null
+	pkill "${app}" &> /dev/null
 done
 
 
