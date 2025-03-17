@@ -253,5 +253,16 @@ kw(){
 
 alias kwp="kw get pods"
 
+# Select a KUVECONFIG yaml with fzf
+kcfg() {
+    local selected_config
+    selected_config="$(find $HOME/.kube -type f -name "*.yaml" -o -name "*.yml" | fzf --preview 'yq ".contexts[].context.cluster" {}' --preview-window up)"
+    
+    if [ -n "$selected_config" ]; then
+        export KUBECONFIG=$selected_config
+    fi
+}
+
+
 # INCLUDE GUARD END
 fi
