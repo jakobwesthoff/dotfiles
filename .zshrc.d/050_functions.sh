@@ -244,6 +244,7 @@ gitclone() {
     elif [[ "${repo}" =~ ^git@.+:(.+)/(.+)\.git$ ]]; then
         org="${match[1]}"
         name="${match[2]}"
+        ssh="true"
     elif [[ "${repo}" =~ ^([^/]+)/([^/]+)$ ]]; then
         org="${match[1]}"
         name="${match[2]}"
