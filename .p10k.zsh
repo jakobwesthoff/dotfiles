@@ -43,7 +43,7 @@
   typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
     status                  # exit code of the last command
     command_execution_time  # duration of the last command
-    vcs                     # git status
+    vcs
     background_jobs         # presence of background jobs
     direnv                  # direnv status (https://direnv.net/)
     asdf                    # asdf version manager (https://github.com/asdf-vm/asdf)
@@ -68,6 +68,7 @@
     luaenv                  # lua version from luaenv (https://github.com/cehoffman/luaenv)
     jenv                    # java version from jenv (https://github.com/jenv/jenv)
     plenv                   # perl version from plenv (https://github.com/tokuhirom/plenv)
+    perlbrew                # perl version from perlbrew (https://github.com/gugod/App-perlbrew)
     phpenv                  # php version from phpenv (https://github.com/phpenv/phpenv)
     scalaenv                # scala version from scalaenv (https://github.com/scalaenv/scalaenv)
     haskell_stack           # haskell version from stack (https://haskellstack.org/)
@@ -83,11 +84,14 @@
     context                 # user@hostname
     nordvpn                 # nordvpn connection status, linux only (https://nordvpn.com/)
     ranger                  # ranger shell (https://github.com/ranger/ranger)
+    yazi                    # yazi shell (https://github.com/sxyazi/yazi)
     nnn                     # nnn shell (https://github.com/jarun/nnn)
+    lf                      # lf shell (https://github.com/gokcehan/lf)
     xplr                    # xplr shell (https://github.com/sayanarijit/xplr)
     vim_shell               # vim shell indicator (:sh)
     midnight_commander      # midnight commander shell (https://midnight-commander.org/)
     nix_shell               # nix shell (https://nixos.org/nixos/nix-pills/developing-with-nix-shell.html)
+    chezmoi_shell           # chezmoi shell (https://www.chezmoi.io/)
     vi_mode                 # vi mode (you don't need this if you've enabled prompt_char)
     # vpn_ip                # virtual private network indicator
     # load                  # CPU load
@@ -97,7 +101,9 @@
     todo                    # todo items (https://github.com/todotxt/todo.txt-cli)
     timewarrior             # timewarrior tracking status (https://timewarrior.net/)
     taskwarrior             # taskwarrior task count (https://taskwarrior.org/)
-    # time                  # current time
+    per_directory_history   # Oh My Zsh per-directory-history local/global indicator
+    # cpu_arch              # CPU architecture
+    # time                    # current time
     # ip                    # ip address and bandwidth usage for a specified network interface
     # public_ip             # public IP address
     # proxy                 # system-wide http/https/ftp proxy
@@ -606,7 +612,7 @@
   #
   # Note: If this parameter is set to true, it won't hide tools.
   # Tip: Override this parameter for ${TOOL} with POWERLEVEL9K_ASDF_${TOOL}_SHOW_SYSTEM.
-  typeset -g POWERLEVEL9K_ASDF_SHOW_SYSTEM=true
+  typeset -g POWERLEVEL9K_ASDF_SHOW_SYSTEM=false
 
   # If set to non-empty value, hide tools unless there is a file matching the specified file pattern
   # in the current directory, or its parent directory, or its grandparent directory, and so on.
@@ -939,7 +945,7 @@
   # $(pyenv version-name) == $(pyenv global).
   typeset -g POWERLEVEL9K_PYENV_PROMPT_ALWAYS_SHOW=false
   # If set to false, hide python version if it's equal to "system".
-  typeset -g POWERLEVEL9K_PYENV_SHOW_SYSTEM=true
+  typeset -g POWERLEVEL9K_PYENV_SHOW_SYSTEM=false
 
   # Pyenv segment format. The following parameters are available within the expansion.
   #
@@ -965,7 +971,7 @@
   # $(goenv version-name) == $(goenv global).
   typeset -g POWERLEVEL9K_GOENV_PROMPT_ALWAYS_SHOW=false
   # If set to false, hide go version if it's equal to "system".
-  typeset -g POWERLEVEL9K_GOENV_SHOW_SYSTEM=true
+  typeset -g POWERLEVEL9K_GOENV_SHOW_SYSTEM=false
   # Custom icon.
   # typeset -g POWERLEVEL9K_GOENV_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
@@ -978,13 +984,18 @@
   # $(nodenv version-name) == $(nodenv global).
   typeset -g POWERLEVEL9K_NODENV_PROMPT_ALWAYS_SHOW=false
   # If set to false, hide node version if it's equal to "system".
-  typeset -g POWERLEVEL9K_NODENV_SHOW_SYSTEM=true
+  typeset -g POWERLEVEL9K_NODENV_SHOW_SYSTEM=false
   # Custom icon.
   # typeset -g POWERLEVEL9K_NODENV_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
   ##############[ nvm: node.js version from nvm (https://github.com/nvm-sh/nvm) ]###############
   # Nvm color.
   typeset -g POWERLEVEL9K_NVM_FOREGROUND=70
+ # If set to false, hide node version if it's the same as default:
+ # $(nvm version current) == $(nvm version default).
+ typeset -g POWERLEVEL9K_NVM_PROMPT_ALWAYS_SHOW=false
+ # If set to false, hide node version if it's equal to "system".
+ typeset -g POWERLEVEL9K_NVM_SHOW_SYSTEM=false
   # Custom icon.
   # typeset -g POWERLEVEL9K_NVM_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
@@ -1075,7 +1086,7 @@
   # $(rbenv version-name) == $(rbenv global).
   typeset -g POWERLEVEL9K_RBENV_PROMPT_ALWAYS_SHOW=false
   # If set to false, hide ruby version if it's equal to "system".
-  typeset -g POWERLEVEL9K_RBENV_SHOW_SYSTEM=true
+  typeset -g POWERLEVEL9K_RBENV_SHOW_SYSTEM=false
   # Custom icon.
   # typeset -g POWERLEVEL9K_RBENV_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
@@ -1104,7 +1115,7 @@
   # $(luaenv version-name) == $(luaenv global).
   typeset -g POWERLEVEL9K_LUAENV_PROMPT_ALWAYS_SHOW=false
   # If set to false, hide lua version if it's equal to "system".
-  typeset -g POWERLEVEL9K_LUAENV_SHOW_SYSTEM=true
+  typeset -g POWERLEVEL9K_LUAENV_SHOW_SYSTEM=false
   # Custom icon.
   # typeset -g POWERLEVEL9K_LUAENV_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
@@ -1117,7 +1128,7 @@
   # $(jenv version-name) == $(jenv global).
   typeset -g POWERLEVEL9K_JENV_PROMPT_ALWAYS_SHOW=false
   # If set to false, hide java version if it's equal to "system".
-  typeset -g POWERLEVEL9K_JENV_SHOW_SYSTEM=true
+  typeset -g POWERLEVEL9K_JENV_SHOW_SYSTEM=false
   # Custom icon.
   # typeset -g POWERLEVEL9K_JENV_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
@@ -1130,7 +1141,7 @@
   # $(plenv version-name) == $(plenv global).
   typeset -g POWERLEVEL9K_PLENV_PROMPT_ALWAYS_SHOW=false
   # If set to false, hide perl version if it's equal to "system".
-  typeset -g POWERLEVEL9K_PLENV_SHOW_SYSTEM=true
+  typeset -g POWERLEVEL9K_PLENV_SHOW_SYSTEM=false
   # Custom icon.
   # typeset -g POWERLEVEL9K_PLENV_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
@@ -1143,7 +1154,7 @@
   # $(phpenv version-name) == $(phpenv global).
   typeset -g POWERLEVEL9K_PHPENV_PROMPT_ALWAYS_SHOW=false
   # If set to false, hide php version if it's equal to "system".
-  typeset -g POWERLEVEL9K_PHPENV_SHOW_SYSTEM=true
+  typeset -g POWERLEVEL9K_PHPENV_SHOW_SYSTEM=false
   # Custom icon.
   # typeset -g POWERLEVEL9K_PHPENV_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
@@ -1156,7 +1167,7 @@
   # $(scalaenv version-name) == $(scalaenv global).
   typeset -g POWERLEVEL9K_SCALAENV_PROMPT_ALWAYS_SHOW=false
   # If set to false, hide scala version if it's equal to "system".
-  typeset -g POWERLEVEL9K_SCALAENV_SHOW_SYSTEM=true
+  typeset -g POWERLEVEL9K_SCALAENV_SHOW_SYSTEM=false
   # Custom icon.
   # typeset -g POWERLEVEL9K_SCALAENV_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
