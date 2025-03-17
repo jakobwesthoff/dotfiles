@@ -1,0 +1,62 @@
+# Schriftart und Größe
+font-family = "JetBrainsMono NFM SemiBold"
+font-family-bold = "JetBrainsMono NFM Bold"
+font-family-italic = "JetBrainsMono NFM SemiBold Italic"
+font-family-bold-italic = "JetBrainsMono NFM Bold Italic"
+font-size = 14
+
+font-feature = "calt"
+font-feature = "clig"
+font-feature = "liga"
+
+# Colorscheme (Gruvbox Material Hard dark)
+background = #1d2021
+foreground = #d4be98
+cursor-color = #d4be98
+selection-background = #d4be98
+selection-foreground = #3c3836
+
+# Ansi Farben
+palette = 0=#1d2021
+palette = 1=#ea6962
+palette = 2=#a9b665
+palette = 3=#d8a657
+palette = 4=#7daea3
+palette = 5=#d3869b
+palette = 6=#89b482
+palette = 7=#d4be98
+palette = 8=#eddeb5
+palette = 9=#ea6962
+palette = 10=#a9b665
+palette = 11=#d8a657
+palette = 12=#7daea3
+palette = 13=#d3869b
+palette = 14=#89b482
+palette = 15=#d4be98
+
+# Window properties
+window-padding-x = 5
+window-padding-y = 5
+window-padding-balance = true
+# background-opacity = 0.82
+background-opacity = 1.0
+background-blur = 10
+
+window-decoration = auto
+macos-titlebar-style = hidden
+
+# cursor settings
+shell-integration = none
+cursor-style = block
+cursor-style-blink = false
+
+# Eventhough not the macos default quit after last window was closed
+quit-after-last-window-closed = true
+
+# Fix CMD+left/right home/end mapping with tmux and CTRL+A prefix
+keybind=cmd+left=esc:OH
+keybind=cmd+right=esc:OF
+
+
+# Env on startup
+command = env ENABLE_TMUX_STARTUP=true $SHELL
