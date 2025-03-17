@@ -29,7 +29,7 @@ config.selection_word_boundary = " \t\n{[}]()\"'`,;:"
 
 -- Keyboard shortcuts to make life easier on macos
 config.keys = {
-	-- Change font size with CMD+/-
+	-- Change font size with CMD+/- not with CTRL+/-
 	{
 		key = "+",
 		mods = "CMD",
@@ -39,6 +39,16 @@ config.keys = {
 		key = "-",
 		mods = "CMD",
 		action = wezterm.action.DecreaseFontSize,
+	},
+	{
+		key = "-",
+		mods = "CTRL",
+		action = wezterm.action.DisableDefaultAssignment,
+	},
+	{
+		key = "+",
+		mods = "CTRL",
+		action = wezterm.action.DisableDefaultAssignment,
 	},
 	{
 		key = "0",
