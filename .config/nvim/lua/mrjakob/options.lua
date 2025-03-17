@@ -5,9 +5,11 @@ vim.g.copilot_completion_enabled = false
 vim.cmd("Copilot disable")
 
 -- Some keyboard mappings as I don't want to break my fingers, while typing on a "german" keyboard ;)
-vim.opt.langmap = "+]ü["
+-- Essentially this remaps [] to ü+ with all its modifier key combinations as well
+vim.opt.langmap = "ü[+]"
 -- Plain langmap remapping does not seem to do the trick :(
-vim.keymap.set("n", "ü", "[", { remap = true })
+vim.keymap.set({ "n", "v", "o" }, "ü", "[", { remap = true })
+vim.keymap.set({ "n", "v", "o" }, "+", "]", { remap = true })
 
 vim.opt.expandtab = true -- Convert tabs to spaces
 vim.opt.shiftwidth = 4 -- Amount to indent with << and >>
