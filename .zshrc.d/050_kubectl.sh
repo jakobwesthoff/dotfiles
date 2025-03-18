@@ -255,11 +255,44 @@ alias kwp="kw get pods"
 
 # Select a KUVECONFIG yaml with fzf
 kcfg() {
+    local no_namespace=""
+    if [ "$#" -ge 1 ] && [ "$1" == "--no-namspace" ]; then
+        no_namespace="true"
+    fi
+
+    local yellow red cyan magenta normal
+    # yellow=$(tput setaf 3 || true)
+    # red=$(tput setaf 1 || true)
+    # cyan=$(tput setaf 4 || true)
+    magenta=$(tput setaf 5 || true)
+    normal=$(tput sgr0 || true)
+  
+    local -a possibilities
+
+    local kubeconfig_filename="${KUBECONFIG##*/}"
+    local kubeconfig_dirname="${KUBECONFIG%/*}"
+
+    local search_dir="$HOME/.kube"
+
+    while read -r possibility; do
+        filename=${possibility##*/}
+
+        if [[ "$search_dir" == "$kubeconfig_dirname" ]] && [[ "${filename}" == "$kubeconfig_filename" ]]; then
+            possibilities+=("${magenta}${filename}${normal}")
+        else
+            possibilities+=("$filename")
+        fi
+    done < <(find "$search_dir" -maxdepth 1 -mindepth 1 -type f -name "*.yaml" -o -name "*.yml")
+
     local selected_config
-    selected_config="$(find $HOME/.kube -type f -name "*.yaml" -o -name "*.yml" | fzf --preview 'yq ".contexts[].context.cluster" {}' --preview-window up)"
-    
+    selected_config="$(printf "%s\n" "${possibilities[@]}" | fzf --ansi --preview 'yq ".contexts[].context" '"${search_dir}"'/{}' --preview-window up)"
+
     if [ -n "$selected_config" ]; then
-        export KUBECONFIG=$selected_config
+        export KUBECONFIG="${search_dir}/${selected_config}"
+
+        if [ -z "${no_namespace}" ];then
+            kubens
+        fi
     fi
 }
 
