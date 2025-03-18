@@ -57,6 +57,9 @@ quit-after-last-window-closed = true
 keybind=cmd+left=esc:OH
 keybind=cmd+right=esc:OF
 
+# Clipboard behaviour
+copy-on-select=clipboard
+
 
 # Env on startup
 command = env ENABLE_TMUX_STARTUP=true $SHELL
