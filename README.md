@@ -20,3 +20,12 @@ Most of the needed dependencies can be installed using the `checkout_dependencie
 [Scriptisto](https://github.com/igor-petruk/scriptisto) is needed for some
 of the scripts in this repository. Please install it in conjunction with
 [Rust](https://rustup.rs) if you want to use them.
+
+In order to configure a completely new machine including installing software
+(highly opinionated and tailored to my needs), run the following script after
+checkout: 
+
+```sh
+cd dotfiles
+./initial_macos_setup.sh
+```
