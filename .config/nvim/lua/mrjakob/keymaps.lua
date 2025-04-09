@@ -167,9 +167,8 @@ vim.keymap.set("n", "<leader>fr", fzf.resume, { desc = "[F]ind [R]esume" })
 vim.keymap.set("n", "<leader>fo", fzf.oldfiles, { desc = "[F]ind [O]ld Files" })
 vim.keymap.set("n", "<leader><leader>", fzf.buffers, { desc = "[,] Find existing buffers" })
 vim.keymap.set("n", "<leader>/", fzf.lgrep_curbuf, { desc = "[/] Live grep the current buffer" })
-vim.keymap.set("n", "<leader>fs", require("fzf-lua").lsp_workspace_symbols, { desc = "[F]ind Workspace [S]ymbols" })
--- This one I usually use more seldom, than the workspace one, therefore it is mapped to shift-s
-vim.keymap.set("n", "<leader>fS", require("fzf-lua").lsp_document_symbols, { desc = "[F]ind Document [S]ymbols" })
+vim.keymap.set("n", "<leader>fS", require("fzf-lua").lsp_workspace_symbols, { desc = "[F]ind Workspace [S]ymbols" })
+vim.keymap.set("n", "<leader>fs", require("fzf-lua").lsp_document_symbols, { desc = "[F]ind Document [S]ymbols" })
 -- Search in neovim config
 vim.keymap.set("n", "<leader>fc", function()
   fzf.files({ cwd = vim.fn.stdpath("config") })
