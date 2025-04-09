@@ -1,7 +1,7 @@
 return {
   "saghen/blink.cmp",
   -- use a release tag to download pre-built binaries
-  version = "v0.7.6",
+  version = "v0.14.0",
 
   dependencies = {
     "giuxtaposition/blink-cmp-copilot",
@@ -53,9 +53,7 @@ return {
     signature = { enabled = true },
 
     sources = {
-      completion = {
-        enabled_providers = { "copilot", "lsp", "path", "snippets", "buffer" },
-      },
+      default = { "lsp", "path", "snippets", "buffer", "emoji" },
       providers = {
         copilot = {
           enabled = function()
