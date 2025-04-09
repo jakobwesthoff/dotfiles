@@ -65,22 +65,17 @@ vim.api.nvim_create_autocmd("LspAttach", {
       end)
     end, { desc = "[G]oto [D]efinition(s)" })
 
+    -- Unmap default gr* since 0.11
+    local gr_mappings = { "grr", "gra", "gri", "grn" }
+    for _, keymap in ipairs(gr_mappings) do
+      pcall(function()
+        vim.keymap.del("n", keymap)
+      end)
+    end
+
     -- [G]oto [R]eference(s)
     vim.keymap.set("n", "gr", function()
-      local params = vim.lsp.util.make_position_params()
-      params.context = { includeDeclaration = true }
-      vim.lsp.buf_request(0, "textDocument/references", params, function(_, result)
-        local items = result
-        if type(result) == "table" and result.result then
-          items = result.result
-        end
-
-        if not items or vim.tbl_isempty(items) then
-          vim.notify("No references found", vim.log.levels.ERROR)
-        else
-          require("fzf-lua").lsp_references()
-        end
-      end)
+      require("fzf-lua").lsp_references()
     end, { desc = "[G]oto [R]eference(s)" })
 
     -- [G]oto [I]mplementation(s)
