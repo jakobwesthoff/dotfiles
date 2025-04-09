@@ -349,3 +349,8 @@ rexz() {
     echo "Complete: $input ($initial_size bytes) -> $output ($final_size bytes)"
     echo "Difference: $diff bytes ($percent% $([ $diff -gt 0 ] && echo "smaller" || echo "larger"))"
 }
+
+# Decode a JWT token into header and body struct
+function jwt-decode() {
+    jq -R 'split(".") | .[0],.[1] | @base64d | fromjson' <<<"$1"
+}
