@@ -10,7 +10,14 @@ return {
 
       -- Useful status updates for LSP.
       -- LSP and notify updates in the down right corner
-      { "j-hui/fidget.nvim", opts = {} },
+      {
+        "j-hui/fidget.nvim",
+        opts = {
+          notification = {
+            override_vim_notify = true,
+          },
+        },
+      },
 
       -- Allows extra capabilities provided by nvim-cmp
       "saghen/blink.cmp",
