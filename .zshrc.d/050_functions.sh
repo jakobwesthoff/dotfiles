@@ -286,3 +286,66 @@ ghclone() {
 glclone() {
     gitclone gitlab "$@"
 }
+
+# Recompress any archive using xz -9
+rexz() {
+    if [ $# -ne 1 ]; then
+        echo "Usage: rexz <compressed-file>"
+        return 1
+    fi
+
+    local input="$1"
+    local output="${input%.*}.xz"
+
+    if [ ! -f "$input" ]; then
+        echo "Error: File '$input' does not exist"
+        return 1
+    fi
+
+    local initial_size
+    initial_size=$(stat -c %s "$input")
+
+    declare -a decompress_cmd
+    case "$input" in
+    *.gz)
+        decompress_cmd=("gunzip" "-c")
+        ;;
+    *.bz2)
+        decompress_cmd=("bunzip2" "-c")
+        ;;
+    *.xz)
+        decompress_cmd=("unxz" "-c")
+        ;;
+    *.zst)
+        decompress_cmd=("zstd" "-d" "-c")
+        ;;
+    *.lz4)
+        decompress_cmd=("lz4" "-d" "-c")
+        ;;
+    *.lzo)
+        decompress_cmd=("lzop" "-d" "-c")
+        ;;
+    *.Z)
+        decompress_cmd=("uncompress" "-c")
+        ;;
+    *.7z)
+        decompress_cmd=("7z" "e" "-so")
+        ;;
+    *)
+        echo "Error: Unsupported compression format"
+        return 1
+        ;;
+    esac
+
+    echo "Recompressing $input ($initial_size bytes) to $output..."
+
+    pv -c -N "Compressed" "$input" | "${decompress_cmd[@]}" | pv -c -N "Decompressed" | xz -T0 -9 | pv -c -N "Recompressed" >"$output"
+
+    local final_size
+    final_size=$(stat -c %s "$output")
+    local diff=$((initial_size - final_size))
+    local percent=$(((diff * 100) / initial_size))
+
+    echo "Complete: $input ($initial_size bytes) -> $output ($final_size bytes)"
+    echo "Difference: $diff bytes ($percent% $([ $diff -gt 0 ] && echo "smaller" || echo "larger"))"
+}
