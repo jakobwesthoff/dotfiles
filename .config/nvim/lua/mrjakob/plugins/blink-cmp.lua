@@ -53,7 +53,7 @@ return {
     signature = { enabled = true },
 
     sources = {
-      default = { "lsp", "path", "snippets", "buffer", "emoji" },
+      default = { "lsp", "path", "snippets", "buffer" },
       providers = {
         copilot = {
           enabled = function()
