@@ -217,6 +217,8 @@ return {
             end
           end,
         },
+        jsonls = {},
+        tailwindcss = {},
 
         -- Rust
         -- Handled by rustacean.vim
