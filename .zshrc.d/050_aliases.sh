@@ -52,3 +52,5 @@ alias light="theme.rs light"
 alias dark="theme.rs dark"
 alias toggle="theme.rs toggle"
 
+# Remove first line
+alias no-title="tail -n+2"
