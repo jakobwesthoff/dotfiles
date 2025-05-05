@@ -168,6 +168,10 @@ vim.keymap.set("n", "<leader>fs", require("fzf-lua").lsp_document_symbols, { des
 vim.keymap.set("n", "<leader>fc", function()
   fzf.files({ cwd = vim.fn.stdpath("config") })
 end, { desc = "[F]ind Neovim [C]onfig files" })
+-- Search in my dotfiles config
+vim.keymap.set("n", "<leader>fd", function()
+  fzf.files({ cwd = os.getenv("HOME") .. "/dotfiles" })
+end, { desc = "[F]ind [D]otfiles" })
 -- Search in TODOs, FIXMEs, HACKs, via todo-comments.nvim
 vim.keymap.set("n", "<leader>ft", function()
   require("todo-comments.fzf").todo()
