@@ -200,6 +200,7 @@ return {
         docker_compose_language_service = {},
         -- Helm
         helm_ls = {},
+        -- JSON
         yamlls = {
           -- FIXME: yamlls produces a lot of false positives for helm files
           -- due to template syntax at the moment. It is loaded nevertheless.
@@ -218,7 +219,9 @@ return {
           end,
         },
         jsonls = {},
-        tailwindcss = {},
+
+        -- PlatformIO
+        clangd = {},
 
         -- Rust
         -- Handled by rustacean.vim

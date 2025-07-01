@@ -76,6 +76,7 @@ brew "yq"
 brew "yt-dlp", args: ["HEAD"]
 brew "zsh"
 brew "zoxide"
+brew "watson"
 brew "azure/kubelogin/kubelogin"
 brew "felixkratz/formulae/borders"
 brew "koekeishiya/formulae/skhd"

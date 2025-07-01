@@ -60,6 +60,8 @@ return { -- Autoformat
       json = { "prettierd", "prettier", stop_after_first = true },
       php = { "scf-docker" },
       yaml = { "prettierd" },
+      cpp = { "clang-format" },
+      c = { "clang-format" },
     },
     formatters = {
       ["scf-docker"] = {
