@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+
+# pushnotify - Send Pushover notifications from command line
+# Usage: pushnotify [--title="Title"] "Message"
+
+CONFIG_FILE="$HOME/.config/pushover"
+TITLE=""
+MESSAGE=""
+
+# Function to show usage
+show_usage() {
+    echo "Usage: $0 [--title=\"Title\"] \"Message\""
+    echo ""
+    echo "Options:"
+    echo "  --title=\"Title\"    Optional title for the notification"
+    echo ""
+    echo "Examples:"
+    echo "  $0 \"Backup completed successfully\""
+    echo "  $0 --title=\"Server Alert\" \"High CPU usage detected\""
+    echo ""
+    echo "Configuration:"
+    echo "  Create $CONFIG_FILE with:"
+    echo "  PUSHOVER_APP_TOKEN=your_app_token"
+    echo "  PUSHOVER_USER_KEY=your_user_key"
+}
+
+# Function to show error and exit
+error_exit() {
+    echo "Error: $1" >&2
+    echo ""
+    show_usage
+    exit 1
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+    --title=*)
+        TITLE="${1#*=}"
+        shift
+        ;;
+    -h | --help)
+        show_usage
+        exit 0
+        ;;
+    -*)
+        error_exit "Unknown option: $1"
+        ;;
+    *)
+        if [[ -z "$MESSAGE" ]]; then
+            MESSAGE="$1"
+        else
+            error_exit "Too many arguments. Message should be quoted if it contains spaces."
+        fi
+        shift
+        ;;
+    esac
+done
+
+# Check if message is provided
+if [[ -z "$MESSAGE" ]]; then
+    error_exit "Message is required"
+fi
+
+# Check if config file exists
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    error_exit "Config file not found: $CONFIG_FILE"
+fi
+
+# Source the config file
+source "$CONFIG_FILE"
+
+# Check if required variables are set
+if [[ -z "$PUSHOVER_APP_TOKEN" ]]; then
+    error_exit "PUSHOVER_APP_TOKEN not set in $CONFIG_FILE"
+fi
+
+if [[ -z "$PUSHOVER_USER_KEY" ]]; then
+    error_exit "PUSHOVER_USER_KEY not set in $CONFIG_FILE"
+fi
+
+# Prepare curl command
+CURL_CMD=(
+    "curl" "-s"
+    "--form-string" "token=$PUSHOVER_APP_TOKEN"
+    "--form-string" "user=$PUSHOVER_USER_KEY"
+    "--form-string" "message=$MESSAGE"
+)
+
+# Add title if provided
+if [[ -n "$TITLE" ]]; then
+    CURL_CMD+=("--form-string" "title=$TITLE")
+fi
+
+# Add API endpoint
+CURL_CMD+=("https://api.pushover.net/1/messages.json")
+
+# Send the notification
+RESPONSE=$("${CURL_CMD[@]}")
+
+# Check if curl was successful
+if [[ $? -eq 0 ]]; then
+    # Parse response to check for errors
+    if echo "$RESPONSE" | grep -q '"status":1'; then
+        echo "Notification sent successfully"
+        exit 0
+    else
+        echo "Error sending notification:" >&2
+        echo "$RESPONSE" | grep -o '"errors":\[[^]]*\]' >&2
+        exit 1
+    fi
+else
+    echo "Error: Failed to connect to Pushover API" >&2
+    exit 1
+fi
