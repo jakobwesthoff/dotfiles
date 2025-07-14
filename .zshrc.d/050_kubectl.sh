@@ -253,10 +253,13 @@ kw(){
 
 alias kwp="kw get pods"
 
-# Select a KUVECONFIG yaml with fzf
+# Select a KUBECONFIG yaml with fzf
+#
+# Use either kubens to select namespaces or $configfile.namespaces as static
+# list in cases namespaces can't be accessed.
 kcfg() {
     local no_namespace=""
-    if [ "$#" -ge 1 ] && [ "$1" == "--no-namspace" ]; then
+    if [[ "$#" -ge 1 ]] && [[ "$1" == "--no-namespace" ]]; then
         no_namespace="true"
     fi
 
@@ -290,8 +293,19 @@ kcfg() {
     if [ -n "$selected_config" ]; then
         export KUBECONFIG="${search_dir}/${selected_config}"
 
-        if [ -z "${no_namespace}" ];then
-            kubens
+        if [ -z "${no_namespace}" ]; then
+            local namespace_file="${search_dir}/${selected_config}.namespaces"
+            if [ -f "$namespace_file" ]; then
+                # Use file-based namespace selection
+                local selected_ns
+                selected_ns="$(cat "$namespace_file" | fzf)"
+                if [ -n "$selected_ns" ]; then
+                    kubectl config set-context --current --namespace="$selected_ns"
+                fi
+            else
+                # Use existing kubens behavior
+                kubens
+            fi
         fi
     fi
 }
