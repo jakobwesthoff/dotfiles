@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+
+# Get a quick answer from Claude CLI within the terminal.
+# This script uses the Claude CLI to process requests and stream responses.
+
+# Commandline question template
+COMMANDLINE_QUESTION_TEMPLATE="$(
+  cat <<EOF
+You are a helpful AI that builds command lines for the shell of a Linux/macOS system. Please respond with as little additional context as possible. Preferably without any context and provide me only the commands as an answer to my question. Do NOT use any indentations at all. All output MUST be ONE commandline. It may contain more than one command, but MUST then use pipes | or semicolons appropriately. Always enclose them with ---COMMAND START--- and ---COMMAND END---.
+EOF
+)"
+
+ai_request() {
+  local content="$1"
+
+  # Stream the response through Claude and parse JSON to text
+  echo "$content" | claude --output-format stream-json --print --verbose |
+    jq -r --unbuffered 'select(.type == "assistant") | .message.content[].text // empty' 2>/dev/null
+}
+
+usage() {
+  echo "Usage: ai [-h] [-q]"
+  echo "  -h  Show this help message and exit"
+  echo "  -q  Ask a full question instead of just retrieving a commandline"
+}
+
+main() {
+  # Parse possible arguments -h|--help, -q|--question
+  local question=""
+
+  while true; do
+    case "$1" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -q | --question)
+      question="true"
+      shift
+      ;;
+    -*)
+      echo "Invalid option: $1" >&2
+      usage
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+    esac
+  done
+
+  # If no arguments are provided, show usage
+  if [ "$#" -eq 0 ]; then
+    usage
+    exit 1
+  fi
+
+  if [ -n "$question" ]; then
+    # stream output
+    ai_request "$*"
+  else
+    local answer
+    answer=$(ai_request "${COMMANDLINE_QUESTION_TEMPLATE}: $*")
+
+    # Print the lines between the first and last command start/end markers using bash regex
+    if [[ "$answer" =~ ---COMMAND\ START---(.+)---COMMAND\ END--- ]]; then
+      echo -e "\r\033[K${BASH_REMATCH[1]}"
+
+      # Yellow colored question
+      echo -en "\033[33mExecute? [y/N] \033[0m"
+      read -r -n 1 -t 10 -s answer
+      echo
+      if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+        eval "${BASH_REMATCH[1]}"
+      fi
+    fi
+  fi
+}
+
+main "$@"
