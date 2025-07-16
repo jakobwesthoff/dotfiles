@@ -54,3 +54,7 @@ alias toggle="theme.rs toggle"
 
 # Remove first line
 alias no-title="tail -n+2"
+
+# Watson timetracking related
+alias wa=watson
+alias wad=watson-dashboard
