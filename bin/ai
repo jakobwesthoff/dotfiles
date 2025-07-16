@@ -3,6 +3,10 @@
 # Get a quick answer from Claude CLI within the terminal.
 # This script uses the Claude CLI to process requests and stream responses.
 
+# Global variables for spinner
+SPINNER_PID=""
+SPINNER_CHARS="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
 # Commandline question template
 COMMANDLINE_QUESTION_TEMPLATE="$(
   cat <<EOF
@@ -10,12 +14,54 @@ You are a helpful AI that builds command lines for the shell of a Linux/macOS sy
 EOF
 )"
 
+# Spinner utility functions
+spinner_loop() {
+  local delay=0.1
+  local i=0
+  local spinner_char_count=${#SPINNER_CHARS}
+
+  while true; do
+    printf "\r🤖 %s" "${SPINNER_CHARS:$i:1}"
+    ((i = (i + 1) % spinner_char_count))
+    sleep "$delay"
+  done
+}
+
+start_spinner() {
+  if [ -n "$SPINNER_PID" ]; then
+    return
+  fi
+
+  spinner_loop &
+  SPINNER_PID=$!
+
+  # Hide cursor
+  printf "\033[?25l"
+}
+
+stop_spinner() {
+  if [ -n "$SPINNER_PID" ]; then
+    kill "$SPINNER_PID" 2>/dev/null
+    wait "$SPINNER_PID" 2>/dev/null
+    SPINNER_PID=""
+  fi
+
+  # Clear spinner line and show cursor
+  printf "\r\033[K"
+  printf "\033[?25h"
+}
+
+cleanup_spinner() {
+  stop_spinner
+  exit
+}
+
+# Trap signals to ensure spinner cleanup
+trap cleanup_spinner SIGINT SIGTERM
+
 ai_request() {
   local content="$1"
-
-  # Stream the response through Claude and parse JSON to text
-  echo "$content" | claude --output-format stream-json --print --verbose |
-    jq -r --unbuffered 'select(.type == "assistant") | .message.content[].text // empty' 2>/dev/null
+  echo "$content" | claude --output-format text --print
 }
 
 usage() {
@@ -56,15 +102,21 @@ main() {
   fi
 
   if [ -n "$question" ]; then
-    # stream output
-    ai_request "$*"
+    # stream output with spinner
+    start_spinner
+    local answer
+    answer=$(ai_request "$*")
+    stop_spinner
+    echo "$answer"
   else
+    start_spinner
     local answer
     answer=$(ai_request "${COMMANDLINE_QUESTION_TEMPLATE}: $*")
+    stop_spinner
 
     # Print the lines between the first and last command start/end markers using bash regex
     if [[ "$answer" =~ ---COMMAND\ START---(.+)---COMMAND\ END--- ]]; then
-      echo -e "\r\033[K${BASH_REMATCH[1]}"
+      echo "${BASH_REMATCH[1]}"
 
       # Yellow colored question
       echo -en "\033[33mExecute? [y/N] \033[0m"
