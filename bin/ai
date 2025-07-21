@@ -14,6 +14,14 @@ You are a helpful AI that builds command lines for the shell of a Linux/macOS sy
 EOF
 )"
 
+# Cleanup strings by trimming newlines and spaces
+trim() {
+  local var="$1"
+  var="${var#"${var%%[![:space:]]*}"}"
+  var="${var%"${var##*[![:space:]]}"}"
+  echo "$var"
+}
+
 # Spinner utility functions
 spinner_loop() {
   local delay=0.1
@@ -114,17 +122,13 @@ main() {
     answer=$(ai_request "${COMMANDLINE_QUESTION_TEMPLATE}: $*")
     stop_spinner
 
+    local trimmed_answer
     # Print the lines between the first and last command start/end markers using bash regex
     if [[ "$answer" =~ ---COMMAND\ START---(.+)---COMMAND\ END--- ]]; then
-      echo "${BASH_REMATCH[1]}"
-
-      # Yellow colored question
-      echo -en "\033[33mExecute? [y/N] \033[0m"
-      read -r -n 1 -t 10 -s answer
-      echo
-      if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
-        eval "${BASH_REMATCH[1]}"
-      fi
+      trimmed_answer="$(trim "${BASH_REMATCH[1]}")"
+      echo "${trimmed_answer}"
+      # Copy to clipboard
+      echo -n "${trimmed_answer}" | pbcopy
     fi
   fi
 }
