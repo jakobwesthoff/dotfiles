@@ -57,5 +57,4 @@ alias no-title="tail -n+2"
 
 # Watson timetracking related
 alias wa=watson
-alias wad=watson-dashboard
-alias wat="watson-dashboard worktime:today"
+alias wat="wad worktime:today"
