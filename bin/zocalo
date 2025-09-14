@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+SCRIPT_NAME=$(basename "${BASH_SOURCE[0]}")
+SMB_HOST="$SCRIPT_NAME"
+SMB_USERNAME="jakob"
+
+list_all_shares() {
+    smbutil view "//$SMB_HOST" | awk '$2 == "Disk" {print $1}'
+}
+
+mount_share() {
+    local share="$1"
+    osascript -e 'mount volume "smb://'"$SMB_USERNAME"'@'"$SMB_HOST"'/'"$share"'"'
+}
+
+if [ "$#" -lt 1 ]; then
+    list_all_shares
+else
+    for share in "$@"; do
+        echo "Mounting //$SMB_USERNAME@$SMB_HOST/$share"
+        mount_share "$share"
+    done
+
+    if [ "$#" -eq 1 ]; then
+        echo "cd /Volumes/$1" | pbcopy
+        echo "Copied to Clipboard: cd /Volumes/$1"
+    fi
+fi
