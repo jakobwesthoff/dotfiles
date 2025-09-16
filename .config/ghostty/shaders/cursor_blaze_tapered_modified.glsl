@@ -96,8 +96,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     float horizontalMovement = abs(movementVector.x);
     float verticalMovement = abs(movementVector.y);
 
-    // Define threshold for horizontal movement (approximately 1-2 characters width)
-    float charThreshold = currentCursor.z * 1.5; // 1.5 character widths
+    // Define threshold for horizontal movement using absolute value
+    // Since cursor width is tiny in normalized coords, use absolute threshold
+    float charThreshold = 0.02; // Absolute threshold for testing
 
     // Only show trail if there's vertical movement OR horizontal movement exceeds threshold
     // This prevents trail from showing during normal typing
@@ -129,8 +130,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     // Use very small smoothstep range (-0.001, 0.001) for subtle anti-aliasing without visible glow
     float trailAlpha = smoothstep(-0.001, 0.001, sdfTrail) * shouldShowTrail;
     vec4 trail = mix(TRAIL_COLOR, fragColor, trailAlpha);
-    //cursorblaze - render current cursor with hard edges (no glow)
-    trail = mix(TRAIL_COLOR, trail, step(0., sdfCurrentCursor));
     // Apply time-based fade-out animation to the trail
     fragColor = mix(trail, fragColor, 1. - smoothstep(0., sdfCurrentCursor, easedProgress * lineLength * shouldShowTrail));
 }
