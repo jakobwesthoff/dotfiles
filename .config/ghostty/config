@@ -54,6 +54,7 @@ cursor-style-blink = false
 quit-after-last-window-closed = true
 
 # Fix CMD+left/right home/end mapping with tmux and CTRL+A prefix
+#
 keybind=cmd+left=esc:OH
 keybind=cmd+right=esc:OF
 
@@ -63,6 +64,9 @@ copy-on-select=clipboard
 
 # Env on startup
 command = env ENABLE_TMUX_STARTUP=true $SHELL
+
+## Cursor trail
+custom-shader="./shaders/cursor_blaze_tapered_modified.glsl"
 
 ## Shaders
 # custom-shader="/Users/jakob/Development/github/hackr-sh/ghostty-shaders/matrix-hallway.glsl"
