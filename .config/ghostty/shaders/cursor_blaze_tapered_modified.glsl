@@ -102,7 +102,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
     // Only show trail if there's vertical movement OR horizontal movement exceeds threshold
     // This prevents trail from showing during normal typing
-    float shouldShowTrail = step(0.01, verticalMovement) + step(charThreshold, horizontalMovement);
+    // Increased vertical threshold to avoid small typing adjustments
+    float shouldShowTrail = step(0.05, verticalMovement) + step(charThreshold, horizontalMovement);
     shouldShowTrail = min(shouldShowTrail, 1.0); // Clamp to 1.0
 
     // When drawing a parellelogram between cursors for the trail i need to determine where to start at the top-left or top-right vertex of the cursor
