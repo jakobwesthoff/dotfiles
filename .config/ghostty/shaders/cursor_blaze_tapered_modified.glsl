@@ -46,19 +46,6 @@ float antialising(float distance) {
     return 1. - smoothstep(0., normalize(vec2(2., 2.), 0.).x, distance);
 }
 
-float determineStartVertexFactor(vec2 c, vec2 p) {
-    // Conditions using step
-    float condition1 = step(p.x, c.x) * step(c.y, p.y); // c.x < p.x && c.y > p.y
-    float condition2 = step(c.x, p.x) * step(p.y, c.y); // c.x > p.x && c.y < p.y
-
-    // If neither condition is met, return 1 (else case)
-    return 1.0 - max(condition1, condition2);
-}
-
-float isLess(float c, float p) {
-    // Conditions using step
-    return 1.0 - step(p, c); // c < p
-}
 
 vec2 getRectangleCenter(vec4 rectangle) {
     return vec2(rectangle.x + (rectangle.z / 2.), rectangle.y - (rectangle.w / 2.));
@@ -111,18 +98,79 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     float shouldShowTrail = step(charThresholdV, verticalMovement) + step(charThresholdH, horizontalMovement);
     shouldShowTrail = min(shouldShowTrail, 1.0); // Clamp to 1.0
 
-    // When drawing a parellelogram between cursors for the trail i need to determine where to start at the top-left or top-right vertex of the cursor
-    float vertexFactor = determineStartVertexFactor(currentCursor.xy, previousCursor.xy);
-    float invertedVertexFactor = 1.0 - vertexFactor;
+    // TRAIL PARALLELOGRAM CONSTRUCTION:
+    // Create a perfect parallelogram by connecting corresponding edges of both cursors.
+    // The parallelogram connects the edge of the previous cursor that faces the movement direction
+    // to the edge of the current cursor that faces back toward the previous position.
+    //
+    // Algorithm:
+    // 1. Determine primary movement direction (horizontal vs vertical)
+    // 2. For each cursor, identify the two corner points on the edge facing the other cursor
+    // 3. Connect these edges to form a proper parallelogram
+    //
+    // This ensures the trail appears centered and seamlessly connects both cursor positions
+    // regardless of movement direction or cursor shape (block, line, etc.)
 
-    float xFactor = isLess(previousCursor.x, currentCursor.x);
-    float yFactor = isLess(currentCursor.y, previousCursor.y);
+    vec2 movement = centerCC - centerCP;
+    float absHorizontal = abs(movement.x);
+    float absVertical = abs(movement.y);
 
-    // Set every vertex of my parellogram
-    vec2 v0 = vec2(currentCursor.x + currentCursor.z * vertexFactor, currentCursor.y - currentCursor.w);
-    vec2 v1 = vec2(currentCursor.x + currentCursor.z * xFactor, currentCursor.y - currentCursor.w * yFactor);
-    vec2 v2 = vec2(currentCursor.x + currentCursor.z * invertedVertexFactor, currentCursor.y);
-    vec2 v3 = centerCP;
+    // Determine if movement is primarily horizontal (1.0) or vertical (0.0)
+    float isHorizontalPrimary = step(absVertical, absHorizontal);
+
+    // Calculate cursor corner coordinates
+    // Previous cursor corners
+    vec2 prevTopLeft = vec2(previousCursor.x, previousCursor.y);
+    vec2 prevTopRight = vec2(previousCursor.x + previousCursor.z, previousCursor.y);
+    vec2 prevBottomLeft = vec2(previousCursor.x, previousCursor.y - previousCursor.w);
+    vec2 prevBottomRight = vec2(previousCursor.x + previousCursor.z, previousCursor.y - previousCursor.w);
+
+    // Current cursor corners
+    vec2 currTopLeft = vec2(currentCursor.x, currentCursor.y);
+    vec2 currTopRight = vec2(currentCursor.x + currentCursor.z, currentCursor.y);
+    vec2 currBottomLeft = vec2(currentCursor.x, currentCursor.y - currentCursor.w);
+    vec2 currBottomRight = vec2(currentCursor.x + currentCursor.z, currentCursor.y - currentCursor.w);
+
+    // Select connecting edges based on movement direction
+    vec2 prevEdge1, prevEdge2, currEdge1, currEdge2;
+
+    if (isHorizontalPrimary > 0.5) {
+        // Horizontal movement: connect vertical edges
+        if (movement.x > 0.0) {
+            // Moving right: connect previous right edge to current left edge
+            prevEdge1 = prevTopRight;
+            prevEdge2 = prevBottomRight;
+            currEdge1 = currTopLeft;
+            currEdge2 = currBottomLeft;
+        } else {
+            // Moving left: connect previous left edge to current right edge
+            prevEdge1 = prevTopLeft;
+            prevEdge2 = prevBottomLeft;
+            currEdge1 = currTopRight;
+            currEdge2 = currBottomRight;
+        }
+    } else {
+        // Vertical movement: connect horizontal edges
+        if (movement.y > 0.0) {
+            // Moving up: connect previous top edge to current bottom edge
+            prevEdge1 = prevTopLeft;
+            prevEdge2 = prevTopRight;
+            currEdge1 = currBottomLeft;
+            currEdge2 = currBottomRight;
+        } else {
+            // Moving down: connect previous bottom edge to current top edge
+            prevEdge1 = prevBottomLeft;
+            prevEdge2 = prevBottomRight;
+            currEdge1 = currTopLeft;
+            currEdge2 = currTopRight;
+        }
+    }
+
+    // Create parallelogram vertices by connecting the identified edges
+    vec2 v0 = prevEdge1;   // First corner of previous cursor edge
+    vec2 v1 = prevEdge2;   // Second corner of previous cursor edge
+    vec2 v2 = currEdge2;   // Corresponding second corner of current cursor edge
+    vec2 v3 = currEdge1;   // Corresponding first corner of current cursor edge
 
     float sdfCurrentCursor = getSdfRectangle(vu, currentCursor.xy - (currentCursor.zw * offsetFactor), currentCursor.zw * 0.5);
     float sdfTrail = getSdfParallelogram(vu, v0, v1, v2, v3);
