@@ -96,14 +96,19 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     float horizontalMovement = abs(movementVector.x);
     float verticalMovement = abs(movementVector.y);
 
-    // Define threshold for horizontal movement using absolute value
-    // Since cursor width is tiny in normalized coords, use absolute threshold
-    float charThreshold = 0.02; // Absolute threshold for testing
+    // Calculate full character cell dimensions assuming 2:1 height-to-width ratio
+    // This works regardless of cursor shape (block, vertical line, horizontal line)
+    float charWidth = max(currentCursor.z, currentCursor.w / 2.0);
+    float charHeight = max(currentCursor.w, currentCursor.z * 2.0);
 
-    // Only show trail if there's vertical movement OR horizontal movement exceeds threshold
-    // This prevents trail from showing during normal typing
-    // Increased vertical threshold to avoid small typing adjustments
-    float shouldShowTrail = step(0.05, verticalMovement) + step(charThreshold, horizontalMovement);
+    // Define thresholds based on character cell size in normalized coordinates
+    // This automatically scales with both font size and terminal dimensions
+    float charThresholdH = charWidth * 1.5; // 1.5 character widths
+    float charThresholdV = charHeight * 1.5; // 1.5 character heights
+
+    // Only show trail if movement exceeds character-based thresholds
+    // This prevents trail from showing during normal typing regardless of window size
+    float shouldShowTrail = step(charThresholdV, verticalMovement) + step(charThresholdH, horizontalMovement);
     shouldShowTrail = min(shouldShowTrail, 1.0); // Clamp to 1.0
 
     // When drawing a parellelogram between cursors for the trail i need to determine where to start at the top-left or top-right vertex of the cursor
