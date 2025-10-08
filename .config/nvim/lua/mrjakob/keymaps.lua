@@ -100,7 +100,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
     -- [G]oto [D]eclaration
     vim.keymap.set("n", "gD", function()
       -- Check if declaration is supported
-      local clients = vim.lsp.get_active_clients({ bufnr = 0 })
+      local clients = vim.lsp.get_clients({ bufnr = 0 })
       local has_support = false
       for _, client in ipairs(clients) do
         if client.supports_method("textDocument/declaration") then
