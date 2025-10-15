@@ -61,3 +61,6 @@ alias wat="wad worktime:today"
 
 # macOS quarantine
 alias unquarantine="sudo xattr -rd com.apple.quarantine"
+
+# Eject diskdrive (macOS)
+alias eject="drutil eject"
