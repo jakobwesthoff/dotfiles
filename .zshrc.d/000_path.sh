@@ -17,6 +17,9 @@ fi
 # Include npm executables in the searchpath
 export PATH="/usr/local/share/npm/bin:${PATH}"
 
+# Prefer homebrew curl over system curl
+export PATH="/opt/homebrew/opt/curl/bin:${PATH}"
+
 ##
 # Homebrew configuration
 ##
@@ -39,11 +42,10 @@ fi
 
 # Prefer gnu find, locate and xargs over bsd tools
 if [ -d $HOMEBREW_PREFIX/opt/findutils/libexec/gnubin ]; then
-  export PATH="$HOMEBREW_PREFIX/opt/findutils/libexec/gnubin:$PATH"
+    export PATH="$HOMEBREW_PREFIX/opt/findutils/libexec/gnubin:$PATH"
 fi
 
 # Use snap bin folder if available
 if [ -d "/snap/bin" ]; then
-  export PATH="/snap/bin:$PATH"
+    export PATH="/snap/bin:$PATH"
 fi
-

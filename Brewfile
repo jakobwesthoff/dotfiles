@@ -117,7 +117,6 @@ cask "istat-menus@6"
 cask "affinity-designer"
 cask "affinity-photo"
 
-mas 'Kaleidoscope', id: 587512244 
 mas 'Disk Speed Test', id: 425264550 
 mas 'Keynote', id: 409183694 
 mas 'Webcam Settings', id: 533696630 
@@ -136,4 +135,3 @@ mas 'Bear', id: 1091189122
 mas 'Airmail', id: 918858936 
 mas 'Creator\'s Best Friend', id: 1524172135 
 mas 'Yoink', id: 457622435 
-mas 'GIF Brewery 3', id: 1081413713 

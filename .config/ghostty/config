@@ -55,8 +55,12 @@ quit-after-last-window-closed = true
 
 # Fix CMD+left/right home/end mapping with tmux and CTRL+A prefix
 #
-keybind=cmd+left=esc:OH
-keybind=cmd+right=esc:OF
+keybind = cmd+left=esc:OH
+keybind = cmd+right=esc:OF
+
+# Fix problems with cmd+plus and cmd+minus not properly working any more. Not idea why but the mapping helps
+keybind = super+bracket_right=increase_font_size:1
+keybind = super+slash=decrease_font_size:1
 
 # Clipboard behaviour
 copy-on-select=clipboard
