@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ueo pipefail
+set -uexo pipefail
 
 # Disclaimer
 echo "---------------------------------------------------------------------"
@@ -51,6 +51,7 @@ if [ ! -d "$HOME/dotfiles" ]; then
 	popd
 fi
 
+cd "$HOME/dotfiles"
 
 brew bundle install
 
@@ -89,7 +90,11 @@ read -r
 osascript -e 'tell application "System Preferences" to quit'
 
 # Keep-alive: update existing `sudo` time stamp until `.macos` has finished
-while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+while true; do
+	sudo -n true
+	sleep 60
+	kill -0 "$$" || exit
+done 2>/dev/null &
 
 # Disable the sound effects on boot
 #sudo nvram SystemAudioVolume=" "
@@ -271,8 +276,7 @@ for app in "Activity Monitor" \
 	"Tweetbot" \
 	"Twitter" \
 	"iCal"; do
-	pkill "${app}" &> /dev/null
+	pkill "${app}" &>/dev/null || true
 done
-
 
 echo "Everything is setup. Please restart to ensure every config is applied."
