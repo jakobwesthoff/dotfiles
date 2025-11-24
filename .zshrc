@@ -1,7 +1,3 @@
-# Disable shell sessions management, which disturbs our shell history and we
-# don't need it.
-export SHELL_SESSIONS_DISABLE=1
-
 # Startup with tmux if selected and allow for session selection
 if [ -n "${ENABLE_TMUX_STARTUP}" ] && [ -z "${MUX}" ]; then
   # locate fzf in all its possible locations, as we might not have a proper path set yet
