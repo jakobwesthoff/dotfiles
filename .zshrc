@@ -52,7 +52,7 @@ if [ -n "${ENABLE_TMUX_STARTUP}" ] && [ -z "${MUX}" ]; then
       fi
     elif [ "${selected_session}" = "NO TMUX" ]; then
       export ENABLE_TMUX_STARTUP=""
-      zsh
+      zsh -l
     else
       session_id="$(echo "$selected_session" | sed -e 's@^\([^:]*\):.*$@\1@g')"
       "${tmux_bin}" attach-session -t "${session_id}"
