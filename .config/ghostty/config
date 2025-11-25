@@ -65,9 +65,11 @@ keybind = super+slash=decrease_font_size:1
 # Clipboard behaviour
 copy-on-select=clipboard
 
-
 # Env on startup
 command = env ENABLE_TMUX_STARTUP=true $SHELL
+
+# try to set terminfo or fallback to xterm-256color for ssh
+shell-integration-features = ssh-terminfo,ssh-env
 
 ## Cursor trail
 custom-shader="./shaders/cursor_blaze_tapered_modified.glsl"
