@@ -40,3 +40,4 @@
 # See: https://apple.stackexchange.com/questions/427561/
 #
 export SHELL_SESSIONS_DISABLE=1
+export SHELL_SESSION_HISTORY=0

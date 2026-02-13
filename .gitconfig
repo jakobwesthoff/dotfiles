@@ -4,6 +4,7 @@
 [alias]
     ci = commit
     st = status
+    cif = "!f() { offset=\"$1\"; shift; GIT_AUTHOR_DATE=$(gdate -d \"$offset\" --iso-8601=seconds) GIT_COMMITTER_DATE=$(gdate -d \"$offset\" --iso-8601=seconds) git commit \"$@\"; }; f"
 [color]
     branch = auto
     diff = auto
