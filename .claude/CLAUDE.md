@@ -9,6 +9,13 @@ When in doubt about a design decision, ask rather than assume.
 
 Run shell scripts through `shellcheck`.
 
+### ULID generation
+
+Use `mkulid -l` to generate lowercase ULIDs. Use `-n <count>` to
+generate multiple at once. Useful when creating documents in a
+directory that need a random but chronologically sortable prefix
+(e.g., todo files like `<ulid>-short-description.md`).
+
 ### SESSION.md
 
 While working, if you come across any bugs, missing features, or other
@@ -21,7 +28,7 @@ sufficient. **Do not write your accomplishments into this file.**
 ## Rust guidelines
 
 - When adding dependencies to Rust projects, use `cargo add`.
-- In code that uses `eyre` or `anyhow` `Result`s, consistently use
+- In code that uses `anyhow` or `eyre` `Result`s, consistently use
   `.context()` prior to every error-propagation with `?`. Context
   messages in `context` should be simple present tense, such as to
   complete the sentence "while attempting to ...".
@@ -67,9 +74,9 @@ When you refer to types or very short code snippets, place them in
 backticks. When you have a full line of code or more than one line of
 code, put them in indented code blocks.
 
-Prefer to write git commit messages by using a temporary file rather
-than using command-line arguments to the `git` command. Remove the
-temporary file afterwards.
+Write git commit messages via a `.tmp-commit-msg` file in the project
+root directory. Use `git commit -F .tmp-commit-msg` and remove the file
+afterwards.
 
 Never under no circumstances are you to mention the help of ai in general or
 claude and anthropic specifically within commit messages. This explicitly
