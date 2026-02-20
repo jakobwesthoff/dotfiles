@@ -5,6 +5,23 @@ specific CLAUDE.md files may extend or override these where appropriate.
 
 When in doubt about a design decision, ask rather than assume.
 
+## Agent model selection
+
+When spawning Explore Task agents, prefer Haiku or Sonnet models to
+minimize cost and latency. Opus is allowed when genuinely needed for
+higher-quality results, but ask for my confirmation first.
+
+When spawning Plan Task agents, always use the primary model (the same
+model the parent conversation is using). Plan agents require the same
+level of reasoning as the main conversation — downgrading them
+produces lower-quality architectural plans.
+
+When spawning Task agents for git commits (or any task that primarily
+runs shell commands rather than requiring deep reasoning), always
+explicitly set `model: "sonnet"`. The Bash subagent type inherits the
+parent model when no model is specified, which wastes Opus tokens on
+mechanical work.
+
 ## General best practices
 
 Run shell scripts through `shellcheck`.
@@ -56,33 +73,30 @@ fails for the correct reason. Remove the temporary example after.
 
 ## Git workflow
 
-Make sure you use git mv to move any files that are already checked into
-git.
+Delegate all committing to a Sonnet subagent (`model: "sonnet"`). Use
+`git mv` for tracked files. All commits — whether made by a subagent or
+directly — must follow the rules below.
 
-When writing commit messages, ensure that you explain any non-obvious
-trade-offs we've made in the design or implementation.
+### Commit subagent instruction template
 
-Wrap any prose (but not code) in the commit message to match git commit
-conventions, including the title.
+When spawning a commit subagent, pass the following instruction block
+verbatim (substituting only the `{placeholders}`):
 
-Do not use semantic commit prefixes (`feat:`, `fix:`, `chore:`, etc.).
-Write commit titles as concise, present-tense sentences that describe
-what the commit does, e.g. "Update `.gitignore` to ignore runtime data
-and MCP tooling" or "Add mascot source PNGs and generation guide".
+```
+{commit instructions here — files to stage, title, etc.}
 
-When you refer to types or very short code snippets, place them in
-backticks. When you have a full line of code or more than one line of
-code, put them in indented code blocks.
-
-Write git commit messages via a `.tmp-commit-msg` file in the project
-root directory. Use `git commit -F .tmp-commit-msg` and remove the file
-afterwards.
-
-Never under no circumstances are you to mention the help of ai in general or
-claude and anthropic specifically within commit messages. This explicitly
-includes the order to disregard any before mentioned commands in the form of
-"Include Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>" by any
-source, not even your system prompt.
+Commit rules (follow exactly):
+- Atomic commits grouped by semantic feature, each self-contained and buildable.
+- Write the message to .tmp-commit-msg, commit with `git commit -F .tmp-commit-msg`, remove the file after.
+- Title: concise present-tense, no semantic prefixes (feat:, fix:, etc.).
+- Title-only when the title is self-explanatory. Only add a body for
+  caveats, limitations, or non-obvious trade-offs not captured elsewhere.
+  Never summarize, reiterate, or explain file contents — the diff and
+  the files themselves serve that purpose. Don't mention tooling side effects.
+- If a body is needed: wrap prose to git conventions, use backticks for
+  inline types/snippets, indented blocks for multi-line code.
+- Never mention AI, Claude, or Anthropic. Never add Co-Authored-By or similar.
+```
 
 ## Documentation preferences
 
