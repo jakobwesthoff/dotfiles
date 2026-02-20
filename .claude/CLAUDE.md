@@ -38,6 +38,15 @@ explicitly set `model: "sonnet"`. The Bash subagent type inherits the
 parent model when no model is specified, which wastes Opus tokens on
 mechanical work.
 
+## Plan mode workflow
+
+During plan mode, focus on discussing open design decisions and
+trade-offs iteratively. Present overviews, partial plans, and update
+the plan file as needed — but do **not** call ExitPlanMode until
+explicitly told that all decisions are settled. Avoid re-presenting
+the full plan repeatedly; address only the open or changed parts
+during discussion.
+
 ## General best practices
 
 Run shell scripts through `shellcheck`.
