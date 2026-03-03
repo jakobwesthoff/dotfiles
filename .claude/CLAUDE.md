@@ -23,8 +23,8 @@ When in doubt about a design decision, ask rather than assume.
 
 ## Agent model selection
 
-When spawning Explore Task agents, prefer Haiku or Sonnet models to
-minimize cost and latency. Opus is allowed when genuinely needed for
+When spawning Explore Task agents, prefer Sonnet models to minimize normal
+usage count and latency. Opus is allowed when genuinely needed for
 higher-quality results, but ask for my confirmation first.
 
 When spawning Plan Task agents, always use the primary model (the same
@@ -32,11 +32,10 @@ model the parent conversation is using). Plan agents require the same
 level of reasoning as the main conversation — downgrading them
 produces lower-quality architectural plans.
 
-When spawning Task agents for git commits (or any task that primarily
-runs shell commands rather than requiring deep reasoning), always
-explicitly set `model: "sonnet"`. The Bash subagent type inherits the
-parent model when no model is specified, which wastes Opus tokens on
-mechanical work.
+When spawning Task agents that primarily run shell commands rather than
+requiring deep reasoning, always explicitly set `model: "sonnet"`. The Bash
+subagent type inherits the parent model when no model is specified, which
+wastes Opus tokens on mechanical work
 
 ## Plan mode workflow
 
@@ -104,17 +103,8 @@ fails for the correct reason. Remove the temporary example after.
 
 ## Git workflow
 
-Delegate all committing to a Sonnet subagent (`model: "sonnet"`). Use
-`git mv` for tracked files. All commits — whether made by a subagent or
+Use `git mv` for tracked files. All commits — whether made by a subagent or
 directly — must follow the rules below.
-
-### Commit subagent instruction template
-
-When spawning a commit subagent, pass the following instruction block
-verbatim (substituting only the `{placeholders}`):
-
-```
-{commit instructions here — files to stage, title, etc.}
 
 Commit rules (follow exactly):
 - Atomic commits grouped by semantic feature, each self-contained and buildable.
@@ -127,7 +117,6 @@ Commit rules (follow exactly):
 - If a body is needed: wrap prose to git conventions, use backticks for
   inline types/snippets, indented blocks for multi-line code.
 - Never mention AI, Claude, or Anthropic. Never add Co-Authored-By or similar.
-```
 
 ## Documentation preferences
 
