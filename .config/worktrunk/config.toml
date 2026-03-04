@@ -1,3 +1,7 @@
+[commit.generation]
+command = "MAX_THINKING_TOKENS=0 claude -p --model=haiku --tools='' --disable-slash-commands --setting-sources='' --system-prompt=''"
+
+[projects]
 # # User Configuration
 #
 # Create with `wt config create`.
@@ -191,5 +195,9 @@
 # {{ git_diff }}
 # </diff>
 #
-# """
-# <!-- DEFAULT_SQUASH_TEMPLATE_END -->
+
+# [post-switch]
+# tmux = "[ -n \"$TMUX\" ] && tmux rename-window \"wt:{{ branch | sanitize }}\""
+
+[merge]
+squash = false

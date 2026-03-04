@@ -1,0 +1,2 @@
+[projects."github.com/jakobwesthoff/squirly"]
+approved-commands = ["cd frontend && bun install", "just mascots"]
