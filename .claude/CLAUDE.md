@@ -72,6 +72,10 @@ incidental tasks until later. You do not need to fix them all straight
 away unless they block your progress; writing them down is often
 sufficient. **Do not write your accomplishments into this file.**
 
+## Code Exploration
+
+Prefer the reflex/rfx mcp server over grepping and searching through code files directly if possible.
+
 ## Rust guidelines
 
 - When adding dependencies to Rust projects, use `cargo add`.
