@@ -112,7 +112,13 @@ directly — must follow the rules below.
 
 Commit rules (follow exactly):
 - Atomic commits grouped by semantic feature, each self-contained and buildable.
-- Write the message to .tmp-commit-msg, commit with `git commit -F .tmp-commit-msg`, remove the file after.
+- Commit message workflow — three **separate** tool calls, never chained
+  with `&&` or `;`:
+  1. Use the **Write tool** to create `.tmp-commit-msg` (never `cat`,
+     `echo`, or heredoc).
+  2. Run `git commit -F .tmp-commit-msg` alone in its own Bash call.
+  3. Run `rm .tmp-commit-msg` alone in its own Bash call.
+  Each step must be its own independent tool invocation.
 - Title: concise present-tense, no semantic prefixes (feat:, fix:, etc.).
 - Title-only when the title is self-explanatory. Only add a body for
   caveats, limitations, or non-obvious trade-offs not captured elsewhere.
