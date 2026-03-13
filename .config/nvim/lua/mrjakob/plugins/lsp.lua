@@ -48,6 +48,25 @@ return {
       -- If you're wondering about lsp vs treesitter, you can check out the wonderfully
       -- and elegantly composed help section, `:help lsp-vs-treesitter`
 
+      -- --query-driver tells clangd which compilers it may invoke to discover
+      -- built-in include paths and predefined macros. Without it, clangd only
+      -- knows about the host clang and cannot introspect cross-compilers like
+      -- xtensa-esp32-elf-g++, leading to missing toolchain headers and false
+      -- diagnostics in embedded projects.
+      --
+      -- The glob pattern is broad on purpose: it matches any compiler binary
+      -- under ~/.platformio as well as common system paths. For projects that
+      -- use a regular host compiler, the pattern simply never matches anything
+      -- extra, so clangd falls back to its normal built-in driver detection.
+      -- In other words, this flag is a no-op for non-embedded C/C++ projects.
+      vim.lsp.config("clangd", {
+        cmd = {
+          "clangd",
+          "--query-driver=**/**/xtensa-*,**/arm-none-eabi-*",
+          "--background-index",
+        },
+      })
+
       --  This function gets run when an LSP attaches to a particular buffer.
       --    That is to say, every time a new file is opened that is associated with
       --    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
@@ -220,7 +239,10 @@ return {
         },
         jsonls = {},
 
-        -- PlatformIO
+        -- C/C++ (including PlatformIO / embedded cross-compilation)
+        -- NOTE: cmd is configured via vim.lsp.config() below, because
+        -- mason-lspconfig's automatic_enable uses vim.lsp.enable() which
+        -- bypasses the legacy handlers/lspconfig.setup() path.
         clangd = {},
 
         -- Rust
