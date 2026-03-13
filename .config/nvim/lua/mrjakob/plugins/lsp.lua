@@ -115,21 +115,6 @@ return {
         end,
       })
 
-      -- Make hover window have borders
-      local floating_border_style = "rounded"
-
-      vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
-        border = floating_border_style,
-      })
-
-      vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
-        border = floating_border_style,
-      })
-
-      vim.diagnostic.config({
-        float = { border = floating_border_style },
-      })
-
       -- Show window/showMessage requests using vim.notify instead of logging to messages
       vim.lsp.handlers["window/showMessage"] = function(_, params, ctx)
         local message_type = params.type
@@ -312,14 +297,6 @@ return {
     "mrcjkb/rustaceanvim",
     version = "^5", -- Recommended
     lazy = false, -- This plugin is already lazy
-    config = function()
-      vim.g.rustaceanvim = {
-        tools = {
-          float_win_config = {
-            border = "rounded",
-          },
-        },
-      }
-    end,
+    opts = {},
   },
 }

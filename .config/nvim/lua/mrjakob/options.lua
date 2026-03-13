@@ -70,3 +70,7 @@ vim.opt.scrolloff = 10
 -- Disable commandline until it is needed. This gives us a cleaner look and an extra line ;)
 vim.opt.cmdheight = 0
 
+-- Apply rounded borders to all floating windows globally (LSP hover,
+-- signature help, diagnostics, code actions, completion docs, etc.).
+vim.o.winborder = "rounded"
+
