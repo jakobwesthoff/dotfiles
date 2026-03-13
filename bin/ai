@@ -129,6 +129,7 @@ main() {
       echo "${trimmed_answer}"
       # Copy to clipboard
       echo -n "${trimmed_answer}" | pbcopy
+      printf '\033]52;c;%s\a' "$(printf '%s' "${trimmed_answer}" | base64)" >/dev/tty
     fi
   fi
 }

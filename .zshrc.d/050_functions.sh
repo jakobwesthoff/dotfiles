@@ -49,10 +49,20 @@ makeitso() {
     sudo $(history 2 | head -n 1 | sed -e 's@^[0-9]\+\s\+@@')
 }
 
+# Copy stdin to clipboard via pbcopy and OSC 52 escape sequence
+clipcopy() {
+    local content
+    content="$(cat)"
+    printf '%s' "$content" | pbcopy
+    printf '\033]52;c;%s\a' "$(printf '%s' "$content" | base64)" >/dev/tty
+}
+
 # Copy current working directory to clipboard AND output it
 cwd() {
-    pwd | tr -d '\n' | pbcopy
-    pwd
+    local dir
+    dir="$(pwd)"
+    printf '%s' "$dir" | clipcopy
+    echo "$dir"
 }
 
 # Rename using a temporary step to overcome hfs case-insensitivity
