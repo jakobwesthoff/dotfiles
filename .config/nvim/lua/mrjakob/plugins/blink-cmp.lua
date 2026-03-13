@@ -3,11 +3,7 @@ return {
   -- use a release tag to download pre-built binaries
   version = "v0.14.0",
 
-  dependencies = {
-    "giuxtaposition/blink-cmp-copilot",
-  },
-
-  ---@module 'blink.cmp'
+---@module 'blink.cmp'
   ---@type blink.cmp.Config
   opts = {
     keymap = {
@@ -54,17 +50,6 @@ return {
 
     sources = {
       default = { "lsp", "path", "snippets", "buffer" },
-      providers = {
-        copilot = {
-          enabled = function()
-            return vim.g.copilot_completion_enabled
-          end,
-          name = "copilot",
-          module = "blink-cmp-copilot",
-          score_offset = 100,
-          should_show_items = true,
-        },
-      },
     },
   },
 

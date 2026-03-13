@@ -1,9 +1,3 @@
--- Custom options
--- Disable copilot completions by default
--- They can be enabled with <Leader>uc
-vim.g.copilot_completion_enabled = false
-vim.cmd("Copilot disable")
-
 -- Some keyboard mappings as I don't want to break my fingers, while typing on a "german" keyboard ;)
 -- Essentially this remaps [] to ü+ with all its modifier key combinations as well
 vim.opt.langmap = "ü[+]"
