@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Claude Code status line script
-# Displays: [Model] │ [Directory] [Circle Bar] [%] [Helpful message]
+# Displays: [Model] │ [Directory] [Circle Bar] [%] [Used / Total tokens]
 #
 # VERSION DETECTION:
 #   Real-time mode  (Claude Code >= 2.1.72): context_window.used_percentage is present in JSON
@@ -26,9 +26,8 @@ input=$(cat)
 model_name=$(echo "$input" | jq -r '.model.display_name // "Unknown Model"')
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // "?"')
 transcript_path=$(echo "$input" | jq -r '.transcript_path // ""')
-exceeds_200k=$(echo "$input" | jq -r '.context_window.exceeds_200k_tokens // false')
+context_window_size=$(echo "$input" | jq -r '.context_window.context_window_size // 200000')
 used_pct_raw=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
-total_input_tokens=$(echo "$input" | jq -r '.context_window.total_input_tokens // "n/a"')
 
 # =========================================================
 # Determine context usage percentage
@@ -37,23 +36,12 @@ total_input_tokens=$(echo "$input" | jq -r '.context_window.total_input_tokens /
 mode="UNKNOWN"
 raw_used=0
 
-if [ "$exceeds_200k" = "true" ]; then
-    # Hard override: context definitely exceeded
-    raw_used=100
-    mode="REALTIME(exceeds_200k)"
-elif [ -n "$used_pct_raw" ]; then
+if [ -n "$used_pct_raw" ]; then
     # Real-time mode: Claude Code >= 2.1.72 provides used_percentage directly
     raw_used=$(echo "$used_pct_raw" | awk '{printf "%.2f", $1}')
     mode="REALTIME"
 elif [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
-    # Fallback mode: parse transcript JSONL for last complete assistant message
-    # "Complete" is heuristically defined as total tokens > 1000 to filter streaming artifacts.
-    last_tokens=$(grep -o '"type":"assistant"[^}]*"input_tokens":[0-9]*[^}]*"cache_read_input_tokens":[0-9]*' "$transcript_path" 2>/dev/null \
-        | awk -F'"input_tokens":' '{print $2}' \
-        | awk -F',' '{print $1}' \
-        | tail -1)
-
-    # More robust: use jq to find last assistant message with usage.input_tokens > 1000
+    # Fallback mode: parse transcript JSONL for last assistant message with usage data.
     last_usage=$(grep -E '"type"\s*:\s*"assistant"' "$transcript_path" 2>/dev/null \
         | jq -s 'map(select(.message.usage.input_tokens != null))
                  | map(select((.message.usage.input_tokens + (.message.usage.cache_read_input_tokens // 0)) > 1000))
@@ -64,8 +52,7 @@ elif [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
         input_toks=$(echo "$last_usage" | jq -r '.input_tokens // 0')
         cache_toks=$(echo "$last_usage" | jq -r '.cache_read_input_tokens // 0')
         total_toks=$((input_toks + cache_toks))
-        raw_used=$(echo "$total_toks" | awk '{printf "%.2f", ($1 / 200000) * 100}')
-        total_input_tokens="$total_toks (from transcript)"
+        raw_used=$(awk -v t="$total_toks" -v s="$context_window_size" 'BEGIN { printf "%.2f", (t / s) * 100 }')
         mode="FALLBACK"
     else
         raw_used=0
@@ -77,24 +64,32 @@ else
 fi
 
 # =========================================================
-# Scale and cap percentage
-# Scaling formula: used = (rawUsed / 80) * 100, capped at 100
-# This treats 80% of the context window as effectively "full"
-# to give a more actionable warning earlier.
+# Compute absolute token counts
+#
+# Claude Code reserves a fixed-size autocompact buffer that is
+# not exposed in the statusline JSON. The value below is derived
+# from /context output (33k tokens, independent of window size).
 # =========================================================
 
-used=$(echo "$raw_used" | awk '{
-    scaled = ($1 / 80) * 100
-    if (scaled > 100) scaled = 100
-    printf "%.0f", scaled
+AUTOCOMPACT_BUFFER_TOKENS=33000
+
+used_tokens=$(awk -v pct="$raw_used" -v size="$context_window_size" \
+    'BEGIN { printf "%.0f", (pct / 100) * size }')
+effective_tokens=$((context_window_size - AUTOCOMPACT_BUFFER_TOKENS))
+
+# Usage percentage relative to effective (usable) capacity, capped at 100
+used=$(awk -v u="$used_tokens" -v e="$effective_tokens" 'BEGIN {
+    pct = (u / e) * 100
+    if (pct > 100) pct = 100
+    printf "%.0f", pct
 }')
 
 # =========================================================
 # Debug log (written to stderr so it appears separately from status output)
 # =========================================================
 
->&2 printf "[statusline] mode=%s raw_used=%.2f%% scaled=%s%% total_input_tokens=%s\n" \
-    "$mode" "$raw_used" "$used" "$total_input_tokens"
+>&2 printf "[statusline] mode=%s used_tokens=%s effective_tokens=%s used=%s%%\n" \
+    "$mode" "$used_tokens" "$effective_tokens" "$used"
 
 # =========================================================
 # Build circle progress bar (10 circles, ● filled / ○ empty)
@@ -107,7 +102,7 @@ filled=$(echo "$used" | awk '{
 }')
 empty=$((10 - filled))
 
-# Choose color based on scaled percentage
+# Choose color based on effective usage percentage
 if   [ "$used" -ge 80 ]; then bar_color="$RED"
 elif [ "$used" -ge 70 ]; then bar_color="$ORANGE"
 elif [ "$used" -ge 60 ]; then bar_color="$YELLOW"
@@ -119,15 +114,21 @@ for ((i=0; i<filled; i++)); do bar="${bar}●"; done
 for ((i=0; i<empty;  i++)); do bar="${bar}○"; done
 
 # =========================================================
-# Helpful contextual message based on usage level
+# Compute human-readable token counts (used / effective capacity)
 # =========================================================
 
-if   [ "$used" -ge 100 ]; then hint="🔴 Context full — start a new session"
-elif [ "$used" -ge 80  ]; then hint="🟠 Getting crowded — consider /compact"
-elif [ "$used" -ge 60  ]; then hint="🟡 Halfway there"
-elif [ "$used" -ge 30  ]; then hint="🟢 Plenty of context left"
-else                           hint="✨ Fresh session"
-fi
+format_tokens() {
+    local tokens="$1"
+    if [ "$tokens" -ge 1000000 ]; then
+        awk -v t="$tokens" 'BEGIN { printf "%.1fM", t / 1000000 }'
+    elif [ "$tokens" -ge 1000 ]; then
+        awk -v t="$tokens" 'BEGIN { printf "%.0fk", t / 1000 }'
+    else
+        printf '%s' "$tokens"
+    fi
+}
+
+token_display="$(format_tokens "$used_tokens") / $(format_tokens "$effective_tokens")"
 
 # =========================================================
 # Shorten directory for display:
@@ -223,12 +224,12 @@ done
 
 # =========================================================
 # Render the status line
-# Format: [Model] │ [Directory]   [Bar] [%] [Hint]
+# Format: [Model] │ [Directory]   [Bar] [%] [Tokens]
 # =========================================================
 
-printf "${DIM}%s${RESET} │ ${DIM}%s${RESET}   ${bar_color}%s${RESET} ${DIM}%s%%${RESET}  %s\n" \
+printf "${DIM}%s${RESET} │ ${DIM}%s${RESET}   ${bar_color}%s${RESET} ${DIM}%s%%${RESET}  ${DIM}%s${RESET}\n" \
     "$model_name" \
     "$display_dir" \
     "$bar" \
     "$used" \
-    "$hint"
+    "$token_display"
