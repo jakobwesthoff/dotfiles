@@ -28,5 +28,6 @@ require("lazy").setup({
 
 -- Loading additional configs
 require("mrjakob.options")
+require("mrjakob.autocmds")
 require("mrjakob.keymaps")
 require("mrjakob.lastpos")
