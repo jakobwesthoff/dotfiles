@@ -12,30 +12,27 @@ return {
       -- LSP and notify updates in the down right corner
       {
         "j-hui/fidget.nvim",
-        -- Fidget's default window settings (winblend=100, normal_hl="Comment")
-        -- rely on Neovim's winblend compositor to make the floating window
-        -- transparent. This breaks with transparent colorscheme backgrounds
-        -- (gruvbox-material transparent=true) because both the float's Normal
-        -- and the underlying editor Normal have bg=NONE. Neovim's winblend
-        -- needs actual RGB values to blend; NONE is treated as black, producing
-        -- a visible black rectangle behind notifications.
+        -- Workaround for neovim/neovim#18576: `hl_blend_attrs()` in
+        -- `src/nvim/highlight.c` forces bg=NONE to -1 before calling
+        -- `rgb_blend()`, which produces black via bitwise arithmetic on
+        -- the negative value. With a transparent colorscheme (Normal
+        -- bg=NONE) this makes any floating window using winblend show a
+        -- black background instead of being transparent.
         --
-        -- Setting normal_hl="NormalFloat" gives the float a real bg (colors.bg3
-        -- via our gruvbox-material customize callback) and winblend=0 disables
-        -- blending entirely (which is pointless anyway when the underlying bg
-        -- is NONE — any winblend>0 just darkens toward black).
+        -- Fixed upstream in PR #34302 (merged June 2025, milestone 0.12).
+        -- Not backported to 0.11.x. Until we upgrade to 0.12, we use
+        -- normal_hl="NormalFloat" (has real bg via gruvbox-material
+        -- customize callback) and winblend=0 (blending is pointless when
+        -- the underlying bg is NONE anyway).
         --
-        -- Additionally, vim.o.winborder leaks into fidget's window on
-        -- reposition because fidget's nvim_win_set_config() call omits the
-        -- border field. A fix exists on the fork at
-        -- jakobwesthoff/fidget.nvim (fix/preserve-border-on-reposition) but
-        -- has not been upstreamed yet. Until then, winborder="rounded" will
-        -- cause fidget to show an unwanted border on every window update.
+        -- Separate issue: vim.o.winborder leaks into fidget's window on
+        -- reposition because fidget's `nvim_win_set_config()` omits the
+        -- border field. Fix on jakobwesthoff/fidget.nvim branch
+        -- fix/preserve-border-on-reposition, not yet upstreamed.
         --
-        -- TODO: Re-evaluate if any of the following change:
-        --   - Neovim fixes winblend compositing with bg=NONE backgrounds
-        --   - Fidget fixes the winborder leak in nvim_win_set_config reposition
-        --   - gruvbox-material changes how transparent mode handles float bg
+        -- TODO: Remove this workaround after upgrading to Neovim 0.12+
+        --   and revert to fidget defaults (winblend=100, normal_hl="Comment").
+        -- TODO: Upstream the fidget winborder reposition fix.
         opts = {
           notification = {
             override_vim_notify = true,
