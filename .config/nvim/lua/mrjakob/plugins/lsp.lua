@@ -15,6 +15,11 @@ return {
         opts = {
           notification = {
             override_vim_notify = true,
+            window = {
+              normal_hl = "NormalFloat",
+              winblend = 0,
+              border = "none",
+            },
           },
         },
       },
