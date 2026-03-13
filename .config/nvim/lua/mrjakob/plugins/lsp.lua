@@ -12,13 +12,36 @@ return {
       -- LSP and notify updates in the down right corner
       {
         "j-hui/fidget.nvim",
+        -- Fidget's default window settings (winblend=100, normal_hl="Comment")
+        -- rely on Neovim's winblend compositor to make the floating window
+        -- transparent. This breaks with transparent colorscheme backgrounds
+        -- (gruvbox-material transparent=true) because both the float's Normal
+        -- and the underlying editor Normal have bg=NONE. Neovim's winblend
+        -- needs actual RGB values to blend; NONE is treated as black, producing
+        -- a visible black rectangle behind notifications.
+        --
+        -- Setting normal_hl="NormalFloat" gives the float a real bg (colors.bg3
+        -- via our gruvbox-material customize callback) and winblend=0 disables
+        -- blending entirely (which is pointless anyway when the underlying bg
+        -- is NONE — any winblend>0 just darkens toward black).
+        --
+        -- Additionally, vim.o.winborder leaks into fidget's window on
+        -- reposition because fidget's nvim_win_set_config() call omits the
+        -- border field. A fix exists on the fork at
+        -- jakobwesthoff/fidget.nvim (fix/preserve-border-on-reposition) but
+        -- has not been upstreamed yet. Until then, winborder="rounded" will
+        -- cause fidget to show an unwanted border on every window update.
+        --
+        -- TODO: Re-evaluate if any of the following change:
+        --   - Neovim fixes winblend compositing with bg=NONE backgrounds
+        --   - Fidget fixes the winborder leak in nvim_win_set_config reposition
+        --   - gruvbox-material changes how transparent mode handles float bg
         opts = {
           notification = {
             override_vim_notify = true,
             window = {
               normal_hl = "NormalFloat",
               winblend = 0,
-              border = "none",
             },
           },
         },
