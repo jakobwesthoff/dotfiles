@@ -130,6 +130,14 @@ format_tokens() {
 
 token_display="$(format_tokens "$used_tokens") / $(format_tokens "$effective_tokens")"
 
+# Yellow warning when token usage exceeds 262k
+TOKEN_WARNING=262144
+if [ "$used_tokens" -ge "$TOKEN_WARNING" ]; then
+    token_color="${YELLOW}"
+else
+    token_color="${DIM}"
+fi
+
 # =========================================================
 # Shorten directory for display:
 #   1. Replace $HOME with ~
@@ -227,7 +235,7 @@ done
 # Format: [Model] │ [Directory]   [Bar] [%] [Tokens]
 # =========================================================
 
-printf "${DIM}%s${RESET} │ ${DIM}%s${RESET}   ${bar_color}%s${RESET} ${DIM}%s%%${RESET}  ${DIM}%s${RESET}\n" \
+printf "${DIM}%s${RESET} │ ${DIM}%s${RESET}   ${bar_color}%s${RESET} ${DIM}%s%%${RESET}  ${token_color}%s${RESET}\n" \
     "$model_name" \
     "$display_dir" \
     "$bar" \
