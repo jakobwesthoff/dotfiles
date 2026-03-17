@@ -50,6 +50,18 @@ during discussion.
 
 Run shell scripts through `shellcheck`.
 
+### Bash tool calls
+
+Prefer issuing separate Bash tool calls over chaining commands with
+`&&`, `;`, or `||`. Chained commands bypass blanket permission rules,
+forcing manual approval each time. Use chaining only when there is no
+practical alternative (e.g., a tight dependency where splitting calls
+would be incorrect).
+
+In addition please try to craft commands in order to NOT trigger those checks: 
+- Compound commands with cd and git require approval to prevent bare repository attacks
+  - This can be easily avoided using full paths or the `-C` option with git
+
 ### sed (macOS)
 
 Use the macOS-compatible invocation: `sed -e "s|PAT|REPL|g" -i file`.
@@ -63,14 +75,15 @@ generate multiple at once. Useful when creating documents in a
 directory that need a random but chronologically sortable prefix
 (e.g., todo files like `<ulid>-short-description.md`).
 
-### SESSION.md
+### Todos (`todos/` folder)
 
-While working, if you come across any bugs, missing features, or other
-oddities about the implementation, structure, or workflow, **add a
-concise description of them to SESSION.md** to defer solving such
-incidental tasks until later. You do not need to fix them all straight
-away unless they block your progress; writing them down is often
-sufficient. **Do not write your accomplishments into this file.**
+While working, if you come across any bugs or missing features create an entry
+in the `todos/` folder in the form `ulid-short-todo-description.md`. Todos
+should always be concise, but reflect all the topic relevant collected
+information as well discusisons and decisions regarding the matter, to defer it
+cleanly to a later time and date.
+
+Always inform the user before creating a todo if not specifically instructed to do so.
 
 ## Code Exploration
 
