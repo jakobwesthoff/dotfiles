@@ -28,6 +28,7 @@ cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // "?"')
 transcript_path=$(echo "$input" | jq -r '.transcript_path // ""')
 context_window_size=$(echo "$input" | jq -r '.context_window.context_window_size // 200000')
 used_pct_raw=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
+session_cost=$(echo "$input" | jq -r '.cost.total_cost_usd // 0')
 
 # =========================================================
 # Determine context usage percentage
@@ -139,6 +140,15 @@ else
 fi
 
 # =========================================================
+# Format session cost display
+# =========================================================
+
+cost_display=$(awk -v c="$session_cost" 'BEGIN {
+    if (c < 0.01) printf "$%.3f", c
+    else printf "$%.2f", c
+}')
+
+# =========================================================
 # Shorten directory for display:
 #   1. Replace $HOME with ~
 #   2. Abbreviate intermediate path components to the shortest
@@ -232,12 +242,13 @@ done
 
 # =========================================================
 # Render the status line
-# Format: [Model] │ [Directory]   [Bar] [%] [Tokens]
+# Format: [Model] │ [Directory]   [Bar] [%] [Tokens]  ([Cost])
 # =========================================================
 
-printf "${DIM}%s${RESET} │ ${DIM}%s${RESET}   ${bar_color}%s${RESET} ${DIM}%s%%${RESET}  ${token_color}%s${RESET}\n" \
+printf "${DIM}%s${RESET} │ ${DIM}%s${RESET}   ${bar_color}%s${RESET} ${DIM}%s%%${RESET}  ${token_color}%s${RESET}  ${DIM}(%s)${RESET}\n" \
     "$model_name" \
     "$display_dir" \
     "$bar" \
     "$used" \
-    "$token_display"
+    "$token_display" \
+    "$cost_display"
