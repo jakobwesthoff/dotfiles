@@ -1,0 +1,320 @@
+---
+name: patterns-and-practices
+description: Cherri best practices, efficiency tips, common patterns, compilation, signing, and anti-patterns
+metadata:
+  tags: cherri, best-practices, efficiency, signing, compilation, anti-patterns
+---
+
+## Efficiency at runtime
+
+### Clear unused outputs
+
+Add `nothing()` after actions whose output you won't use:
+
+```ruby
+someActionWithOutput()
+nothing()  // prevents output from consuming memory
+```
+
+Control flow blocks (`if`, `menu`, `for`, `repeat`) add `nothing()`
+automatically at the end.
+
+### Avoid large pre-defined arrays
+
+```ruby
+// SLOW — each item creates an Add to Variable action
+@items = ["a", "b", "c", "d", "e", "f", "g", "h"]
+
+// BETTER — use a dictionary if structure allows
+@data = {"items": ["a", "b", "c"]}
+
+// BEST — build incrementally when needed
+@items: array
+@items += computedValue()
+```
+
+### Prefer constants over variables
+
+Every `const` saves one Set Variable action compared to `@var`:
+
+```ruby
+// GOOD — 1 action (the action output itself)
+const result = someAction()
+show("{result}")
+
+// WORSE — 2 actions (action + Set Variable)
+@result = someAction()
+show("{@result}")
+```
+
+## Small file size
+
+### Use `nil` to skip optional arguments
+
+```ruby
+// GOOD — skips the optional arg, smaller output
+someAction(required, nil, "third")
+
+// WORSE — fills in the default explicitly
+someAction(required, "default", "third")
+```
+
+### Use type declarations instead of empty values
+
+```ruby
+// FAST compilation, no unnecessary action
+@builder: text
+
+// SLOW compilation, creates an empty Text action
+@builder = ""
+```
+
+### Use raw text when interpolation isn't needed
+
+```ruby
+// FASTER — skips interpolation parsing
+@msg = 'Hello, world!'
+
+// SLOWER — parses for {variables}
+@msg = "Hello, world!"
+```
+
+## Compilation
+
+### CLI usage
+
+```bash
+cherri input.cherri                      # Compile and sign (macOS)
+cherri input.cherri --hubsign            # Compile and sign via HubSign (non-macOS)
+cherri input.cherri --signing-server=URL # Custom signing server
+cherri input.cherri --debug              # Debug mode (stack traces, plist output)
+cherri input.cherri --open               # Open in Shortcuts after compile (macOS)
+cherri input.cherri --comments           # Include // comments as Shortcut comment actions
+cherri input.cherri --share=anyone       # Sign for public distribution (vs contacts-only default)
+cherri input.cherri --action=keyword     # Search available actions
+```
+
+### Signing
+
+- **macOS**: automatic via `/usr/bin/shortcuts sign`
+- **Non-macOS**: use `--hubsign` for the RoutineHub signing service, or
+  `--signing-server=URL` for a self-hosted
+  [shortcut-signing-server](https://github.com/scaxyz/shortcut-signing-server)
+- Unsigned shortcuts CANNOT be imported on iOS 15+ / macOS 12+
+
+Signing modes (macOS):
+- Default: `people-who-know-me` (contacts)
+- Public: use `--share=anyone` for broad distribution
+
+## Common patterns
+
+### HTTP API call with response handling
+
+```ruby
+#include 'actions/web'
+#include 'actions/scripting'
+
+@token = "my-token"
+const headers = {
+    "Authorization": "Bearer {@token}",
+    "Content-Type": "application/json"
+}
+const body = {"url": "{@pageUrl}"}
+
+const response = jsonRequest(@apiEndpoint, "POST", body, headers)
+const dict = getDictionary(response)
+const errorField = getValue(dict, "error")
+
+if errorField {
+    alert("Failed: {errorField}", "Error")
+} else {
+    showNotification("Saved!", "Success")
+}
+```
+
+### Extract URL from share sheet input
+
+```ruby
+#include 'actions/web'
+#include 'actions/scripting'
+
+#define inputs url, text
+#define from sharesheet
+
+// ShortcutInput may be a URL directly or text containing a URL
+const urls = getURLs(ShortcutInput)
+const pageUrl = getFirstItem(urls)
+
+if !pageUrl {
+    alert("No URL found in the shared content", "Error")
+    stop()
+}
+```
+
+Note: `getFirstItem()` requires `#include 'actions/scripting'`.
+
+### Dictionary manipulation
+
+```ruby
+#include 'actions/scripting'
+
+@dictVar = {
+    "key1": "value",
+    "key2": 5,
+    "key3": true
+}
+
+// Read
+@value = @dictVar['key1']              // bracket syntax (raw string only)
+@value = getValue(@dictVar, "key1")    // function (supports variable keys)
+
+// Write
+setValue(@dictVar, "key4", "new value")
+
+// Inspect
+@keys = getKeys(@dictVar)
+@values = getValues(@dictVar)
+```
+
+### Menu-based user interaction
+
+```ruby
+menu "What would you like to do?" {
+    item "Add Bookmark":
+        alert("Adding bookmark...")
+    item "Search":
+        alert("Searching...")
+    item "Cancel":
+        stop()
+}
+```
+
+### VCard menus (rich menus with images)
+
+```ruby
+#include 'stdlib'
+#include 'actions/scripting'
+#include 'actions/text'
+#include 'actions/web'
+
+const icon = embedFile("assets/icon.png")
+
+@items = []
+repeat i for 3 {
+    @items += makeVCard("Title {i}", "Subtitle {i}", icon)
+}
+@menuItems = "{@items}"
+@vcf = setName(@menuItems, "menu.vcf")
+@contact = @vcf.contact
+@chosenItem = chooseFromList(@contact, "Prompt")
+alert(@chosenItem, "You chose:")
+```
+
+### System setting toggles
+
+```ruby
+#include 'actions/settings'
+
+setBrightness(0.75)
+setVolume(0.5)
+DNDOn()
+DNDOff()
+lightMode()
+darkMode()
+```
+
+## Anti-patterns
+
+### FORBIDDEN: Wrong string interpolation syntax
+
+```ruby
+// FORBIDDEN — this is NOT JavaScript or shell
+@msg = "Hello, ${name}!"
+
+// CORRECT — use {varName} or {@varName}
+@msg = "Hello, {@name}!"
+```
+
+### Variable referencing — `@` prefix is optional
+
+Both bare names and `@`-prefixed forms work when referencing variables:
+
+```ruby
+// Both are valid:
+alert(message, "Title")
+alert(@message, "Title")
+```
+
+Constants always use bare names (no `@`).
+
+### FORBIDDEN: Missing includes
+
+```ruby
+// FORBIDDEN — will fail to compile
+const response = jsonRequest("https://api.example.com", "POST", body)
+
+// CORRECT — include the action category first
+#include 'actions/web'
+const response = jsonRequest("https://api.example.com", "POST", body)
+```
+
+### FORBIDDEN: Using `@var` for immutable values
+
+```ruby
+// FORBIDDEN — wastes an action
+@url = "https://api.example.com"
+
+// CORRECT — use const for values that don't change
+const url = "https://api.example.com"
+```
+
+### NEVER: Inline import question identifiers in strings
+
+```ruby
+// NEVER — import questions cannot be inlined
+#question token "Token" ""
+const header = "Bearer {token}"  // WILL NOT WORK
+
+// CORRECT — store in a Text action first
+#question token "Token" ""
+const tokenValue = text(token)
+const header = "Bearer {tokenValue}"
+```
+
+Import questions can only be used ONCE as a direct action argument:
+
+```ruby
+#question name "What is your name?" "Brandon"
+#question age "What is your age?" "24"
+
+alert(name, "Name")  // direct action argument — OK
+alert(age, "Age")    // direct action argument — OK
+```
+
+### NEVER: Mix AND and OR conditions
+
+```ruby
+// NEVER — Shortcuts only supports all-AND or all-OR
+if @a == "x" && @b == "y" || @c == "z" {
+    // compiler error
+}
+
+// CORRECT — nest if needed
+if @a == "x" && @b == "y" {
+    if @c == "z" {
+        // ...
+    }
+}
+```
+
+### NEVER: Use bracket syntax on constants
+
+```ruby
+// NEVER — bracket syntax only works on variables
+const dict = {"key": "value"}
+const val = dict['key']  // WRONG
+
+// CORRECT — use getValue for constants
+const val = getValue(dict, "key")
+```
+

@@ -1,0 +1,244 @@
+---
+name: actions-and-includes
+description: How the include system, action definitions, raw actions, stdlib, and copy/paste macros work in Cherri
+metadata:
+  tags: cherri, actions, includes, http, stdlib, raw-actions, custom-actions
+---
+
+## Include system
+
+Actions outside the basic category require explicit includes:
+
+```ruby
+#include 'actions/web'        // HTTP requests, URLs, Safari
+#include 'actions/scripting'  // dictionaries, lists, apps, numbers
+#include 'actions/text'       // text manipulation, regex, rich text
+#include 'actions/network'    // IP, WiFi, cellular, SSH
+#include 'actions/sharing'    // share sheet, clipboard, email, SMS
+#include 'actions/device'     // device details, battery
+#include 'actions/documents'  // file operations
+#include 'actions/location'   // GPS, maps
+#include 'actions/settings'   // brightness, volume, DND, appearance
+#include 'actions/images'     // image editing, GIFs
+#include 'actions/photos'     // photo library
+#include 'actions/music'      // Apple Music playback
+#include 'actions/media'      // audio, video, camera, Shazam
+#include 'actions/calendar'   // events, reminders, dates
+#include 'actions/contacts'   // contacts, phone
+#include 'actions/crypto'     // base64, hashing
+#include 'actions/shortcuts'  // run/manage shortcuts
+#include 'actions/intelligence' // Apple Intelligence, LLMs
+#include 'actions/translation'  // translate text
+#include 'actions/pdf'        // PDF creation, splitting
+#include 'actions/math'       // calculations, statistics
+#include 'actions/mac'        // macOS-only (shell scripts, windows)
+#include 'actions/a11y'       // accessibility settings
+#include 'actions/dropbox'    // Dropbox file saving
+#include 'stdlib'             // standard library functions (runJS, etc.)
+```
+
+NEVER call an action without its include — the compiler will throw an
+"undefined action" error.
+
+For complete action signatures per category, see the action catalog files.
+
+### Including Cherri files
+
+```ruby
+#include 'path/to/file.cherri'
+```
+
+- File must exist and have `.cherri` extension
+- Each file can only be included once
+- Use `..` for parent directory paths
+
+## Key usage patterns
+
+### HTTP requests
+
+```ruby
+#include 'actions/web'
+
+const headers = {
+    "Authorization": "Bearer {token}",
+    "Content-Type": "application/json"
+}
+const body = {"url": "{pageUrl}"}
+
+// JSON POST (most common for APIs)
+const response = jsonRequest("https://api.example.com", "POST", body, headers)
+
+// GET request
+const data = downloadURL("https://api.example.com/data", headers)
+```
+
+Methods: `POST`, `PUT`, `PATCH`, `DELETE`. GET uses `downloadURL()`.
+
+Note the `dictionary!` type on HTTP action params — headers and body
+require **literal dictionary values** (inline dicts or constants), not
+`@` variable references.
+
+### Dictionaries
+
+```ruby
+#include 'actions/scripting'
+
+@dictVar = {"key1": "value", "count": 5}
+
+// Bracket syntax (raw string key only, variables only — NOT constants)
+@val = dictVar['key1']
+
+// getValue (supports variable keys, works with constants)
+const dict = {"key": "value"}
+const val = getValue(dict, "key")
+
+// Modify and inspect
+setValue(dictVar, "newKey", "newValue")
+@keys = getKeys(dictVar)
+@values = getValues(dictVar)
+```
+
+### Lists
+
+```ruby
+#include 'actions/scripting'
+
+@listVar = list("Item 1", "Item 2", "Item 3")
+const first = getFirstItem(listVar)
+const second = getListItem(listVar, 2)  // 1-indexed!
+```
+
+IMPORTANT: Shortcuts list indexes start at 1, not 0.
+
+## Custom action definitions
+
+For actions not built into Cherri, define them with the raw identifier
+and parameter-key mappings:
+
+```ruby
+enum callType {
+    'Audio',
+    'Video'
+}
+
+action 'com.apple.facetime.facetime' callOnFaceTime(
+    variable contact: 'WFFaceTimeContact',
+    callType type: 'WFFaceTimeType' = "Video"
+)
+
+callOnFaceTime(Ask, "Audio")
+```
+
+### Definition syntax
+
+```
+action [attributes] ['identifier'] actionName(
+    type[!] [?]paramName: 'WFParameterKey' [= default]
+) [: outputType] [{ extra params }]
+```
+
+Attributes (optional, after `action`):
+- `default` — preferred definition when multiple share same identifier
+- `mac` / `!mac` — platform restriction
+- `v17` — minimum iOS version
+
+The `!` after type means literal value required (not variable).
+The `?` before param name means optional.
+
+### Identifier shorthand
+
+Actions starting with `is.workflow.actions` can omit the prefix:
+
+```ruby
+action 'is.workflow.actions.alert' ...
+action 'alert' ...  // equivalent
+```
+
+### Extra fixed parameters
+
+```ruby
+action 'downloadurl' jsonRequest(
+    text url: 'WFURL',
+    HTTPMethod ?method: 'WFHTTPMethod',
+    dictionary! ?body: 'WFJSONValues',
+    dictionary! ?headers: 'WFHTTPHeaders',
+) {
+    "WFHTTPBodyType": "JSON"
+}
+```
+
+## Raw actions (one-off, no reusable definition)
+
+```ruby
+rawAction("is.workflow.actions.alert", {
+    "WFAlertActionMessage": "Hello, world!",
+    "WFAlertActionTitle": "Alert"
+})
+```
+
+For variable values in raw action parameters, use the `${}` prefix:
+
+```ruby
+@file = nil
+rawAction("is.workflow.actions.documentpicker.save", {
+    "WFInput": "${file}"
+})
+```
+
+`${}` is ONLY for raw action variable references. NEVER use it for
+normal string interpolation.
+
+## Compiler built-in actions (always available)
+
+These are built into the compiler — no `#include` needed:
+
+```ruby
+// Embed a file as base64 at compile time
+const audioFile = embedFile("path/to/file.mp3")
+
+// Create vCard items (for rich menus with images)
+const card = makeVCard("Title", "Subtitle")
+const cardWithIcon = makeVCard("Title", "Subtitle", iconImage)
+
+// Text action — critical for storing import question values
+const val = text(someInput)
+```
+
+## Standard library functions (`stdlib`)
+
+Higher-level functions built on standard actions:
+
+```ruby
+#include 'stdlib'
+
+// Run JavaScript in a web view
+@jsResult = runJS("console.log('hello')")
+
+// Choose from vCard-styled list (rich menu with icons)
+@items = []
+repeat i for 3 {
+    @items += makeVCard("Title {i}", "Subtitle {i}")
+}
+@choice = chooseFromVCard(items, "Prompt")
+```
+
+The stdlib internally uses actions from `actions/text`, `actions/web`,
+and `actions/scripting`. The compiler resolves these — you typically
+only need `#include 'stdlib'`.
+
+## Copy/paste macros
+
+Reusable code blocks without function overhead:
+
+```ruby
+copy carbon {
+    alert("Hello, Cherri!")
+}
+
+paste carbon
+paste carbon
+```
+
+Use pastables for code reuse WITHOUT arguments. Use functions when you
+need arguments. Pastables duplicate actions at each paste site; functions
+add overhead upfront but reuse efficiently.
