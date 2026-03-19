@@ -42,10 +42,27 @@ cherri --glyph=bookmark --no-ansi
 Use `--no-ansi` with `--action`, `--docs`, and `--glyph` to get clean
 output. Do NOT use `--no-ansi` when compiling `.cherri` files.
 
-Note: `--action` and `--docs` do NOT show which `#include` an action
-belongs to. If unsure, search the docs categories one at a time with
-separate commands — do NOT chain multiple cherri calls into a single
-shell command.
+Substring search: `--action=` accepts partial names and suggests matches:
+
+```bash
+cherri --action=random --no-ansi
+```
+
+This returns `randomNumber`, `getRandomItem`, etc. Use this when you
+don't know the exact action name.
+
+### Caveats about `--docs` and `--action`
+
+- `--action` and `--docs` do NOT show which `#include` an action
+  belongs to. If unsure, search the docs categories one at a time with
+  separate commands — do NOT chain multiple cherri calls into one.
+- Some actions do not appear in `--docs` category output at all (e.g.,
+  `randomNumber` is missing from every category). Use `--action=name`
+  as fallback to confirm an action exists and get its signature.
+- When the compiler reports "requires include: `#include 'actions/X'`"
+  in an error, the suggested include may be wrong — it sometimes cycles
+  through incorrect suggestions. Try `#include 'actions/scripting'`
+  first as a fallback for actions that seem miscategorized.
 
 ## Include system
 
@@ -127,18 +144,24 @@ require **literal dictionary values** (inline dicts or constants), not
 
 @dictVar = {"key1": "value", "count": 5}
 
-// Bracket syntax (raw string key only, variables only — NOT constants)
+// Bracket syntax — key MUST be a literal string, dict MUST be a variable
 @val = dictVar['key1']
 
-// getValue (supports variable keys, works with constants)
+// getValue — works with both variables and constants for the dict,
+// and supports variable keys (not just literal strings)
 const dict = {"key": "value"}
 const val = getValue(dict, "key")
+@val2 = getValue(dictVar, someKeyVar)
 
 // Modify and inspect
 setValue(dictVar, "newKey", "newValue")
 @keys = getKeys(dictVar)
 @values = getValues(dictVar)
 ```
+
+Use `getValue` when: the dictionary is a `const`, OR the key is a
+runtime variable. Use bracket syntax only for `@var` dicts with
+literal string keys.
 
 ### Lists
 

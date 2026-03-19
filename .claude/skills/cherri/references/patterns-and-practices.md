@@ -242,6 +242,31 @@ lightMode()
 darkMode()
 ```
 
+### Date difference (days between two dates)
+
+There is no `getTimeBetweenDates` action. Use Unix epoch seconds via
+custom date formatting to calculate differences:
+
+```ruby
+#include 'actions/calendar'
+
+const eventDate = date("2025-12-25")
+@now = CurrentDate
+
+// Format as Unix epoch seconds (custom format "U")
+const eventSec = formatDate(eventDate, "Custom", "U")
+const nowSec = formatDate(@now, "Custom", "U")
+
+// Convert to numbers and compute difference in days
+@eventNum: number
+@eventNum = number(eventSec)
+@nowNum: number
+@nowNum = number(nowSec)
+
+@days = @eventNum / 86400 - @nowNum / 86400
+alert("{@days} days until event", "Countdown")
+```
+
 ## Compiler quirks and workarounds
 
 These are known compiler behaviors that differ from what you might expect.

@@ -25,9 +25,10 @@ Variables create a **Set Variable** action in Shortcuts. They are mutable.
 
 ### Referencing variables
 
-When referencing a variable, both the bare name and `@`-prefixed form work
-interchangeably — in action arguments, conditions, interpolation, and
-expressions. The official docs use bare names; the test suite uses `@`:
+Both the bare name and `@`-prefixed form work when referencing variables.
+However, the compiler emits deprecation warnings for bare names
+("Prefix variable reference with @ for compilation speed"), so prefer
+the `@` form to avoid noisy output:
 
 ```ruby
 @textVar = "test"
