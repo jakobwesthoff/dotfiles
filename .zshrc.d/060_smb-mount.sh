@@ -11,7 +11,7 @@ smb-mount() {
 
     for share in "$@"; do
         echo "Mounting //$username@$host/$share"
-        osascript -e 'mount volume "smb://'"$username"'@'"$host"'/'"$share"'"'
+        osascript -e 'mount volume "smb://'"$username"'@'"$host"'/'"$share"'"' >/dev/null
     done
 
     if [ "$#" -eq 1 ]; then
