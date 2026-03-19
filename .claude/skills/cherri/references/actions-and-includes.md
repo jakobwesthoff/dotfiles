@@ -1,9 +1,48 @@
 ---
 name: actions-and-includes
-description: How the include system, action definitions, raw actions, stdlib, and copy/paste macros work in Cherri
+description: How to discover actions via CLI, the include system, action definitions, raw actions, stdlib, and copy/paste macros
 metadata:
   tags: cherri, actions, includes, http, stdlib, raw-actions, custom-actions
 ---
+
+## Discovering actions via CLI
+
+The `cherri` compiler has built-in documentation. ALWAYS use these
+commands to look up action signatures — they reflect the exact version
+installed.
+
+Look up a specific action by name:
+
+```bash
+cherri --action=jsonRequest --no-ansi
+```
+
+Browse all actions in a category:
+
+```bash
+cherri --docs=web --no-ansi
+```
+
+Available categories: `basic`, `web`, `scripting`, `text`, `documents`,
+`calendar`, `contacts`, `crypto`, `sharing`, `shortcuts`, `intelligence`,
+`translation`, `pdf`, `math`, `mac`, `images`, `photos`, `music`,
+`media`, `network`, `device`, `settings`, `location`, `a11y`, `dropbox`.
+
+Filter a category by subcategory:
+
+```bash
+cherri --docs=web --subcat=HTTP --no-ansi
+```
+
+Search for glyphs:
+
+```bash
+cherri --glyph=bookmark --no-ansi
+```
+
+ALWAYS use `--no-ansi` to get clean markdown output without ANSI escape
+codes. Note: `--action` exits with code 1 even on success — ignore the
+exit code.
 
 ## Include system
 
@@ -16,14 +55,14 @@ Actions outside the basic category require explicit includes:
 #include 'actions/network'    // IP, WiFi, cellular, SSH
 #include 'actions/sharing'    // share sheet, clipboard, email, SMS
 #include 'actions/device'     // device details, battery
-#include 'actions/documents'  // file operations
-#include 'actions/location'   // GPS, maps
+#include 'actions/documents'  // file operations, notes, QR codes
+#include 'actions/location'   // GPS, maps, weather
 #include 'actions/settings'   // brightness, volume, DND, appearance
 #include 'actions/images'     // image editing, GIFs
 #include 'actions/photos'     // photo library
 #include 'actions/music'      // Apple Music playback
 #include 'actions/media'      // audio, video, camera, Shazam
-#include 'actions/calendar'   // events, reminders, dates
+#include 'actions/calendar'   // events, reminders, dates, timers
 #include 'actions/contacts'   // contacts, phone
 #include 'actions/crypto'     // base64, hashing
 #include 'actions/shortcuts'  // run/manage shortcuts
@@ -38,9 +77,9 @@ Actions outside the basic category require explicit includes:
 ```
 
 NEVER call an action without its include — the compiler will throw an
-"undefined action" error.
-
-For complete action signatures per category, see the action catalog files.
+"undefined action" error. When unsure which include an action needs,
+use `cherri --action=actionName --no-ansi` — the output shows the
+category.
 
 ### Including Cherri files
 
@@ -109,6 +148,25 @@ const second = getListItem(listVar, 2)  // 1-indexed!
 ```
 
 IMPORTANT: Shortcuts list indexes start at 1, not 0.
+
+### Quantity fields (`qty()` syntax)
+
+Some actions use quantity-typed parameters prefixed with `#`. These
+require the `qty(value, unit)` constructor:
+
+```ruby
+#include 'actions/calendar'
+
+// The # prefix on the type marks it as a quantity field
+startTimer(qty(25, "min"))
+
+// adjustDate uses #dateUnit
+adjustDate(date, "Add", qty(7, "days"))
+```
+
+The available units depend on the enum for that quantity field. Use
+`cherri --action=actionName --no-ansi` to see the exact type and
+allowed values.
 
 ## Custom action definitions
 

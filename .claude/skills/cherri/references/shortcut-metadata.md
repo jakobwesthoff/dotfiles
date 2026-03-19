@@ -23,10 +23,19 @@ Available colors: `red`, `darkorange`, `orange`, `yellow`, `green`, `teal`,
 #define glyph bookmark
 ```
 
-Browse all glyph identifiers at [glyphs.cherrilang.org](https://glyphs.cherrilang.org/).
+Browse glyphs at [glyphs.cherrilang.org](https://glyphs.cherrilang.org/)
+or search via CLI:
 
-Common glyphs: `bookmark`, `bookmarkFill`, `link`, `globe`, `star`,
-`paperplane`, `squareAndArrowUp`, `plus`, `checkmark`, `magnifyingglass`.
+```bash
+cherri --glyph=bookmark --no-ansi
+```
+
+Verified glyphs: `bookmark`, `globe`, `star`, `smileyFace`,
+`chainlink`, `airplane`, `paperAirplane`, `checklist`,
+`circledCheckmark`, `circledPlus`.
+
+NEVER guess glyph names from SF Symbols — Cherri uses its own
+identifiers. Always verify with `cherri --glyph=name --no-ansi`.
 
 ## Input and output types
 

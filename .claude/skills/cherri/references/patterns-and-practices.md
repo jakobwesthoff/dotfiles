@@ -223,6 +223,75 @@ lightMode()
 darkMode()
 ```
 
+## Compiler quirks and workarounds
+
+These are known compiler behaviors that differ from what you might expect.
+
+### Action return values need explicit coercion for comparisons
+
+Action outputs cannot be used directly in numeric comparisons. Wrap them
+with `number()` and store in a typed variable:
+
+```ruby
+#include 'actions/device'
+
+// WRONG — compiler rejects action output in comparison
+const level = getBatteryLevel()
+if level < 20 {}
+
+// CORRECT — coerce and store in typed variable
+@level: number
+@level = number(getBatteryLevel())
+if @level < 20 {}
+```
+
+### Boolean-returning actions must use `@var`, not `const`
+
+Some actions that return booleans (e.g., `isCharging()`,
+`connectedToCharger()`) crash the compiler when assigned to `const`.
+Always use `@var`:
+
+```ruby
+// WRONG — compiler panic
+const charging = isCharging()
+
+// CORRECT
+@charging = isCharging()
+```
+
+### Avoid calling the same detail-getter multiple times in one expression
+
+Calling actions like `getWeatherDetail()` multiple times on the same
+source variable can crash the compiler. Workaround: interleave each
+call with a variable append:
+
+```ruby
+// WRONG — may crash
+@msg = "Temp: {getWeatherDetail(weather, "Temperature")} Wind: {getWeatherDetail(weather, "Wind Speed")}"
+
+// CORRECT — serialize calls via variable building
+@msg: text
+@temp = getWeatherDetail(weather, "Temperature")
+@msg += "Temp: {@temp}\n"
+@wind = getWeatherDetail(weather, "Wind Speed")
+@msg += "Wind: {@wind}"
+```
+
+### `runShellScript()` requires `input` even when unused
+
+The `input` parameter is not optional. Pass `nil` when no stdin is needed:
+
+```ruby
+#include 'actions/mac'
+
+@output = runShellScript("ls -la", nil)
+```
+
+### `detectLanguage()` returns human-readable names
+
+Returns `"English"`, `"German"`, etc. — NOT locale codes like `en_US`.
+But `translate()` uses locale codes for `to`/`from`. Plan accordingly.
+
 ## Anti-patterns
 
 ### FORBIDDEN: Wrong string interpolation syntax
@@ -306,6 +375,20 @@ if @a == "x" && @b == "y" {
     }
 }
 ```
+
+### NEVER: Nest action calls as arguments
+
+```ruby
+// NEVER — crashes the compiler
+@chosen = chooseFromList(list("A", "B", "C"), "Pick one")
+
+// CORRECT — assign to variable first, then pass
+@items = list("A", "B", "C")
+@chosen = chooseFromList(items, "Pick one")
+```
+
+Always assign action results to a variable or constant before passing
+them as arguments to another action.
 
 ### NEVER: Use bracket syntax on constants
 

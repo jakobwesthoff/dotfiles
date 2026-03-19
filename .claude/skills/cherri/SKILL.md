@@ -64,20 +64,23 @@ show("{myConst}")
 - [references/patterns-and-practices.md](references/patterns-and-practices.md) — Best practices, efficiency tips, common patterns, compilation, signing, anti-patterns
 - [references/share-sheet-shortcut.md](references/share-sheet-shortcut.md) — Complete pattern for building a share sheet bookmark shortcut with API integration
 
-## Action catalog
+## Looking up actions
 
-Complete action signatures and include requirements, organized by domain:
+ALWAYS use the `cherri` CLI to look up action signatures — it reflects
+the exact compiler version installed and is the source of truth.
 
-- [references/actions-basic.md](references/actions-basic.md) — Core actions (no include needed): output, alerts, prompts, count, search
-- [references/actions-web.md](references/actions-web.md) — HTTP requests, URLs, Safari, RSS, Giphy
-- [references/actions-scripting.md](references/actions-scripting.md) — Dictionaries, lists, numbers, passwords
-- [references/actions-text.md](references/actions-text.md) — Text manipulation, regex, rich text, dictation, speech
-- [references/actions-files.md](references/actions-files.md) — File operations, archives, notes, QR codes, Dropbox
-- [references/actions-datetime.md](references/actions-datetime.md) — Calendar events, reminders, dates, timers, formatting
-- [references/actions-contacts.md](references/actions-contacts.md) — Contacts, phone, sharing, clipboard, email, SMS, AirDrop
-- [references/actions-images.md](references/actions-images.md) — Image editing, GIFs, photo library
-- [references/actions-audio-video.md](references/actions-audio-video.md) — Music playback, audio/video recording, camera, Shazam, podcasts
-- [references/actions-device.md](references/actions-device.md) — Device info, settings, network, location, weather, accessibility
-- [references/actions-ai.md](references/actions-ai.md) — Apple Intelligence LLMs, Writing Tools, translation
-- [references/actions-math-crypto.md](references/actions-math-crypto.md) — Math, statistics, rounding, hashing, base64, PDF
-- [references/actions-macos.md](references/actions-macos.md) — macOS-only: shell scripts, AppleScript, windows, Shortcuts management
+```bash
+# Look up a specific action
+cherri --action=jsonRequest --no-ansi
+
+# Browse all actions in a category
+cherri --docs=web --no-ansi
+
+# Search for a glyph
+cherri --glyph=bookmark --no-ansi
+```
+
+Categories: `basic`, `web`, `scripting`, `text`, `documents`, `calendar`,
+`contacts`, `crypto`, `sharing`, `shortcuts`, `intelligence`, `translation`,
+`pdf`, `math`, `mac`, `images`, `photos`, `music`, `media`, `network`,
+`device`, `settings`, `location`, `a11y`, `dropbox`.
