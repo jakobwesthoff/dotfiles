@@ -81,17 +81,36 @@ someAction(required, "default", "third")
 
 ## Compilation
 
+### CLI hygiene
+
+When invoking `cherri` from Claude Code, follow these rules to avoid
+permission issues:
+
+- ALWAYS write `.cherri` source to a file first, then compile from the
+  file path. NEVER pipe source code into the compiler.
+- ALWAYS issue each `cherri` invocation as its own separate Bash tool
+  call. NEVER chain multiple `cherri` calls with `;`, `&&`, or `|`.
+- NEVER append shell constructs like `2>&1`, `2>/dev/null`,
+  `; echo "exit:$?"`, or `; echo "---DONE---"` to cherri commands.
+  These trigger permission prompts. Just run the bare command.
+- NEVER use `for` loops or other shell constructs to iterate over
+  multiple `cherri` calls. Issue them as separate Bash tool calls.
+- Use `--no-ansi` ONLY with `--action`, `--docs`, and `--glyph` lookups.
+  Do NOT use `--no-ansi` when compiling `.cherri` files.
+- Silent output (no stdout, exit code 0) means compilation succeeded.
+  Error messages appear on stdout when compilation fails.
+
 ### CLI usage
 
 ```bash
 cherri input.cherri                      # Compile and sign (macOS)
+cherri input.cherri --skip-sign          # Compile without signing
 cherri input.cherri --hubsign            # Compile and sign via HubSign (non-macOS)
 cherri input.cherri --signing-server=URL # Custom signing server
 cherri input.cherri --debug              # Debug mode (stack traces, plist output)
 cherri input.cherri --open               # Open in Shortcuts after compile (macOS)
 cherri input.cherri --comments           # Include // comments as Shortcut comment actions
 cherri input.cherri --share=anyone       # Sign for public distribution (vs contacts-only default)
-cherri input.cherri --action=keyword     # Search available actions
 ```
 
 ### Signing
@@ -291,6 +310,80 @@ The `input` parameter is not optional. Pass `nil` when no stdin is needed:
 
 Returns `"English"`, `"German"`, etc. — NOT locale codes like `en_US`.
 But `translate()` uses locale codes for `to`/`from`. Plan accordingly.
+
+### Strict `number` vs `float` type separation
+
+`number` means integer, `float` means decimal. The compiler enforces
+this strictly in both directions:
+
+```ruby
+// WRONG
+wait(0.2)           // number param rejects float literal
+setBrightness(1)    // float param rejects integer literal
+
+// CORRECT
+wait(1)             // integer for number param
+setBrightness(1.0)  // decimal for float param
+```
+
+### Globals cannot be assigned to `const`
+
+`ShortcutInput`, `CurrentDate`, `Clipboard`, `Device` are variable
+references, not action outputs. They must use `@var`:
+
+```ruby
+// WRONG — "Type variable values cannot be constants"
+const input = ShortcutInput
+
+// CORRECT
+@input = ShortcutInput
+```
+
+### `#include 'actions/music'` may be broken
+
+The `seek` action definition references `timerDuration` as an unknown
+type, causing the entire include to fail. Workaround: define only the
+needed music actions manually:
+
+```ruby
+action 'is.workflow.actions.getmusicdetail' getMusicDetail(
+    variable music: 'WFInput',
+    text! detail: 'WFMusicDetailType'
+)
+```
+
+### Curly braces in strings are always parsed as references
+
+Both double-quoted and single-quoted strings treat `{N}` as a variable
+reference attempt. This means regex quantifiers like `{50}` are
+unusable in string literals — use character classes or loops instead.
+
+### Menu item bodies must be statements
+
+Bare string literals in menu items fail. Use variable assignment or
+action calls:
+
+```ruby
+// WRONG — "Illegal character"
+menu "Pick" {
+    item "A":
+        "Hello"
+}
+
+// CORRECT
+@result: text
+menu "Pick" {
+    item "A":
+        @result = "Hello"
+}
+```
+
+### No `break` statement in loops
+
+Loops always run to completion. Use a counter variable with an `if`
+guard to skip iterations after a condition is met.
+
+### `speak()` is in `actions/text`, not `actions/media`
 
 ## Anti-patterns
 

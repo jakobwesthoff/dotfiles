@@ -7,9 +7,8 @@ metadata:
 
 ## Discovering actions via CLI
 
-The `cherri` compiler has built-in documentation. ALWAYS use these
-commands to look up action signatures — they reflect the exact version
-installed.
+The `cherri` compiler has built-in documentation. Use these commands to
+look up action signatures — they reflect the exact version installed.
 
 Look up a specific action by name:
 
@@ -40,9 +39,13 @@ Search for glyphs:
 cherri --glyph=bookmark --no-ansi
 ```
 
-ALWAYS use `--no-ansi` to get clean markdown output without ANSI escape
-codes. Note: `--action` exits with code 1 even on success — ignore the
-exit code.
+Use `--no-ansi` with `--action`, `--docs`, and `--glyph` to get clean
+output. Do NOT use `--no-ansi` when compiling `.cherri` files.
+
+Note: `--action` and `--docs` do NOT show which `#include` an action
+belongs to. If unsure, search the docs categories one at a time with
+separate commands — do NOT chain multiple cherri calls into a single
+shell command.
 
 ## Include system
 
