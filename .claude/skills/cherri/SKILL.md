@@ -37,19 +37,17 @@ Cherri looks like a C-style scripting language with these key differences:
 
 ## Variable referencing
 
-Variables are declared with `@` prefix. When referencing them later (in
-action arguments, conditions, string interpolation), both the bare name
-and `@`-prefixed form work:
+Variables are declared with `@` prefix. When referencing them later,
+both bare name and `@`-prefixed form work, but the compiler prefers `@`
+(bare names produce deprecation warnings):
 
 ```ruby
 @myVar = "hello"
 const myConst = "hello"
 
-// Both forms work for variables:
-alert(myVar, "Title")       // bare name
-alert(@myVar, "Title")      // @prefix — also valid
-show("{myVar}")             // interpolation without @
-show("{@myVar}")            // interpolation with @ — also valid
+// Prefer @prefix for variables (avoids deprecation warnings):
+alert(@myVar, "Title")
+show("{@myVar}")
 
 // Constants always use bare name:
 alert(myConst, "Title")
@@ -59,9 +57,11 @@ show("{myConst}")
 ## Reference files
 
 - [references/language-fundamentals.md](references/language-fundamentals.md) — Variables, constants, types, control flow, functions, string interpolation, globals
-- [references/actions-and-includes.md](references/actions-and-includes.md) — Standard library actions, includes, HTTP requests, action definitions, stdlib
+- [references/actions-and-includes.md](references/actions-and-includes.md) — Include system, CLI action discovery, custom action definitions, raw actions, stdlib, copy/paste macros
 - [references/shortcut-metadata.md](references/shortcut-metadata.md) — #define directives, import questions, input/output types, share sheet config
-- [references/patterns-and-practices.md](references/patterns-and-practices.md) — Best practices, efficiency tips, common patterns, compilation, signing, anti-patterns
+- [references/common-patterns.md](references/common-patterns.md) — Reusable code patterns: HTTP, menus, dictionaries, dates, share sheet, lists
+- [references/patterns-and-practices.md](references/patterns-and-practices.md) — Best practices, efficiency tips, compilation, CLI hygiene, anti-patterns
+- [references/compiler-quirks.md](references/compiler-quirks.md) — Known compiler bugs and workarounds (read when debugging unexpected compile errors)
 - [references/share-sheet-shortcut.md](references/share-sheet-shortcut.md) — Complete pattern for building a share sheet bookmark shortcut with API integration
 
 ## Looking up actions
