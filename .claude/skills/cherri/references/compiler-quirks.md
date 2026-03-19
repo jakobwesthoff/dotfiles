@@ -166,6 +166,63 @@ are the known photo actions (look up signatures with `--action=`):
 `getLatestVideos`, `getLatestScreenshots`, `getLatestBursts`,
 `getLatestLivePhotos`, `removeFromAlbum`.
 
+## `variable` typed params reject string literals
+
+Some action parameters are typed `variable` (not `text`), meaning they
+require a variable/constant reference, not a string literal. Store the
+value in a `@var` first:
+
+```ruby
+// WRONG — hash() takes variable input, not a string literal
+const h = hash("my text", "SHA256")
+
+// CORRECT
+@text = "my text"
+const h = hash(@text, "SHA256")
+```
+
+Similarly, `sendEmail()` requires a `variable` for the contact param.
+Use `emailAddress()` to create the right type:
+
+```ruby
+#include 'actions/sharing'
+
+const recipientText = prompt("Email:")
+const recipient = emailAddress("{recipientText}")
+sendEmail(recipient, "", "Subject", "Body", false, true)
+```
+
+## Custom action definitions for missing functionality
+
+When a built-in action doesn't accept the parameters you need, define
+a custom action binding with the raw Shortcuts identifier:
+
+```ruby
+// addQuickReminder() takes no args — useless for setting title
+// Define a custom binding with the WFInput parameter:
+action 'is.workflow.actions.addnewreminder' addNewReminder(
+    text title: 'WFInput'
+)
+
+addNewReminder("Buy groceries")
+```
+
+Find Shortcuts action identifiers by inspecting existing shortcuts or
+searching online. The `action 'identifier' name(...)` syntax lets you
+bind any parameter key.
+
+## Output filename derives from `#define name`
+
+The compiled filename is always based on `#define name`, not the source
+filename. With `--skip-sign`, `_unsigned` is appended. The `-o` flag
+does not override this.
+
+## `showNotification` needs no include
+
+`showNotification()` is in the basic category — no `#include` needed.
+This is easy to confuse since `setClipboard()`, `share()`, and other
+similar "output" actions require `#include 'actions/sharing'`.
+
 ## Some actions are missing from `--docs` output
 
 Not all actions appear when browsing categories with `--docs=`. For
