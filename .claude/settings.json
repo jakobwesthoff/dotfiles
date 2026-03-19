@@ -21,6 +21,5 @@
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
-  "voiceEnabled": true,
-  "model": "sonnet"
+  "voiceEnabled": false
 }

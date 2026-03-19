@@ -62,6 +62,13 @@ In addition please try to craft commands in order to NOT trigger those checks:
 - Compound commands with cd and git require approval to prevent bare repository attacks
   - This can be easily avoided using full paths or the `-C` option with git
 
+### Reading line ranges
+
+To extract a specific range of lines from a file, use the Read tool with
+`offset` and `limit` parameters instead of shelling out to `sed`, `awk`,
+or `head`/`tail`. The Read tool is purpose-built for this, avoids
+unnecessary Bash invocations, and renders output with line numbers.
+
 ### sed (macOS)
 
 Use the macOS-compatible invocation: `sed -e "s|PAT|REPL|g" -i file`.
@@ -249,3 +256,9 @@ rather than making assumptions.
 If a change touches code you haven't read, read it first. Understand
 the surrounding context, conventions, and constraints before suggesting
 modifications.
+
+## Bug fix workflow
+
+When a bug is reported, do not attempt a fix immediately. First, write
+at least one test that reproduces the bug and confirms it fails. Then
+fix the bug and verify correctness through passing tests.
