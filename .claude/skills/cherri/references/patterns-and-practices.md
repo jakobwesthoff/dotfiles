@@ -83,8 +83,8 @@ someAction(required, "default", "third")
 
 ### CLI hygiene
 
-When invoking `cherri` from Claude Code, follow these rules to avoid
-permission issues:
+When invoking `cherri` from an AI agent, follow these rules to avoid
+permission issues with shell command execution:
 
 - ALWAYS write `.cherri` source to a file first, then compile from the
   file path. NEVER pipe source code into the compiler.
@@ -384,6 +384,17 @@ Loops always run to completion. Use a counter variable with an `if`
 guard to skip iterations after a condition is met.
 
 ### `speak()` is in `actions/text`, not `actions/media`
+
+### `--docs=photos` may be empty (compiler bug)
+
+Some compiler versions have a broken docs generator for the photos
+category — `--docs=photos` shows no actions even though they exist.
+If `--docs=photos` returns actions, use that. If it's empty, these
+are the known photo actions (look up signatures with `--action=`):
+`savePhoto`, `selectPhotos`, `deletePhotos`, `createAlbum`,
+`renameAlbum`, `searchPhotos`, `getLastImport`, `getLatestPhotos`,
+`getLatestVideos`, `getLatestScreenshots`, `getLatestBursts`,
+`getLatestLivePhotos`, `removeFromAlbum`.
 
 ## Anti-patterns
 
