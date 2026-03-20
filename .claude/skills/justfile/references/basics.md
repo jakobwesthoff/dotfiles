@@ -102,6 +102,11 @@ build target:
   @echo 'Building {{target}}…'
 ```
 
+**Do not confuse** parenthesized dependencies `(build "main")` (for passing
+arguments, runs **before** body) with `&&` dependencies (for post-body
+ordering). `deploy: (clean)` is a pre-body dep that passes no arguments —
+use `deploy: && clean` to run `clean` **after** the body.
+
 ### Cross-module dependencies
 
 ```just
@@ -219,6 +224,11 @@ example:
 
 ## Anti-Patterns
 
+NEVER put blank lines between comment lines and the recipe header — a blank
+line breaks the doc comment association. Only the last `#` line with no
+blank line before the recipe becomes the doc comment in `--list`. Use
+`[doc("text")]` for explicit control.
+
 NEVER expect shell state to persist between linewise recipe lines:
 
 ```just
@@ -232,7 +242,8 @@ right:
   cd /tmp && pwd
 ```
 
-NEVER use indented continuation in linewise recipes without `\`:
+NEVER use indented continuation in linewise recipes without `\` — just
+reports `error: Recipe line has extra leading whitespace`:
 
 ```just
 # BROKEN — parse error from extra indentation

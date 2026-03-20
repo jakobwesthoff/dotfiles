@@ -38,7 +38,7 @@ Multiple attributes can be stacked on separate lines. `[arg]`, `[env]`,
 | `[no-quiet]` | Echo lines even when `set quiet` is active |
 | `[positional-arguments]` | Enable `$1`, `$2`, `$@` for this recipe |
 | `[parallel]` | Run dependencies concurrently |
-| `[env("VAR", "VALUE")]` | Set env var for this recipe (repeatable, unstable) |
+| `[env("VAR", "VALUE")]` | Set env var for this recipe (repeatable) |
 | `[default]` | Use as module's default recipe |
 
 ### Visibility & Documentation
@@ -59,10 +59,10 @@ Multiple attributes can be stacked on separate lines. `[arg]`, `[env]`,
 | `[macos]` | macOS only |
 | `[unix]` | All Unix (includes macOS) |
 | `[windows]` | Windows only |
-| `[freebsd]` | FreeBSD (unstable) |
-| `[netbsd]` | NetBSD (unstable) |
+| `[freebsd]` | FreeBSD |
+| `[netbsd]` | NetBSD |
 | `[openbsd]` | OpenBSD |
-| `[dragonfly]` | DragonFly BSD (unstable) |
+| `[dragonfly]` | DragonFly BSD |
 
 A recipe without platform attributes runs on **all** platforms. Once any
 platform attribute is present, the recipe is only enabled when at least one

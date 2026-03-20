@@ -1,5 +1,5 @@
 ---
-name: justfile-authoring
+name: justfile
 description: >-
   Write correct, idiomatic Justfiles with just. Use when creating a Justfile,
   writing just recipes, adding project tasks, or mentioning "justfile", "just",
@@ -10,6 +10,8 @@ description: >-
 
 Use this skill when asked to create, modify, or review a Justfile — the task
 file format for the [`just`](https://github.com/casey/just) command runner.
+
+These reference files are self-contained — prefer them over external sources.
 
 ## Key Concepts
 
@@ -63,6 +65,10 @@ Silent `--dump` output to stdout = valid parse. Errors print to stderr.
 - `import` merges into the current scope (flat inclusion). `mod` creates an
   **isolated** namespace — parent variables are NOT visible inside modules
   and vice versa.
+- Features marked **(unstable)** in these references may change between `just`
+  versions. NEVER use them without informing the user and getting explicit
+  approval. When needed, explain what the feature does and that it requires
+  `set unstable` in the justfile.
 
 ## Reference Files
 

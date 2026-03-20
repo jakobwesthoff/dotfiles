@@ -7,9 +7,11 @@ metadata:
   tags: functions, built-in, path, string, env, hash, datetime
 ---
 
-All functions return strings. Functions returning "true"/"false" return
-literal strings, not booleans. Every `_directory` function has a `_dir`
-alias (e.g., `home_dir()` = `home_directory()`).
+All functions return strings. All function **arguments** are strings too —
+numeric-looking parameters like `choose(n, ...)` must be quoted:
+`choose('64', HEX)`, not `choose(64, HEX)`. Functions returning
+"true"/"false" return literal strings, not booleans. Every `_directory`
+function has a `_dir` alias (e.g., `home_dir()` = `home_directory()`).
 
 ## System Information
 
@@ -63,7 +65,7 @@ Use `source_directory()` inside modules for paths relative to that module.
 | Function | Example |
 |----------|---------|
 | `absolute_path("./foo")` | `/project/foo` (lexical, no symlink resolution) |
-| `canonicalize("./foo")` | Resolves symlinks; path must exist |
+| `canonicalize("./foo")` | Resolves symlinks; path must exist **at parse time** |
 | `extension("/a/b.txt")` | `"txt"` |
 | `file_name("/a/b.txt")` | `"b.txt"` |
 | `file_stem("/a/b.txt")` | `"b"` |
@@ -84,7 +86,7 @@ Prefer the `/` operator over `join()` for consistent cross-platform paths.
 | Function | Description |
 |----------|-------------|
 | `replace(s, from, to)` | Replace all literal occurrences |
-| `replace_regex(s, regex, repl)` | Regex replace; `$1`, `$name` captures |
+| `replace_regex(s, regex, repl)` | Regex replace; `${1}`, `$name` captures. Use braces (`${1}`) when followed by alphanumerics/`_` — bare `$1_` is parsed as group name `1_` |
 | `trim(s)` | Strip leading + trailing whitespace |
 | `trim_start(s)` / `trim_end(s)` | Strip one side |
 | `trim_start_match(s, pat)` | Remove prefix once |

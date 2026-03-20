@@ -116,13 +116,6 @@ build:
   {{source_directory()}}/scripts/compile.sh
 ```
 
-### Overriding submodule variables
-
-```console
-$ just foo::bar=VALUE recipe
-$ just --set foo::bar VALUE recipe
-```
-
 ## Doc & Group on Modules
 
 ```just
@@ -189,3 +182,8 @@ justfile dotenv settings are honored.
 
 NEVER use `justfile_directory()` inside a submodule expecting the module's
 directory — it always returns the root. Use `source_directory()` instead.
+
+NEVER depend on sibling modules from within a submodule — a recipe in
+`api/mod.just` cannot reference `db::migrate` because `db` is not in `api`'s
+scope. Cross-module dependencies only work from the scope where both modules
+are declared (typically the root justfile).

@@ -49,8 +49,6 @@ $ just os=darwin build
 $ just --set os darwin build
 ```
 
-Submodule variables: `just foo::bar=VALUE` or `--set foo::bar VALUE`.
-
 ## String Types
 
 | Syntax | Escapes | Notes |
@@ -168,7 +166,8 @@ publish:
 
 Whitespace inside `{{…}}` is allowed: `{{ config }}` equals `{{config}}`.
 
-To produce a literal `{{`, use `{{{{`:
+To produce a literal `{{`, use `{{{{`. Only `{{` is special — `}}` outside
+an interpolation block is always literal and needs no escaping:
 
 ```just
 braces:

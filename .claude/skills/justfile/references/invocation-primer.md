@@ -65,8 +65,6 @@ zero or more.
 ```console
 $ just os=darwin build             # NAME=VALUE before recipe
 $ just --set os darwin build       # --set flag
-$ just foo::bar=VALUE recipe       # submodule variable
-$ just --set foo::bar VALUE recipe
 ```
 
 ## Key Flags for Authoring Decisions
@@ -80,7 +78,7 @@ and doc comments matter:
 $ just --list
 $ just --list --unsorted          # preserve source order
 $ just --list foo                 # list submodule recipes
-$ just --list-submodules          # recursive listing
+$ just --list --list-submodules   # recursive listing (requires --list)
 $ just --groups                   # list all groups
 ```
 
@@ -89,6 +87,10 @@ Customize output: `--list-heading`, `--list-prefix`.
 ### `--dry-run` / `-n`
 
 Print commands without executing. Useful for verifying complex recipes.
+
+**Caveats:** backtick expressions in variables are shown unevaluated (the
+literal backtick expression, not the computed value). `[confirm]` recipes
+still prompt for confirmation — pass `--yes` alongside `--dry-run`.
 
 ### `--choose`
 
@@ -127,8 +129,8 @@ $ just --unstable recipe
 $ JUST_UNSTABLE=1 just recipe
 ```
 
-Or in the justfile: `set unstable`. Features like `lazy`, `guards`,
-`which()`, `&&`/`||` operators require this.
+Or in the justfile: `set unstable`. Features like `lazy`, `which()`,
+`&&`/`||` operators require this.
 
 ## `[arg]` and Invocation UX
 

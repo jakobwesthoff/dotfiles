@@ -86,7 +86,7 @@ If the condition is false, execution aborts with the message.
 
 ## Guards (`?` sigil)
 
-Requires `set guards` (unstable). The `?` prefix on a recipe line causes the
+Requires `set guards`. The `?` prefix on a recipe line causes the
 **current recipe** to stop if the command exits with status `1`. Other recipes
 (including dependents) continue running.
 
