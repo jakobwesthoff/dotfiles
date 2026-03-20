@@ -3,10 +3,8 @@ return {
     -- Main LSP Configuration
     "neovim/nvim-lspconfig",
     dependencies = {
-      -- Automatically install LSPs and related tools to stdpath for Neovim
-      { "williamboman/mason.nvim", config = true }, -- NOTE: Must be loaded before dependants
+      "williamboman/mason.nvim",
       "williamboman/mason-lspconfig.nvim",
-      "WhoIsSethDaniel/mason-tool-installer.nvim",
 
       -- Useful status updates for LSP.
       -- LSP and notify updates in the down right corner
@@ -165,34 +163,6 @@ return {
         diagnostic_signs[vim.diagnostic.severity[type]] = icon
       end
       vim.diagnostic.config({ signs = { text = diagnostic_signs } })
-
-      -- =========================================================
-      -- Mason — install servers and tools
-      -- =========================================================
-
-      require("mason").setup()
-
-      require("mason-tool-installer").setup({
-        ensure_installed = {
-          -- LSP servers
-          "lua_ls",
-          "marksman",
-          "ts_ls",
-          "taplo",
-          "phpactor",
-          "shellcheck",
-          "bashls",
-          "dockerls",
-          "docker_compose_language_service",
-          "helm_ls",
-          "yamlls",
-          "jsonls",
-          "clangd",
-          -- Formatters / linters
-          "stylua",
-          "prettierd",
-        },
-      })
 
       -- mason-lspconfig's automatic_enable (default: true) calls
       -- vim.lsp.enable() for installed servers, picking up the
