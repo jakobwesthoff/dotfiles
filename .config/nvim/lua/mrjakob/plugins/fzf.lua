@@ -3,6 +3,8 @@ return {
   dependencies = { "nvim-tree/nvim-web-devicons" },
   config = function()
     require("fzf-lua").setup({
+      -- Register fzf-lua as the vim.ui.select provider
+      ui_select = true,
       fzf_opts = { ["--wrap"] = true },
       fzf_colors = {
         ["pointer"] = { "fg", { "Red" } },

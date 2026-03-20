@@ -2,6 +2,7 @@ return {
   "folke/snacks.nvim",
   ---@type snacks.Config
   opts = {
+    -- input = { enabled = true }, -- cursor positioning broken with prompt buffers
     indent = {
       enabled = true,
       animate = {
