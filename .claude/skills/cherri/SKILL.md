@@ -25,12 +25,26 @@ Cherri looks like a C-style scripting language with these key differences:
 - **Definitions** use `#define` for shortcut metadata (color, glyph, inputs)
 - **Import questions** use `#question` for first-run setup prompts
 
+## Invoking the compiler
+
+ALWAYS run each `cherri` command as its own standalone Bash call with
+no shell additions. NEVER append `2>&1`, `; echo ...`, `&&`, or any
+other shell constructs. Write source to a file first, then compile:
+
+```bash
+cherri /path/to/file.cherri --skip-sign
+```
+
+Silent output = success. Errors print to stdout. Use `--no-ansi` ONLY
+with `--action`, `--docs`, and `--glyph` lookups, NOT when compiling.
+
 ## Critical rules
 
 - NEVER use `${}` for string interpolation. Cherri uses `{varName}`.
 - NEVER omit `#include` statements. Actions outside basic require explicit includes.
 - NEVER use `@variable` when the value won't change. Use `const` for smaller shortcuts.
 - NEVER use bracket syntax (`dict['key']`) on constants — use `getValue(dict, "key")` instead.
+- NEVER nest action calls as arguments — store results in variables first.
 - ALWAYS use `const` over `@var` when the value is assigned once and never mutated.
 - ALWAYS add `nothing()` after actions whose output you won't use.
 - ALWAYS use `text()` to store import question values before using them in string interpolation.

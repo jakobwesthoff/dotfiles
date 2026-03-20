@@ -8,6 +8,24 @@ metadata:
 Read this when a compile fails unexpectedly or behavior differs from
 what the language docs suggest. These are known issues with workarounds.
 
+## Expressions cannot contain action calls
+
+Action return values cannot appear as operands in arithmetic
+expressions. Store the result first:
+
+```ruby
+// WRONG — "Value of type 'action' not allowed in expression"
+@cents = number(@amountText) * 100
+
+// CORRECT
+@raw: number
+@raw = number(@amountText)
+@cents = @raw * 100
+```
+
+The same applies to passing action calls as arguments to other actions
+(nested calls crash the compiler). Always assign to a variable first.
+
 ## Action return values need explicit coercion for comparisons
 
 Action outputs cannot be used directly in numeric comparisons. Wrap
