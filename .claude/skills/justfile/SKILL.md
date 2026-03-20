@@ -65,10 +65,11 @@ Silent `--dump` output to stdout = valid parse. Errors print to stderr.
 - `import` merges into the current scope (flat inclusion). `mod` creates an
   **isolated** namespace — parent variables are NOT visible inside modules
   and vice versa.
-- Features marked **(unstable)** in these references may change between `just`
-  versions. NEVER use them without informing the user and getting explicit
-  approval. When needed, explain what the feature does and that it requires
-  `set unstable` in the justfile.
+- NEVER add `set unstable` preemptively. Write the justfile without it and
+  validate with `--dump`. If `just` reports a feature is unstable, inform the
+  user and get explicit approval before adding `set unstable`. This makes the
+  installed `just` version the source of truth — unstable markers in this
+  skill may be outdated.
 
 ## Reference Files
 
