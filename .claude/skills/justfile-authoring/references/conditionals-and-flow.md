@@ -147,13 +147,16 @@ right2:
   if [ -f foo ]; then echo found; fi
 ```
 
-NEVER forget that `path_exists()` and `is_dependency()` return **strings**,
-not booleans:
+NEVER use boolean-returning functions bare in conditionals — they return
+**strings**, not booleans. This applies to `path_exists()`,
+`semver_matches()`, and `is_dependency()`:
 
 ```just
-# WRONG — always true (non-empty string)
+# WRONG — this is a type error, not a boolean check
 foo := if path_exists("bar") { "yes" } else { "no" }
+ok := if semver_matches(v, ">=1.0") { "yes" } else { "no" }
 
-# CORRECT
+# CORRECT — always compare explicitly
 foo := if path_exists("bar") == "true" { "yes" } else { "no" }
+ok := if semver_matches(v, ">=1.0") == "true" { "yes" } else { "no" }
 ```

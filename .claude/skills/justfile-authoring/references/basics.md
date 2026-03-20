@@ -58,6 +58,10 @@ build:
   cargo build
 ```
 
+When multiple `#` lines precede a recipe with no blank line between them,
+only the **last** line becomes the doc comment in `--list`. Use
+`[doc("text")]` for explicit control over multi-line descriptions.
+
 Override or suppress with `[doc]`:
 
 ```just
@@ -79,7 +83,10 @@ test: build
   ./run-tests
 ```
 
-### Subsequent dependencies (run after the recipe body)
+### Subsequent dependencies (run AFTER the recipe body)
+
+`&&` in a dependency list introduces recipes that run **after** the body
+completes. This is just syntax for dependency ordering, NOT shell `&&`:
 
 ```just
 deploy: build && notify cleanup
@@ -240,6 +247,11 @@ right:
     echo yes; \
   fi
 ```
+
+NEVER use `{{recipe_name}}` to call a recipe — `{{…}}` evaluates
+expressions (variables, functions, conditionals), NOT recipes. To call
+a recipe from another recipe's body, declare it as a dependency or
+shell out: `just --justfile {{justfile()}} recipe-name`.
 
 For complex multi-line logic, prefer
 [shebang/script recipes](references/advanced-patterns.md).

@@ -32,6 +32,21 @@ tabs both work (but must be consistent per recipe).
 | Shebang recipes, cross-platform, idioms | [references/advanced-patterns.md](references/advanced-patterns.md) |
 | Understanding how users invoke recipes | [references/invocation-primer.md](references/invocation-primer.md) |
 
+## Validating justfiles
+
+Run each `just` command as its own standalone Bash call with no shell
+additions. NEVER append `2>&1`, `|| echo ...`, `&&`, `for` loops, or
+any other compound shell constructs.
+
+```bash
+just --justfile /path/to/justfile --dump
+just --justfile /path/to/justfile --list
+just --justfile /path/to/justfile --dry-run recipe-name
+just --justfile /path/to/justfile --fmt --check --unstable
+```
+
+Silent `--dump` output to stdout = valid parse. Errors print to stderr.
+
 ## Critical Rules
 
 - Each linewise recipe line runs in a **separate shell**. Shell state (`cd`,
@@ -40,9 +55,14 @@ tabs both work (but must be consistent per recipe).
 - Use `{{variable}}` to interpolate just variables in recipe bodies. Bare
   `variable` or `$variable` references shell variables, not just variables.
 - `{{{{` produces a literal `{{` in recipe bodies.
+- `{{…}}` evaluates **expressions** only — NEVER use it to invoke recipes.
 - NEVER mix tabs and spaces within a single recipe's indentation.
-- Functions like `path_exists()` return **strings** `"true"`/`"false"`, not
-  booleans — always compare with `== "true"`.
+- Functions like `path_exists()`, `semver_matches()`, and `is_dependency()`
+  return **strings** `"true"`/`"false"`, not booleans — always compare with
+  `== "true"`.
+- `import` merges into the current scope (flat inclusion). `mod` creates an
+  **isolated** namespace — parent variables are NOT visible inside modules
+  and vice versa.
 
 ## Reference Files
 

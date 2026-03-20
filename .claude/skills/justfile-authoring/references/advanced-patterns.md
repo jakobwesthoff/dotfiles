@@ -69,6 +69,22 @@ windows-task:
   Write-Host "Hello from PowerShell"
 ```
 
+### Body tokenization caveat
+
+Script and shebang recipe bodies are still **tokenized by just** for
+`{{…}}` interpolation. Character sequences that conflict with just's
+lexer will cause parse errors even though they are valid in the target
+language.
+
+NEVER use shell heredocs (`<<EOF … EOF`) inside shebang or script
+recipes. The heredoc body is parsed as justfile content, and barewords
+or assignment-like lines trigger parse errors. Use `printf`, `echo`,
+or the interpreter's native string handling instead.
+
+NEVER use Python `->` return type annotations inside `[script("python3")]`
+recipes — the `->` token is not valid in just's lexer. Remove annotations
+or move annotated functions to an external `.py` file.
+
 ## Cross-Platform Recipes
 
 Provide platform-specific implementations with OS attributes and
