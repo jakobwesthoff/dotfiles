@@ -72,9 +72,10 @@ windows-task:
 ### Body tokenization caveat
 
 Script and shebang recipe bodies are still **tokenized by just** for
-`{{…}}` interpolation. Character sequences that conflict with just's
-lexer will cause parse errors even though they are valid in the target
-language.
+`{{…}}` interpolation — including `#` comment lines within the body.
+A `{{` inside a comment in a script body triggers a parse error.
+Character sequences that conflict with just's lexer will cause parse
+errors even though they are valid in the target language.
 
 NEVER use shell heredocs (`<<EOF … EOF`) inside shebang or script
 recipes. The heredoc body is parsed as justfile content, and barewords
@@ -170,7 +171,9 @@ $ just --fmt --check --unstable   # CI check (exit 1 if unformatted)
 $ just --dump                     # print formatted to stdout
 ```
 
-`--fmt` is currently unstable.
+`--fmt` is currently unstable. Canonical style: 4-space recipe indentation,
+spaces inside interpolations (`{{ var }}` not `{{var}}`). Use `--dump` output
+as the formatting reference.
 
 ## Multi-Line Constructs
 

@@ -98,6 +98,10 @@ Prefer the `/` operator over `join()` for consistent cross-platform paths.
 | `prepend(prefix, s)` | Prepend to each whitespace-separated word |
 | `encode_uri_component(s)` | Percent-encode for URLs |
 
+**Regex escaping:** in double-quoted strings, backslashes need doubling
+(`"\\d+"` for `\d+`). Use single-quoted raw strings for regex patterns:
+`replace_regex(s, '\d+', 'NUM')`.
+
 ## Case Conversion
 
 | Function | Output style |

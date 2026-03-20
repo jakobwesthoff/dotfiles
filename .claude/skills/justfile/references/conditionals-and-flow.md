@@ -127,6 +127,10 @@ example:
 
 ## Anti-Patterns
 
+NEVER use `>`, `<`, `>=`, or `<=` for comparisons — just only supports
+`==`, `!=`, and `=~`. For numeric-like comparisons, use regex matching
+or shell logic inside a recipe body.
+
 NEVER use `if`/`else` as a shell construct in a linewise recipe body —
 it must be a just expression inside `{{…}}`, or a single-line shell
 construct:

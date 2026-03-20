@@ -8,6 +8,9 @@ metadata:
 ---
 
 Attributes are placed on lines immediately before a recipe, `mod`, or alias.
+Doc comments (`#`) must come **before** attributes — the sequence must be
+`# comment` → `[attr]` → `recipe:`. Placing a `#` comment after an attribute
+causes an `Extraneous attribute` error.
 
 ## Syntax Forms
 
@@ -106,6 +109,9 @@ A parameter can have both `long` and `short`. `value` makes it a flag
 (no value taken from CLI).
 
 Variadic `+`/`*` parameters CANNOT be made into options.
+
+`--list` does not reveal `[arg]`-defined option names — use
+`just --usage <recipe>` to see the generated CLI interface.
 
 ## Applicability
 
