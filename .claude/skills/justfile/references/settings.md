@@ -143,7 +143,9 @@ set fallback
 ```
 
 When a recipe isn't found, search parent directories for justfiles.
-Search stops at a justfile without `set fallback`.
+Search stops at a justfile without `set fallback`. Fallback only works
+with directory-based search — `--justfile` pins to an exact file and
+disables fallback.
 
 ## Lazy Evaluation (unstable)
 

@@ -82,7 +82,8 @@ bar:
   {{ assert(foo == "hello", "expected foo to be hello") }}
 ```
 
-If the condition is false, execution aborts with the message.
+If the condition is false, execution aborts with the message. On success,
+`assert()` returns an empty string.
 
 ## Guards (`?` sigil)
 
@@ -109,7 +110,8 @@ exit codes are reserved.
 
 ## Combining Sigils
 
-Recipe lines accept any combination of `@`, `-`, and `?`:
+Recipe lines accept combinations of `@`, `-`, and `?`, **except** `-` and
+`?` which are mutually exclusive (infallible + guard is contradictory):
 
 | Sigil | Effect |
 |-------|--------|

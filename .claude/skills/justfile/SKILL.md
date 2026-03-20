@@ -48,6 +48,8 @@ just --justfile /path/to/justfile --fmt --check --unstable
 ```
 
 Silent `--dump` output to stdout = valid parse. Errors print to stderr.
+Note: `--dump` only checks syntax — it does not evaluate variables, so
+`error()` and `assert()` at variable level are NOT triggered.
 
 ## Critical Rules
 

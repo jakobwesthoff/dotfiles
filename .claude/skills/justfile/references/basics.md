@@ -203,7 +203,7 @@ also-hidden:   # attribute
 
 ## Line Sigils
 
-Prefix recipe lines with any combination of:
+Prefix recipe lines with combinations of (`-` and `?` are mutually exclusive):
 
 | Sigil | Effect |
 |-------|--------|

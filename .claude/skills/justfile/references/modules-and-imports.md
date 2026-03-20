@@ -20,7 +20,8 @@ build: lint
 
 - Path is relative to the importing file, absolute, or `~/`-prefixed.
 - Imports are recursive (imported files can import others).
-- Duplicate imports of the same file are OK (1.37.0).
+- Duplicate imports of the same file are OK (1.37.0), but **circular**
+  imports (A imports B imports A) are an error.
 - Order-independent: imported content can reference things defined later.
 
 ### Optional import
@@ -35,6 +36,12 @@ When duplicates exist (requires `allow-duplicate-recipes`/`allow-duplicate-varia
 - **Shallower** definitions override deeper ones.
 - At the **same depth**, earlier imports win.
 - Within a single file, later definitions override earlier ones.
+
+**Caveat:** `import? 'local.just'` in the root file cannot override
+variables or recipes defined in that same root file — root definitions
+are always shallowest. For a local-overrides pattern, put defaults in an
+imported file and import the optional file before it (earlier wins at
+same depth).
 
 ## `mod` — Submodule Declarations
 
