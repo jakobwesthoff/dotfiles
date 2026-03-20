@@ -1,0 +1,57 @@
+---
+name: justfile-authoring
+description: >-
+  Write correct, idiomatic Justfiles with just. Use when creating a Justfile,
+  writing just recipes, adding project tasks, or mentioning "justfile", "just",
+  or ".just".
+---
+
+## When to use
+
+Use this skill when asked to create, modify, or review a Justfile — the task
+file format for the [`just`](https://github.com/casey/just) command runner.
+
+## Key Concepts
+
+`just` is a command runner, NOT a build system. Justfiles define named recipes
+(tasks) with shell commands, variables, and expressions. Key differences from
+`make`: no file targets, no automatic variables, no implicit rules, spaces and
+tabs both work (but must be consistent per recipe).
+
+## Decision Tree
+
+| Task | Start here |
+|------|------------|
+| Writing a basic justfile | [references/basics.md](references/basics.md) |
+| Variables, strings, interpolation | [references/variables-and-expressions.md](references/variables-and-expressions.md) |
+| Using built-in functions | [references/functions.md](references/functions.md) |
+| Conditional logic, error handling | [references/conditionals-and-flow.md](references/conditionals-and-flow.md) |
+| Configuring shell, dotenv, quiet mode | [references/settings.md](references/settings.md) |
+| Recipe attributes (platform, groups, scripts) | [references/attributes.md](references/attributes.md) |
+| Splitting into multiple files | [references/modules-and-imports.md](references/modules-and-imports.md) |
+| Shebang recipes, cross-platform, idioms | [references/advanced-patterns.md](references/advanced-patterns.md) |
+| Understanding how users invoke recipes | [references/invocation-primer.md](references/invocation-primer.md) |
+
+## Critical Rules
+
+- Each linewise recipe line runs in a **separate shell**. Shell state (`cd`,
+  variables) does NOT persist between lines. Use shebang or `[script]` recipes
+  for multi-line logic.
+- Use `{{variable}}` to interpolate just variables in recipe bodies. Bare
+  `variable` or `$variable` references shell variables, not just variables.
+- `{{{{` produces a literal `{{` in recipe bodies.
+- NEVER mix tabs and spaces within a single recipe's indentation.
+- Functions like `path_exists()` return **strings** `"true"`/`"false"`, not
+  booleans — always compare with `== "true"`.
+
+## Reference Files
+
+- [references/basics.md](references/basics.md) — Recipes, dependencies, parameters, aliases, comments, line sigils
+- [references/variables-and-expressions.md](references/variables-and-expressions.md) — Assignment, string types, operators, backticks, interpolation
+- [references/functions.md](references/functions.md) — All ~70 built-in functions by category
+- [references/conditionals-and-flow.md](references/conditionals-and-flow.md) — If/else, assert, error(), guards
+- [references/settings.md](references/settings.md) — All `set` directives, shell config, dotenv, export
+- [references/attributes.md](references/attributes.md) — Platform targeting, groups, script execution, arg options
+- [references/modules-and-imports.md](references/modules-and-imports.md) — `mod`, `import`, submodule isolation, file resolution
+- [references/advanced-patterns.md](references/advanced-patterns.md) — Shebang/script recipes, cross-platform, constants, idioms
+- [references/invocation-primer.md](references/invocation-primer.md) — CLI invocation, argument passing, flags affecting authoring
