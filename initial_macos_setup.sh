@@ -26,6 +26,35 @@ echo "PRESS ENTER TO CONTINUE"
 read -r
 ssh-add --apple-use-keychain
 
+# Ensure SSH config has keychain integration
+if ! grep -q "UseKeychain yes" ~/.ssh/config 2>/dev/null; then
+	echo "WARNING: ~/.ssh/config is missing UseKeychain/AddKeysToAgent settings."
+	echo "Ensure your Host * block includes:"
+	echo "  UseKeychain yes"
+	echo "  AddKeysToAgent yes"
+	echo
+	echo "PRESS ENTER WHEN DONE"
+	read -r
+fi
+
+# FileVault
+if ! fdesetup status | grep -q "FileVault is On"; then
+	echo "FileVault is NOT enabled. Please enable it:"
+	echo "Settings -> Privacy & Security -> FileVault -> Turn On"
+	echo
+	echo "PRESS ENTER WHEN DONE"
+	read -r
+fi
+
+# Xcode Command Line Tools (required by Homebrew)
+if ! xcode-select -p &>/dev/null; then
+	xcode-select --install
+	echo "Waiting for Xcode Command Line Tools installation to complete..."
+	until xcode-select -p &>/dev/null; do
+		sleep 5
+	done
+fi
+
 # Install homebrew
 if ! command -v brew &>/dev/null; then
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -59,6 +88,19 @@ brew bundle install
 # (node_modules, target/, .venv, etc.) from Time Machine backups.
 # Config is managed via stow at ~/.config/asimeow/config.yaml.
 brew services start mdnmdn/asimeow/asimeow
+
+# Start window management services
+skhd --install-service
+skhd --start-service
+yabai --install-service
+yabai --start-service
+
+# Enable Touch ID for sudo (survives macOS updates since Sonoma)
+if [ ! -f /etc/pam.d/sudo_local ]; then
+	sudo tee /etc/pam.d/sudo_local > /dev/null <<'PAM'
+auth       sufficient     pam_tid.so
+PAM
+fi
 
 # Set sensible keyboard repeat values
 # normal minimum is 15 (225 ms)
@@ -215,6 +257,26 @@ defaults write com.apple.dock showhidden -bool true
 
 # Don’t show recent applications in Dock
 defaults write com.apple.dock show-recents -bool false
+
+# Remove all default Dock items and set preferred apps
+defaults write com.apple.dock persistent-apps -array \
+	"<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>/Applications/Ghostty.app</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>" \
+	"<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>/System/Applications/Messages.app</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>" \
+	"<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>/Applications/Zen.app</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
+
+# Hot corners: top-left = Put Display to Sleep, all others disabled
+# Values: 1=disabled, 10=put display to sleep
+defaults write com.apple.dock wvous-tl-corner -int 10
+defaults write com.apple.dock wvous-tl-modifier -int 0
+defaults write com.apple.dock wvous-tr-corner -int 1
+defaults write com.apple.dock wvous-tr-modifier -int 0
+defaults write com.apple.dock wvous-bl-corner -int 1
+defaults write com.apple.dock wvous-bl-modifier -int 0
+defaults write com.apple.dock wvous-br-corner -int 1
+defaults write com.apple.dock wvous-br-modifier -int 0
+
+# Show battery percentage in menu bar
+defaults -currentHost write com.apple.controlcenter BatteryShowPercentage -bool true
 
 # Prevent Time Machine from prompting to use new hard drives as backup volume
 defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
