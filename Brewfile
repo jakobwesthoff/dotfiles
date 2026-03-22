@@ -31,7 +31,7 @@ brew "git-lfs"
 brew "glab"
 brew "gnu-sed"
 brew "gnu-tar"
-brew "helm"
+brew "helm@3"
 brew "hexyl"
 brew "htop"
 brew "hwatch"
@@ -41,7 +41,6 @@ brew "kubecolor"
 brew "kubernetes-cli"
 brew "kubectx"
 brew "llvm"
-# brew "node"
 brew "mas"
 brew "midnight-commander"
 brew "moreutils"
@@ -54,7 +53,7 @@ brew "php"
 brew "pngcrush"
 brew "pstree"
 brew "pv"
-brew "python"
+brew "python@3.14"
 brew "restic"
 brew "ripgrep"
 brew "rsync"
@@ -81,6 +80,20 @@ brew "felixkratz/formulae/borders"
 brew "koekeishiya/formulae/skhd"
 brew "koekeishiya/formulae/yabai"
 brew "mutagen-io/mutagen/mutagen"
+brew "ansible"
+brew "clang-format"
+brew "go"
+brew "just"
+brew "kondo"
+brew "nvm"
+brew "oxipng"
+brew "pandoc"
+brew "rust-analyzer"
+brew "tokei"
+brew "typescript-language-server"
+brew "uv"
+brew "worktrunk"
+brew "yazi"
 
 cask "1password"
 cask "alfred"
@@ -107,7 +120,7 @@ cask "transmit"
 cask "utm"
 cask "vlc"
 cask "ghostty"
-cask "wireshark-app"
+cask "wireshark"
 cask "zerotier-one"
 cask "zoom"
 cask "handbrake-app"
@@ -117,6 +130,14 @@ cask "affinity-designer"
 cask "affinity-photo"
 cask "upscayl"
 cask "imageoptim"
+cask "bambu-studio"
+cask "claude"
+cask "elgato-control-center"
+cask "google-chrome"
+cask "handbrake"
+cask "obsidian"
+cask "rocket"
+cask "zen-browser"
 
 mas 'Disk Speed Test', id: 425264550 
 mas 'Keynote', id: 409183694 
@@ -127,12 +148,10 @@ mas 'Windows App', id: 1295203466
 mas 'GarageBand', id: 682658836
 mas 'The Unarchiver', id: 425424353 
 mas 'Amphetamine', id: 937984704 
-mas 'DaisyDisk', id: 411643860 
 mas 'Xcode', id: 497799835 
 mas 'Numbers', id: 409203825 
 mas 'Pages', id: 409201541 
 mas 'Fantastical', id: 975937182 
 mas 'Bear', id: 1091189122 
-mas 'Airmail', id: 918858936 
 mas 'Creator\'s Best Friend', id: 1524172135 
 mas 'Yoink', id: 457622435 
