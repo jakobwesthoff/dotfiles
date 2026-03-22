@@ -65,7 +65,6 @@ brew "git"
 brew "git-lfs"
 brew "gh"
 brew "glab"
-brew "tower"
 
 # =========================================================
 # Editors & IDE Support
@@ -195,7 +194,7 @@ brew "restic"
 
 cask "arc"
 cask "google-chrome"
-cask "zen-browser"
+cask "zen"
 
 # =========================================================
 # Casks — Communication
@@ -222,7 +221,7 @@ cask "claude"
 cask "ghostty"
 cask "orbstack"
 cask "tower"
-cask "wireshark"
+cask "wireshark-app"
 
 # =========================================================
 # Casks — Media & Design
@@ -230,7 +229,6 @@ cask "wireshark"
 
 cask "affinity-designer"
 cask "affinity-photo"
-cask "handbrake"
 cask "handbrake-app"
 cask "imageoptim"
 cask "obs"
@@ -277,23 +275,3 @@ cask "font-fira-code-nerd-font"
 cask "font-jetbrains-mono"
 cask "font-jetbrains-mono-nerd-font"
 
-# =========================================================
-# Mac App Store
-# =========================================================
-
-mas 'Amphetamine', id: 937984704
-mas 'Bear', id: 1091189122
-mas 'CopyQueue', id: 711074010
-mas 'Creator\'s Best Friend', id: 1524172135
-mas 'Disk Speed Test', id: 425264550
-mas 'Droplr', id: 498672703
-mas 'Fantastical', id: 975937182
-mas 'GarageBand', id: 682658836
-mas 'Keynote', id: 409183694
-mas 'Numbers', id: 409203825
-mas 'Pages', id: 409201541
-mas 'The Unarchiver', id: 425424353
-mas 'Webcam Settings', id: 533696630
-mas 'Windows App', id: 1295203466
-mas 'Xcode', id: 497799835
-mas 'Yoink', id: 457622435
