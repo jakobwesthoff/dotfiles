@@ -55,6 +55,11 @@ cd "$HOME/dotfiles"
 
 brew bundle install
 
+# Start asimeow as a brew service to automatically exclude build artifacts
+# (node_modules, target/, .venv, etc.) from Time Machine backups.
+# Config is managed via stow at ~/.config/asimeow/config.yaml.
+brew services start mdnmdn/asimeow/asimeow
+
 # Set sensible keyboard repeat values
 # normal minimum is 15 (225 ms)
 defaults write -g InitialKeyRepeat -int 12
