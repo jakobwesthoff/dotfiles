@@ -12,19 +12,28 @@ echo "PRESS ENTER TO CONTINUE"
 read -r
 
 # Mac update
-echo "Ensure you have installed the latest macOS Version:"
-echo "Apple Menu -> About This Mac -> Software Update"
-echo
-echo "PRESS ENTER TO CONTINUE"
-read -r
+if softwareupdate -l 2>&1 | grep -q "No new software available"; then
+	echo "macOS is up to date."
+else
+	echo "macOS updates are available. Install them before continuing:"
+	echo "Apple Menu -> About This Mac -> Software Update"
+	echo
+	echo "PRESS ENTER TO CONTINUE"
+	read -r
+fi
 
 # SSH Key
-echo "Please ensure you have provided ssh private keys within the .ssh directory,"
-echo "which allow the access to github and other stuff ;)"
-echo
-echo "PRESS ENTER TO CONTINUE"
-read -r
-ssh-add --apple-use-keychain
+if [ -f ~/.ssh/id_rsa ] || [ -f ~/.ssh/id_ed25519 ]; then
+	echo "SSH keys found."
+	ssh-add --apple-use-keychain
+else
+	echo "No SSH keys found in ~/.ssh (expected id_rsa or id_ed25519)."
+	echo "Please add your SSH private keys before continuing."
+	echo
+	echo "PRESS ENTER TO CONTINUE"
+	read -r
+	ssh-add --apple-use-keychain
+fi
 
 # Ensure SSH config has keychain integration
 if ! grep -q "UseKeychain yes" ~/.ssh/config 2>/dev/null; then
