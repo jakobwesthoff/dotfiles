@@ -1,5 +1,5 @@
 #!/bin/bash
-set -uexo pipefail
+set -euo pipefail
 
 # Disclaimer
 echo "---------------------------------------------------------------------"
@@ -24,10 +24,10 @@ echo "which allow the access to github and other stuff ;)"
 echo
 echo "PRESS ENTER TO CONTINUE"
 read -r
-ssh-add -K
+ssh-add --apple-use-keychain
 
 # Install homebrew
-if ! which brew; then
+if ! command -v brew &>/dev/null; then
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 	eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
@@ -40,7 +40,7 @@ if [ ! -d "$HOME/Development/github/jakobwesthoff" ]; then
 fi
 
 # Install base prerequisites
-brew install git
+brew install git stow
 
 # Checkout and install dotfiles
 if [ ! -d "$HOME/dotfiles" ]; then
@@ -67,42 +67,29 @@ defaults write -g InitialKeyRepeat -int 12
 defaults write -g KeyRepeat -int 2
 # Needs relogin to take effect.
 
-# Unlock with Apple Watch
-echo "Enable Unlock with Apple Watch:"
-echo "Settings -> Security & Privacy -> General"
-echo "-> Use your Apple Watch to unlock apps and your Mac"
-echo
-echo "PRESS ENTER TO WHEN DONE"
-read -r
+# Manual settings that cannot be automated — skip on repeat runs
+read -rp "Configure manual settings (Apple Watch unlock, lock screen)? [y/N] " manual_setup
+if [[ "${manual_setup}" =~ ^[Yy]$ ]]; then
+	echo "Enable Unlock with Apple Watch:"
+	echo "Settings -> Touch ID & Password"
+	echo "-> Use your Apple Watch to unlock apps and your Mac"
+	echo
+	echo "PRESS ENTER WHEN DONE"
+	read -r
 
-echo "Change require password after sleep or unlock to 5 seconds:"
-echo "Settings -> Security & Privacy -> General"
-echo "-> Require Password COMBOBOX after..."
-echo
-echo "PRESS ENTER TO WHEN DONE"
-read -r
-
-# echo "Disable Sound on Startup:"
-# echo "Settings -> Sound ->  Play sound on startup"
-# echo
-# echo "PRESS ENTER TO WHEN DONE"
-# read -r
+	echo "Change require password after sleep or unlock to 5 seconds:"
+	echo "Settings -> Lock Screen"
+	echo "-> Require password after screen saver begins or display is turned off"
+	echo
+	echo "PRESS ENTER WHEN DONE"
+	read -r
+fi
 
 ## Further setup borrowed from ~/.macos — https://mths.be/macos
 
-# Close any open System Preferences panes, to prevent them from overriding
+# Close any open System Settings panes, to prevent them from overriding
 # settings we’re about to change
-osascript -e 'tell application "System Preferences" to quit'
-
-# Keep-alive: update existing `sudo` time stamp until `.macos` has finished
-while true; do
-	sudo -n true
-	sleep 60
-	kill -0 "$$" || exit
-done 2>/dev/null &
-
-# Disable the sound effects on boot
-#sudo nvram SystemAudioVolume=" "
+osascript -e 'tell application "System Settings" to quit'
 
 # Expand save panel by default
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
@@ -148,9 +135,6 @@ defaults write com.apple.finder ShowStatusBar -bool true
 # Finder: show path bar
 defaults write com.apple.finder ShowPathbar -bool true
 
-# Display full POSIX path as Finder window title
-defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
-
 # Keep folders on top when sorting by name
 defaults write com.apple.finder _FXSortFoldersFirst -bool true
 
@@ -191,8 +175,13 @@ defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 # Disable the warning before emptying the Trash
 defaults write com.apple.finder WarnOnEmptyTrash -bool false
 
-# Show the ~/Library folder
-# chflags nohidden ~/Library && xattr -d com.apple.FinderInfo ~/Library
+# Prompt for sudo password and keep the timestamp alive for the rest of the script
+sudo -v
+while true; do
+	sudo -n true
+	sleep 60
+	kill -0 "$$" || exit
+done 2>/dev/null &
 
 # Show the /Volumes folder
 sudo chflags nohidden /Volumes
@@ -227,16 +216,8 @@ defaults write com.apple.dock showhidden -bool true
 # Don’t show recent applications in Dock
 defaults write com.apple.dock show-recents -bool false
 
-# Disable Spotlight indexing for any volume that gets mounted and has not yet
-# been indexed before.
-# Use `sudo mdutil -i off "/Volumes/foo"` to stop indexing any volume.
-#sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Volumes"
-
 # Prevent Time Machine from prompting to use new hard drives as backup volume
 defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
-
-# Disable local Time Machine backups
-# hash tmutil &> /dev/null && sudo tmutil disablelocal
 
 # Show the main window when launching Activity Monitor
 defaults write com.apple.ActivityMonitor OpenMainWindow -bool true
@@ -251,36 +232,15 @@ defaults write com.apple.ActivityMonitor ShowCategory -int 0
 defaults write com.apple.ActivityMonitor SortColumn -string "CPUUsage"
 defaults write com.apple.ActivityMonitor SortDirection -int 0
 
-# Enable the debug menu in Disk Utility
-defaults write com.apple.DiskUtility DUDebugMenuEnabled -bool true
-defaults write com.apple.DiskUtility advanced-image-options -bool true
-
 ###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
 
 for app in "Activity Monitor" \
-	"Address Book" \
-	"Calendar" \
 	"cfprefsd" \
-	"Contacts" \
 	"Dock" \
 	"Finder" \
-	"Google Chrome Canary" \
-	"Google Chrome" \
-	"Mail" \
-	"Messages" \
-	"Opera" \
-	"Photos" \
-	"Safari" \
-	"SizeUp" \
-	"Spectacle" \
-	"SystemUIServer" \
-	"Terminal" \
-	"Transmission" \
-	"Tweetbot" \
-	"Twitter" \
-	"iCal"; do
+	"SystemUIServer"; do
 	pkill "${app}" &>/dev/null || true
 done
 
