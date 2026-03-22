@@ -1,2 +1,9 @@
 [projects."github.com/jakobwesthoff/squirly"]
-approved-commands = ["cd frontend && bun install", "just mascots"]
+approved-commands = [
+    "cd frontend && bun install",
+    "just mascots",
+    "ln -s {{ repo_path }}/.env .",
+    "ln -s {{ repo_path }}/data .",
+    "just install",
+    "just assets",
+]
