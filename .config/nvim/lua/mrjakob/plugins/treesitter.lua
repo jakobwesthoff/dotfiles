@@ -45,7 +45,11 @@ return {
         -- If parser isn't loaded yet, try to install it. install() is
         -- async and idempotent — already-installed parsers are skipped.
         if not pcall(vim.treesitter.language.inspect, lang) then
-          pcall(require("nvim-treesitter").install, { lang })
+          -- Only attempt install if a grammar actually exists for this
+          -- language — avoids "skipping unsupported language" warnings.
+          if require("nvim-treesitter.parsers")[lang] then
+            pcall(require("nvim-treesitter").install, { lang })
+          end
         end
 
         pcall(vim.treesitter.start)
