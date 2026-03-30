@@ -21,5 +21,6 @@
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
-  "voiceEnabled": false
+  "voiceEnabled": false,
+  "autoDreamEnabled": true
 }
