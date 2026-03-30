@@ -40,11 +40,11 @@ wastes Opus tokens on mechanical work
 ## Plan mode workflow
 
 During plan mode, focus on discussing open design decisions and
-trade-offs iteratively. Present overviews, partial plans, and update
-the plan file as needed — but do **not** call ExitPlanMode until
-explicitly told that all decisions are settled. Avoid re-presenting
-the full plan repeatedly; address only the open or changed parts
-during discussion.
+trade-offs iteratively. Update the plan file freely as the discussion
+evolves. Present overviews and partial plans as needed, but address
+only open or changed parts — do not re-present the full plan
+repeatedly. Do **not** call ExitPlanMode until explicitly told that
+all decisions are settled.
 
 ## General best practices
 
