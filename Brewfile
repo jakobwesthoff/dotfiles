@@ -21,6 +21,8 @@ brew "zsh"
 brew "fzf"
 brew "zoxide"
 brew "tmux"
+brew "sesh"
+brew "fd"
 brew "screen"
 brew "yazi"
 
