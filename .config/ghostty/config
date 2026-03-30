@@ -66,7 +66,7 @@ keybind = super+slash=decrease_font_size:1
 copy-on-select=clipboard
 
 # Env on startup
-command = env ENABLE_TMUX_STARTUP=true $SHELL
+command = env ENABLE_TMUX_STARTUP=true $SHELL -l
 
 # try to set terminfo or fallback to xterm-256color for ssh
 shell-integration-features = ssh-terminfo,ssh-env
