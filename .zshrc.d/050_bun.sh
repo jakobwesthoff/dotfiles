@@ -1,6 +1,2 @@
-# bun completions
+# Bun completions (phase 2 of 2 — environment setup in .zprofile.d/050_bun.sh)
 [ -s "/Users/jakob/.bun/_bun" ] && source "/Users/jakob/.bun/_bun"
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
