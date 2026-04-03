@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Claude Code status line script
-# Displays: [Model] │ [Directory] [Circle Bar] [%] [Used / Total tokens]
+# Displays: [Model] │ [Directory] [Circle Bar] [%] [Tokens] [Rate Limit] [Cost]
 #
 # VERSION DETECTION:
 #   Real-time mode  (Claude Code >= 2.1.72): context_window.used_percentage is present in JSON
@@ -29,6 +29,8 @@ transcript_path=$(echo "$input" | jq -r '.transcript_path // ""')
 context_window_size=$(echo "$input" | jq -r '.context_window.context_window_size // 200000')
 used_pct_raw=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 session_cost=$(echo "$input" | jq -r '.cost.total_cost_usd // 0')
+rate_limit_pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
+rate_limit_resets_at=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
 
 # =========================================================
 # Determine context usage percentage
@@ -149,6 +151,54 @@ cost_display=$(awk -v c="$session_cost" 'BEGIN {
 }')
 
 # =========================================================
+# Build rate limit display (5-hour window)
+#
+# Shows a vertical block character (▁–█) mapping usage to 8 levels,
+# the percentage, and the reset time as a local clock hour.
+# Omitted entirely when rate_limits.five_hour is absent (API key
+# users, or before the first API response in a session).
+# =========================================================
+
+rate_limit_display=""
+if [ -n "$rate_limit_pct" ]; then
+    # Vertical progress bar: map 0–100% to one of 8 block characters
+    rate_limit_bar=$(awk -v pct="$rate_limit_pct" 'BEGIN {
+        split("▁ ▂ ▃ ▄ ▅ ▆ ▇ █", bars, " ")
+        idx = int(pct / 100 * 8)
+        if (idx < 1) idx = 1
+        if (idx > 8) idx = 8
+        printf "%s", bars[idx]
+    }')
+
+    rate_limit_rounded=$(awk -v pct="$rate_limit_pct" 'BEGIN { printf "%.0f", pct }')
+
+    # Color the rate limit segment using the same thresholds as the context bar
+    if   [ "$rate_limit_rounded" -ge 80 ]; then rate_color="$RED"
+    elif [ "$rate_limit_rounded" -ge 70 ]; then rate_color="$ORANGE"
+    elif [ "$rate_limit_rounded" -ge 60 ]; then rate_color="$YELLOW"
+    else                                        rate_color="$GREEN"
+    fi
+
+    # Format reset time as a compact local clock hour (e.g. "4pm", "11am")
+    reset_time=""
+    if [ -n "$rate_limit_resets_at" ]; then
+        # Convert Unix epoch to local time (e.g. "4pm", "11am")
+        # macOS date uses %l (space-padded hour), so we trim the leading space.
+        reset_time=$(/bin/date -j -f "%s" "$rate_limit_resets_at" "+%l%p" 2>/dev/null \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's/^ *//')
+    fi
+
+    if [ -n "$reset_time" ]; then
+        rate_limit_display=$(printf "  ${rate_color}%s${RESET} ${DIM}%s%%${RESET} ${DIM}(%s)${RESET}" \
+            "$rate_limit_bar" "$rate_limit_rounded" "$reset_time")
+    else
+        rate_limit_display=$(printf "  ${rate_color}%s${RESET} ${DIM}%s%%${RESET}" \
+            "$rate_limit_bar" "$rate_limit_rounded")
+    fi
+fi
+
+# =========================================================
 # Shorten directory for display:
 #   1. Replace $HOME with ~
 #   2. Abbreviate intermediate path components to the shortest
@@ -242,13 +292,14 @@ done
 
 # =========================================================
 # Render the status line
-# Format: [Model] │ [Directory]   [Bar] [%] [Tokens]  ([Cost])
+# Format: [Model] │ [Directory]   [Bar] [%] [Tokens]  [Rate ▄ N% (Xpm)]  [$Cost]
 # =========================================================
 
-printf "${DIM}%s${RESET} │ ${DIM}%s${RESET}   ${bar_color}%s${RESET} ${DIM}%s%%${RESET}  ${token_color}%s${RESET}  ${DIM}(%s)${RESET}\n" \
+printf "${DIM}%s${RESET} │ ${DIM}%s${RESET}   ${bar_color}%s${RESET} ${DIM}%s%%${RESET}  ${token_color}%s${RESET}%b  ${DIM}[%s]${RESET}\n" \
     "$model_name" \
     "$display_dir" \
     "$bar" \
     "$used" \
     "$token_display" \
+    "$rate_limit_display" \
     "$cost_display"
