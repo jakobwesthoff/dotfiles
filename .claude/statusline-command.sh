@@ -182,11 +182,16 @@ if [ -n "$rate_limit_pct" ]; then
     # Format reset time as a compact local clock hour (e.g. "4pm", "11am")
     reset_time=""
     if [ -n "$rate_limit_resets_at" ]; then
-        # Convert Unix epoch to local time (e.g. "4pm", "11am")
-        # macOS date uses %l (space-padded hour), so we trim the leading space.
-        reset_time=$(/bin/date -j -f "%s" "$rate_limit_resets_at" "+%l%p" 2>/dev/null \
-            | tr '[:upper:]' '[:lower:]' \
-            | sed 's/^ *//')
+        # Convert Unix epoch to local time. BSD date (macOS) wants
+        # `-j -f "%s" <epoch>`; GNU date (Linux, incl. the devcontainer
+        # that bind-mounts this script) wants `-d "@<epoch>"`. Try BSD
+        # first; if it exits non-zero fall back to GNU so the script
+        # works unchanged on both hosts.
+        reset_raw=$(/bin/date -j -f "%s" "$rate_limit_resets_at" "+%l%p" 2>/dev/null \
+            || /bin/date -d "@$rate_limit_resets_at" "+%l%p" 2>/dev/null)
+        # Both forms emit a space-padded hour (%l) and uppercase AM/PM;
+        # trim the leading space and lowercase it for "4pm" / "11am".
+        reset_time=$(printf '%s' "$reset_raw" | tr '[:upper:]' '[:lower:]' | sed 's/^ *//')
     fi
 
     if [ -n "$reset_time" ]; then
