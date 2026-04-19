@@ -188,6 +188,47 @@ Apply literate programming principles to make code self-documenting and maintain
 4. **Avoid Over-Abstraction**: Prefer clear, well-documented inline code over excessive function decomposition.
 5. **Self-Contained When Practical**: Reduce dependencies on external shared utilities when the logic is simple enough to be self-contained.
 
+#### Anti-patterns to Avoid
+
+Even "literate" comments drift into noise. Before writing a comment,
+run it through the following tests — if it fails any of them,
+rewrite or delete it.
+
+1. **Forever test**: Imagine the commit lands and a new developer
+   reads it five years later with no access to the surrounding
+   history. Will the comment still be accurate and useful? Words
+   like "now", "no longer", "used to", "previously" fail this test
+   — they belong in commit messages, not source.
+
+2. **What-is vs. what-isn't**: Comment what the code does and why,
+   not what it used to do, what was rejected, or how it differs
+   from elsewhere.
+   - ❌ "WIT's action record has no keybinding field — the host
+     fills..." (describes what isn't there)
+   - ✅ "Keybindings for well-known `ActionId`s are filled by the
+     host." (describes the current contract)
+
+3. **No cross-path narration**: State invariants directly; don't
+   phrase them as diffs between two pieces of code.
+   - ❌ "Unlike the non-prefix path this uses a plain sort rather
+     than `cmp_sort_key`..."
+   - ✅ "Exactly one plugin responds in prefix mode, so `score DESC`
+     preserves its intended ordering for equal-score items."
+
+4. **No self-editorializing**: Avoid `simplest`, `cleanest`,
+   `defense-in-depth`, `for clarity`, `explicit`. If a choice needs
+   defending in a comment, either the code is wrong or the defence
+   belongs in a commit message.
+
+5. **No orphan comments**: If the code a comment describes has been
+   removed or changed, the comment goes with it. Don't leave a
+   comment that now describes absent code.
+
+6. **Base-impl / template explanation ban**: When implementing an
+   interface or trait, don't comment what the interface itself
+   declares — the interface file says so already. Comment what
+   *this* implementation does and why.
+
 #### Implementation Benefits
 
 - **Maintainability**: Future developers can quickly understand both implementation and design rationale
