@@ -1,5 +1,4 @@
 {
-  "model": "sonnet",
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
@@ -22,8 +21,8 @@
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
-  "autoDreamEnabled": true,
-  "voiceEnabled": false,
   "advisorModel": "opus",
-  "showClearContextOnPlanAccept": true
+  "showClearContextOnPlanAccept": true,
+  "autoDreamEnabled": true,
+  "voiceEnabled": false
 }
