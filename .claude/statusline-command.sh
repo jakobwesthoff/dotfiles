@@ -179,7 +179,9 @@ if [ -n "$rate_limit_pct" ]; then
     else                                        rate_color="$GREEN"
     fi
 
-    # Format reset time as a compact local clock hour (e.g. "4pm", "11am")
+    # Format reset time as a compact local clock time (e.g. "4pm", "2:30pm",
+    # "11am"). Minutes are shown only when non-zero so full-hour resets stay
+    # terse.
     reset_time=""
     if [ -n "$rate_limit_resets_at" ]; then
         # Convert Unix epoch to local time. BSD date (macOS) wants
@@ -187,11 +189,19 @@ if [ -n "$rate_limit_pct" ]; then
         # that bind-mounts this script) wants `-d "@<epoch>"`. Try BSD
         # first; if it exits non-zero fall back to GNU so the script
         # works unchanged on both hosts.
-        reset_raw=$(/bin/date -j -f "%s" "$rate_limit_resets_at" "+%l%p" 2>/dev/null \
-            || /bin/date -d "@$rate_limit_resets_at" "+%l%p" 2>/dev/null)
-        # Both forms emit a space-padded hour (%l) and uppercase AM/PM;
-        # trim the leading space and lowercase it for "4pm" / "11am".
-        reset_time=$(printf '%s' "$reset_raw" | tr '[:upper:]' '[:lower:]' | sed 's/^ *//')
+        reset_parts=$(/bin/date -j -f "%s" "$rate_limit_resets_at" "+%l|%M|%p" 2>/dev/null \
+            || /bin/date -d "@$rate_limit_resets_at" "+%l|%M|%p" 2>/dev/null)
+        if [ -n "$reset_parts" ]; then
+            IFS='|' read -r reset_hour reset_min reset_ampm <<< "$reset_parts"
+            # %l emits a space-padded hour; trim it and lowercase AM/PM.
+            reset_hour="${reset_hour## }"
+            reset_ampm=$(printf '%s' "$reset_ampm" | tr '[:upper:]' '[:lower:]')
+            if [ "$reset_min" = "00" ]; then
+                reset_time="${reset_hour}${reset_ampm}"
+            else
+                reset_time="${reset_hour}:${reset_min}${reset_ampm}"
+            fi
+        fi
     fi
 
     if [ -n "$reset_time" ]; then
