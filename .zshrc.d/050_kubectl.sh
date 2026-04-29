@@ -62,19 +62,6 @@ krsh() {
     kubectl exec --stdin --tty "$1" -c "$container" -- /bin/bash
 }
 
-klog() {
-    if [ $# -lt 1 ]; then
-        echo "Please provide a pod name acquire log from."
-        return 1
-    fi
-
-    local pod="$1"
-    shift 1
-
-    local container="$(__kubectl_select_container "$pod")"
-    kubectl logs "$pod" -c "$container" "$@"
-}
-
 ## Useful aliases taken from
 ## https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/kubectl/kubectl.plugin.zsh
 
@@ -191,14 +178,87 @@ alias kga='kubectl get all'
 alias kgaa='kubectl get all --all-namespaces'
 
 # Logs
-alias kl='kubectl logs'
-alias kl1h='kubectl logs --since 1h'
-alias kl1m='kubectl logs --since 1m'
-alias kl1s='kubectl logs --since 1s'
-alias klf='kubectl logs -f'
-alias klf1h='kubectl logs --since 1h -f'
-alias klf1m='kubectl logs --since 1m -f'
-alias klf1s='kubectl logs --since 1s -f'
+#
+# `kl` forwards arguments to `kubectl logs`. Positional (non-flag)
+# arguments are treated as pod names; flag arguments are shared across
+# all invocations. With a single pod the logs stream in the current
+# pane. With multiple pods a new tmux window is opened, the first pod
+# streams in its initial pane, and each additional pod gets a new
+# full-width split below, rebalanced to equal height.
+kl() {
+    local -a pods flags
+    local arg
+    for arg in "$@"; do
+        if [[ "$arg" == -* ]]; then
+            flags+=("$arg")
+        else
+            pods+=("$arg")
+        fi
+    done
+
+    if [ ${#pods[@]} -eq 0 ]; then
+        echo "Please provide at least one pod name to acquire logs from."
+        return 1
+    fi
+
+    if [ ${#pods[@]} -eq 1 ]; then
+        kubectl logs "${flags[@]}" "${pods[@]}"
+        return
+    fi
+
+    if [ -z "$TMUX" ]; then
+        echo "Multi-pod log streaming requires an active tmux session."
+        return 1
+    fi
+
+    # Build a reusable `kubectl logs <flags> <pod>` command string to
+    # type into each pane. Each value is shell-quoted so pod names or
+    # flag values containing whitespace round-trip safely. We launch
+    # each pane as an interactive shell and then send the command via
+    # `send-keys`, so the shell stays alive after `kubectl logs` exits
+    # instead of the pane closing on us.
+    local flag_str=""
+    for arg in "${flags[@]}"; do
+        flag_str+=" $(printf '%q' "$arg")"
+    done
+
+    # Propagate KUBECONFIG to every new pane via tmux's `-e` flag.
+    # tmux otherwise reuses the server's environment, which can differ
+    # from the calling shell (e.g. after `kcfg` switched configs).
+    local -a env_args
+    if [ -n "$KUBECONFIG" ]; then
+        env_args=(-e "KUBECONFIG=$KUBECONFIG")
+    fi
+
+    local window_id
+    window_id="$(tmux new-window "${env_args[@]}" -P -F '#{window_id}')"
+
+    local -a pane_ids
+    pane_ids+=("$(tmux display-message -p -t "$window_id" '#{pane_id}')")
+
+    local pod
+    for pod in "${pods[@]:1}"; do
+        pane_ids+=("$(tmux split-window -v -t "$window_id" \
+            "${env_args[@]}" -P -F '#{pane_id}')")
+    done
+
+    tmux select-layout -t "$window_id" even-vertical
+
+    local i pane
+    for (( i = 1; i <= ${#pods[@]}; i++ )); do
+        pane="${pane_ids[$i]}"
+        pod="${pods[$i]}"
+        tmux send-keys -t "$pane" \
+            "kubecolor logs${flag_str} $(printf '%q' "$pod")" Enter
+    done
+}
+alias kl1h='kl --since 1h'
+alias kl1m='kl --since 1m'
+alias kl1s='kl --since 1s'
+alias klf='kl -f'
+alias klf1h='kl --since 1h -f'
+alias klf1m='kl --since 1m -f'
+alias klf1s='kl --since 1s -f'
 
 # File copy
 alias kcp='kubectl cp'
