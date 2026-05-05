@@ -21,6 +21,51 @@ specific CLAUDE.md files may extend or override these where appropriate.
 
 When in doubt about a design decision, ask rather than assume.
 
+## Documents that must be fully validated
+
+These rules apply to ADRs, status reports, design documents, todos
+authored as decision records, README/CHANGELOG entries, and any other
+document whose value depends on its accuracy.
+
+- **Every sentence must be either validated and true, or absent.**
+  Nothing speculative. Nothing aspirational. Nothing "probably".
+- **Never fill a section just because the template has it.** If a
+  template section (Context, Consequences, Rationale, Risks,
+  Alternatives, etc.) has no validated content to put in it, leave
+  the section empty, drop it, or replace it with a single explicit
+  line such as `_Not yet established._` Do not invent material.
+- **Do not project the future.** Do not write "this will allow",
+  "in the future we plan to", "consequences will include" unless the
+  user has explicitly stated those plans. Document what is decided
+  now, not what might happen later.
+- **Do not transfer knowledge sideways without verification.**
+  Patterns, conventions, or claims observed in other repositories or
+  earlier conversations are not authoritative for the current
+  document. Re-validate against the project at hand before stating
+  them.
+- **Distinguish what was decided from what was discussed.** If a
+  point was raised but not explicitly accepted, it does not go into a
+  decision record.
+- **When information is missing and integral to the document:** try
+  to validate it yourself first (read the code, run a command, fetch
+  the source). If validation does not converge, ask the user. Do not
+  fill the gap with plausible-sounding text.
+- **You are expected to surface topics that you think belong in the
+  document but haven't been validated or decided.** This is not
+  optional. Silently omitting them is as much a failure as silently
+  inserting them. For every such topic, raise it in chat alongside
+  the draft — name what you considered, why it might belong, and
+  what is missing to validate or decide it. Then wait for the user's
+  call before adding it. The user wants to see the full set of
+  topics you considered, not just the ones that survived.
+- **Cite where the validation came from when it materially supports a
+  claim.** File path + line number, command output, ADR ID, or "user
+  confirmed in conversation" is acceptable. "Best practice" or
+  "convention" without a pointer is not.
+- **Before declaring such a document complete, audit it sentence by
+  sentence:** for each sentence, name the source. If you cannot, the
+  sentence does not stay.
+
 ## Agent model selection
 
 When spawning Explore Task agents, prefer Sonnet models to minimize normal
