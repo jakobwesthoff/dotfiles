@@ -33,20 +33,42 @@ accuracy.
   you cannot name the source for a sentence, remove it.
 - **Sources count, conventions don't.** Every claim traces back to a
   real source — file:line, command output, ADR ID, "user confirmed
-  in conversation". "Best practice", "common pattern", or claims
-  carried from other repos or earlier sessions are not
-  authoritative; re-validate against the project at hand.
+  in conversation". This applies equally to interpretation,
+  synthesis, and judgment calls: "X is impractical", "Y is the
+  obvious choice", "Z scales better" are claims, not observations,
+  and need a source or they go. Connective synthesis is the most
+  easily missed form: sentences that *link* observed facts to design
+  choices — "these behaviours shape what the tests must drive",
+  "mocking hides the protocol", "this means in practice X" — are
+  claims even when each linked half is validated. The connection
+  itself needs a stated source or the sentence goes; the reader can
+  connect the dots from facts + decisions without you writing out
+  the bridge. "Best practice", "common pattern", or claims carried
+  from other repos or earlier sessions are not authoritative;
+  re-validate against the project at hand.
 - **Decided ≠ discussed.** A point raised but not explicitly accepted
-  does not enter a decision record.
+  does not enter a decision record. This includes (a) the rationale
+  behind a decision: if the user accepted A but did not articulate
+  why A over B, do not invent a rationale even if it sounds
+  plausible — record the decision without the why, or ask. Watch
+  particularly for rationales smuggled into decision text via "so
+  X", "in order to Y", "because Z", "this means W" — those clauses
+  are claims about the *why* and need a source. (b) Implementation
+  details that elaborate the decision beyond what was decided: if
+  "use that pattern" was accepted, record the pattern, not the
+  borrowed Cargo feature names, env-var formats, or other specifics
+  that weren't part of the user's grant.
 - **Closure beats citation.** A reader should understand the
   document without leaving it. Validating a source is mandatory;
   *citing* it in the prose is not. Inline the relevant fact in the
   document's own terms — file:line tags on every sentence turn
   prose into bibliography. Reference outward only when the reader
   genuinely needs to act on the target, not just to learn a fact
-  you could state here. Cross-project pointers carry an extra cost
-  (context switch, foreign repo, synthesis burden) and are almost
-  always replaceable with one inlined sentence.
+  you could state here. Cross-project pointers default to dropped:
+  keep one only when the reader's required next action lives in the
+  other project (modifying it, running it, replicating it exactly).
+  "For reference", "as an example", or "for context" do not meet
+  the bar — inline the relevant fact instead.
 - **External information that belongs in the project.** When
   information you took from outside the project (local scratch
   paths, web pages, sibling repos) materially shapes what you're
@@ -59,19 +81,28 @@ accuracy.
   scope best.
 - **Empty beats invented.** Do not fill a template section just
   because it exists. With no validated content, drop the section or
-  write `_Not yet established._`. Never write "this will allow", "we
-  plan to", or "consequences will include" unless the user has
-  stated those plans.
+  write `_Not yet established._`. Do not write any sentence that
+  names a state of affairs that has not yet occurred — "this will
+  allow", "we plan to", "consequences will include", "X is
+  reachable", "Y will be uncovered", "developers will see", "tests
+  will not run in CI" — unless the user has stated those plans.
+  Consequences sections are the most common drift point; if you
+  cannot fill the section with sentences about *now* (what is
+  already true, what the decision already made changes), drop the
+  section.
 - **Missing-info protocol.** Try to validate yourself (read code,
   run a command, fetch the source). If that does not converge, ask
   the user. Never paper over the gap with plausible-sounding text.
 - **Surface what you considered but did not include — required, not
-  optional.** For every topic you thought might belong but is
-  unvalidated or undecided, raise it in chat alongside the draft:
-  what you considered, why it might belong, what is missing to
-  decide. Wait for the user's call. Silent omission is as wrong as
-  silent insertion; the user wants the full set of topics you
-  considered, not just the survivors.
+  optional.** Raise every *real candidate* (something you would have
+  included if conditions were different) in chat alongside the draft.
+  Keep it a triage list, not an audit log: one short line per item,
+  no paragraphs, only items that pass the "real candidate" filter —
+  things that were never genuinely on the table (obviously
+  out-of-scope details, items that belong in a different document)
+  are noise and stay out. For items that resolve to multiple-choice
+  (yes/no, A/B/C, now/later/no), prefer the AskUserQuestion tool
+  over open prose. Silent omission is as wrong as silent insertion.
 
 ## Agent model selection
 
