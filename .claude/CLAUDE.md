@@ -31,11 +31,20 @@ accuracy.
   aspiration, or "probably". A sentence is either validated and true
   or absent. Before declaring done, audit sentence-by-sentence; if
   you cannot name the source for a sentence, remove it.
-- **Sources count, conventions don't.** Cite file:line, command
-  output, ADR ID, or "user confirmed in conversation". "Best
-  practice", "common pattern", or claims carried over from other
-  repos or earlier sessions are not authoritative for this document
-  — re-validate against the project at hand.
+- **Sources count, conventions don't.** Every claim must trace back
+  to a real source — file:line, command output, ADR ID, or "user
+  confirmed in conversation". "Best practice", "common pattern", or
+  claims carried over from other repos or earlier sessions are not
+  authoritative; re-validate against the project at hand.
+
+  Validating the source is mandatory; *writing the citation into the
+  document* is not. Include an inline citation only when it gives
+  the reader information that is hard to find from the document's
+  own content — e.g. pointing to an authoritative external decision,
+  or to evidence the reader would otherwise have to hunt for. Don't
+  pepper every sentence with file:line tags; that turns prose into
+  bibliography. Use judgment: would a reader be helped by chasing
+  this pointer? If yes, cite. If no, validate silently and move on.
 - **Decided ≠ discussed.** A point raised but not explicitly accepted
   does not enter a decision record.
 - **Empty beats invented.** Do not fill a template section just
