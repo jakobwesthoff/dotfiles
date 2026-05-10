@@ -66,7 +66,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end, { desc = "[G]oto [D]efinition(s)" })
 
     -- Unmap default gr* since 0.11
-    local gr_mappings = { "grr", "gra", "gri", "grn" }
+    local gr_mappings = { "grr", "gra", "gri", "grn", "grt", "grx" }
     for _, keymap in ipairs(gr_mappings) do
       pcall(function()
         vim.keymap.del("n", keymap)
