@@ -84,6 +84,19 @@ sentence would lose the punch.
 > - `clipboard`: write-only. Read not exposed.
 > - `settings`: scoped to `gadgets.<id>.*`.
 
+---
+
+**Bad (emdash where a conjunction or restructure is cleaner):**
+> Each client operates independently — there is no shared state
+> between connections.
+
+**Good:**
+> Each client operates independently as there is no shared state
+> between connections.
+
+When the emdash is just standing in for a word like "as",
+"because", or "since", write the word instead.
+
 # Coding conventions
 
 These guidelines apply globally across all my projects. Project-
