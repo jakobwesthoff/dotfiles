@@ -16,22 +16,73 @@ technically focused. Prioritize technical clarity over politeness.
 
 # Writing style: emdash restraint
 
-Emdashes are not banned, but they are overused by default. Before
-reaching for an emdash, try an alternative first:
+Emdashes are fine, but overreliance on them makes prose feel
+choppy and formulaic. The goal is fluent, natural writing, not
+mechanical substitution of one punctuation mark for another.
 
-- **Parenthetical commas** for mild asides.
-- **Semicolons** to join two related independent clauses.
-- **Colons** to introduce an explanation or list.
-- **Separate sentences** when the aside is substantial enough to stand
-  alone.
+When you catch yourself reaching for an emdash, pause and ask
+whether the sentence reads better restructured: a separate
+sentence, a colon introducing what follows, commas around a mild
+aside, or simply rewriting the clause so no special punctuation is
+needed. Often the best fix is not swapping punctuation but
+rephrasing entirely.
 
-Use an emdash only when it is genuinely the clearest punctuation for
-the job, such as a sharp interjection mid-sentence or an appositive
-where commas would create ambiguity. Two emdashes in a single
-paragraph is a strong signal that at least one should be rephrased.
+Emdashes remain the right choice for sharp interjections, for
+appositives where commas would create ambiguity, and anywhere
+they genuinely produce the most readable result. Do not replace
+them with semicolons reflexively; semicolons are usually worse.
 
-This applies to all generated text: prose, code comments, commit
-messages, documentation, and chat output.
+The signal to watch for: three or more emdashes in a single
+paragraph, or a page where every other sentence uses one. That
+pattern means the writing has fallen into a rut and needs
+variety, not a find-and-replace pass.
+
+### Examples
+
+**Bad (emdash as default glue):**
+> The host owns the enabled state. Each gadget is wrapped in a
+> `GadgetSlot` — it holds an `AtomicBool` — plus a
+> `CoalescingDispatcher` — which deduplicates writes.
+
+**Bad (mechanical semicolon swap):**
+> The host owns the enabled state; each gadget is wrapped in a
+> `GadgetSlot`; it holds an `AtomicBool`; plus a
+> `CoalescingDispatcher`; which deduplicates writes.
+
+**Good (restructured for flow):**
+> The host owns the enabled state. Each gadget is wrapped in a
+> `GadgetSlot` that holds an `AtomicBool` for the enabled flag
+> and a `CoalescingDispatcher` that deduplicates writes.
+
+---
+
+**Bad (emdash where a colon is cleaner):**
+> Two storage primitives exist — `SqlStorage` and `FileStorage`.
+
+**Good:**
+> Two storage primitives exist: `SqlStorage` and `FileStorage`.
+
+---
+
+**Good (emdash is the right tool):**
+> The bridge silently drops the channel rather than forwarding it
+> — gadgets that need streaming must stay native.
+
+Here the emdash creates a deliberate pause before a consequence
+that deserves emphasis. A comma would be too weak; a separate
+sentence would lose the punch.
+
+---
+
+**Bad (every list item starts with an emdash glue pattern):**
+> - `logging` — structured logs routed to host logger.
+> - `clipboard` — write-only. Read not exposed.
+> - `settings` — scoped to `gadgets.<id>.*`.
+
+**Good (mix of structures):**
+> - `logging`: structured logs routed to host logger.
+> - `clipboard`: write-only. Read not exposed.
+> - `settings`: scoped to `gadgets.<id>.*`.
 
 # Coding conventions
 
