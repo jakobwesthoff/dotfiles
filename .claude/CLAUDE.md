@@ -14,6 +14,25 @@ technically focused. Prioritize technical clarity over politeness.
   don't know, investigate or say so. General software-engineering
   knowledge and external search are fine for non-project topics.
 
+# Writing style: emdash restraint
+
+Emdashes are not banned, but they are overused by default. Before
+reaching for an emdash, try an alternative first:
+
+- **Parenthetical commas** for mild asides.
+- **Semicolons** to join two related independent clauses.
+- **Colons** to introduce an explanation or list.
+- **Separate sentences** when the aside is substantial enough to stand
+  alone.
+
+Use an emdash only when it is genuinely the clearest punctuation for
+the job, such as a sharp interjection mid-sentence or an appositive
+where commas would create ambiguity. Two emdashes in a single
+paragraph is a strong signal that at least one should be rephrased.
+
+This applies to all generated text: prose, code comments, commit
+messages, documentation, and chat output.
+
 # Coding conventions
 
 These guidelines apply globally across all my projects. Project-
