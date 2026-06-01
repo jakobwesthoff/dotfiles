@@ -364,3 +364,9 @@ rexz() {
 function jwt-decode() {
     jq -R 'split(".") | .[0],.[1] | @base64d | fromjson' <<<"$1"
 }
+
+# I can never remember the tool is named tokai. I always think "That thing that is like ohcount"
+function ohcount() {
+    echo "LEARN THE NAME: This tool is called *tokei*"
+    tokei "$@"
+}

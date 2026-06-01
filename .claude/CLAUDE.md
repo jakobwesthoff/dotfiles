@@ -14,12 +14,178 @@ technically focused. Prioritize technical clarity over politeness.
   don't know, investigate or say so. General software-engineering
   knowledge and external search are fine for non-project topics.
 
+# Writing style: emdash restraint
+
+Emdashes are fine, but overreliance on them makes prose feel
+choppy and formulaic. The goal is fluent, natural writing, not
+mechanical substitution of one punctuation mark for another.
+
+When you catch yourself reaching for an emdash, pause and ask
+whether the sentence reads better restructured: a separate
+sentence, a colon introducing what follows, commas around a mild
+aside, or simply rewriting the clause so no special punctuation is
+needed. Often the best fix is not swapping punctuation but
+rephrasing entirely.
+
+Emdashes remain the right choice for sharp interjections, for
+appositives where commas would create ambiguity, and anywhere
+they genuinely produce the most readable result. Do not replace
+them with semicolons reflexively; semicolons are usually worse.
+
+The signal to watch for: three or more emdashes in a single
+paragraph, or a page where every other sentence uses one. That
+pattern means the writing has fallen into a rut and needs
+variety, not a find-and-replace pass.
+
+### Examples
+
+**Bad (emdash as default glue):**
+> The host owns the enabled state. Each gadget is wrapped in a
+> `GadgetSlot` — it holds an `AtomicBool` — plus a
+> `CoalescingDispatcher` — which deduplicates writes.
+
+**Bad (mechanical semicolon swap):**
+> The host owns the enabled state; each gadget is wrapped in a
+> `GadgetSlot`; it holds an `AtomicBool`; plus a
+> `CoalescingDispatcher`; which deduplicates writes.
+
+**Good (restructured for flow):**
+> The host owns the enabled state. Each gadget is wrapped in a
+> `GadgetSlot` that holds an `AtomicBool` for the enabled flag
+> and a `CoalescingDispatcher` that deduplicates writes.
+
+---
+
+**Bad (emdash where a colon is cleaner):**
+> Two storage primitives exist — `SqlStorage` and `FileStorage`.
+
+**Good:**
+> Two storage primitives exist: `SqlStorage` and `FileStorage`.
+
+---
+
+**Good (emdash is the right tool):**
+> The bridge silently drops the channel rather than forwarding it
+> — gadgets that need streaming must stay native.
+
+Here the emdash creates a deliberate pause before a consequence
+that deserves emphasis. A comma would be too weak; a separate
+sentence would lose the punch.
+
+---
+
+**Bad (every list item starts with an emdash glue pattern):**
+> - `logging` — structured logs routed to host logger.
+> - `clipboard` — write-only. Read not exposed.
+> - `settings` — scoped to `gadgets.<id>.*`.
+
+**Good (mix of structures):**
+> - `logging`: structured logs routed to host logger.
+> - `clipboard`: write-only. Read not exposed.
+> - `settings`: scoped to `gadgets.<id>.*`.
+
+---
+
+**Bad (emdash where a conjunction or restructure is cleaner):**
+> Each client operates independently — there is no shared state
+> between connections.
+
+**Good:**
+> Each client operates independently as there is no shared state
+> between connections.
+
+When the emdash is just standing in for a word like "as",
+"because", or "since", write the word instead.
+
 # Coding conventions
 
 These guidelines apply globally across all my projects. Project-
 specific CLAUDE.md files may extend or override these where appropriate.
 
 When in doubt about a design decision, ask rather than assume.
+
+## Documents that must be fully validated
+
+Applies to ADRs, status reports, design docs, decision-record todos,
+README/CHANGELOG entries, and any document whose value depends on its
+accuracy.
+
+- **No unvalidated sentence stays.** No speculation, projection,
+  aspiration, or "probably". A sentence is either validated and true
+  or absent. Before declaring done, audit sentence-by-sentence; if
+  you cannot name the source for a sentence, remove it.
+- **Sources count, conventions don't.** Every claim traces back to a
+  real source — file:line, command output, ADR ID, "user confirmed
+  in conversation". This applies equally to interpretation,
+  synthesis, and judgment calls: "X is impractical", "Y is the
+  obvious choice", "Z scales better" are claims, not observations,
+  and need a source or they go. Connective synthesis is the most
+  easily missed form: sentences that *link* observed facts to design
+  choices — "these behaviours shape what the tests must drive",
+  "mocking hides the protocol", "this means in practice X" — are
+  claims even when each linked half is validated. The connection
+  itself needs a stated source or the sentence goes; the reader can
+  connect the dots from facts + decisions without you writing out
+  the bridge. "Best practice", "common pattern", or claims carried
+  from other repos or earlier sessions are not authoritative;
+  re-validate against the project at hand.
+- **Decided ≠ discussed.** A point raised but not explicitly accepted
+  does not enter a decision record. This includes (a) the rationale
+  behind a decision: if the user accepted A but did not articulate
+  why A over B, do not invent a rationale even if it sounds
+  plausible — record the decision without the why, or ask. Watch
+  particularly for rationales smuggled into decision text via "so
+  X", "in order to Y", "because Z", "this means W" — those clauses
+  are claims about the *why* and need a source. (b) Implementation
+  details that elaborate the decision beyond what was decided: if
+  "use that pattern" was accepted, record the pattern, not the
+  borrowed Cargo feature names, env-var formats, or other specifics
+  that weren't part of the user's grant.
+- **Closure beats citation.** A reader should understand the
+  document without leaving it. Validating a source is mandatory;
+  *citing* it in the prose is not. Inline the relevant fact in the
+  document's own terms — file:line tags on every sentence turn
+  prose into bibliography. Reference outward only when the reader
+  genuinely needs to act on the target, not just to learn a fact
+  you could state here. Cross-project pointers default to dropped:
+  keep one only when the reader's required next action lives in the
+  other project (modifying it, running it, replicating it exactly).
+  "For reference", "as an example", or "for context" do not meet
+  the bar — inline the relevant fact instead.
+- **External information that belongs in the project.** When
+  information you took from outside the project (local scratch
+  paths, web pages, sibling repos) materially shapes what you're
+  building, raise it with the user and discuss integrating it (as
+  code, fixture, doc snippet) before writing a document around the
+  external pointer. If integration already exists, reference the
+  integrated artifact, not the original. External sources are
+  fragile in proportion to how ephemeral they are — local temp
+  paths worst, web URLs middling, files inside this project's own
+  scope best.
+- **Empty beats invented.** Do not fill a template section just
+  because it exists. With no validated content, drop the section or
+  write `_Not yet established._`. Do not write any sentence that
+  names a state of affairs that has not yet occurred — "this will
+  allow", "we plan to", "consequences will include", "X is
+  reachable", "Y will be uncovered", "developers will see", "tests
+  will not run in CI" — unless the user has stated those plans.
+  Consequences sections are the most common drift point; if you
+  cannot fill the section with sentences about *now* (what is
+  already true, what the decision already made changes), drop the
+  section.
+- **Missing-info protocol.** Try to validate yourself (read code,
+  run a command, fetch the source). If that does not converge, ask
+  the user. Never paper over the gap with plausible-sounding text.
+- **Surface what you considered but did not include — required, not
+  optional.** Raise every *real candidate* (something you would have
+  included if conditions were different) in chat alongside the draft.
+  Keep it a triage list, not an audit log: one short line per item,
+  no paragraphs, only items that pass the "real candidate" filter —
+  things that were never genuinely on the table (obviously
+  out-of-scope details, items that belong in a different document)
+  are noise and stay out. For items that resolve to multiple-choice
+  (yes/no, A/B/C, now/later/no), prefer the AskUserQuestion tool
+  over open prose. Silent omission is as wrong as silent insertion.
 
 ## Agent model selection
 
