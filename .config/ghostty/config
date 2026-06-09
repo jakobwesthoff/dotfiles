@@ -1,13 +1,28 @@
-# Schriftart und Größe
-font-family = "JetBrainsMono NFM SemiBold"
-font-family-bold = "JetBrainsMono NFM Bold"
-font-family-italic = "JetBrainsMono NFM SemiBold Italic"
-font-family-bold-italic = "JetBrainsMono NFM Bold Italic"
+# Font and size
 font-size = 14
 
+# Enable ligatures for all fonts configured below
 font-feature = "calt"
 font-feature = "clig"
 font-feature = "liga"
+
+# Victor Mono (Nerd Font, cursive italics as the comment variant)
+font-family = "VictorMono NFM SemiBold"
+font-family-bold = "VictorMono NFM Bold"
+font-family-italic = "VictorMono NFM SemiBold Italic"
+font-family-bold-italic = "VictorMono NFM Bold Italic"
+
+# JetBrainsMono (Nerd Font)
+# font-family = "JetBrainsMono NFM SemiBold"
+# font-family-bold = "JetBrainsMono NFM Bold"
+# font-family-italic = "JetBrainsMono NFM SemiBold Italic"
+# font-family-bold-italic = "JetBrainsMono NFM Bold Italic"
+
+# Cascadia Code (Nerd Font, also has cursive italics)
+# font-family = "Cascadia Code NF SemiBold"
+# font-family-bold = "Cascadia Code NF Bold"
+# font-family-italic = "Cascadia Code NF SemiBold Italic"
+# font-family-bold-italic = "Cascadia Code NF Bold Italic"
 
 # Colorscheme (Gruvbox Material Hard dark)
 background = #1d2021
@@ -16,7 +31,7 @@ cursor-color = #d4be98
 selection-background = #d4be98
 selection-foreground = #3c3836
 
-# Ansi Farben
+# ANSI colors
 palette = 0=#1d2021
 palette = 1=#ea6962
 palette = 2=#a9b665
