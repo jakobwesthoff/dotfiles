@@ -151,18 +151,55 @@ cost_display=$(awk -v c="$session_cost" 'BEGIN {
 }')
 
 # =========================================================
-# Build rate limit display (5-hour window)
+# Build rate limit display (5-hour and weekly windows)
 #
-# Shows a vertical block character (▁–█) mapping usage to 8 levels,
-# the percentage, and the reset time as a local clock hour.
-# Omitted entirely when rate_limits.five_hour is absent (API key
-# users, or before the first API response in a session).
+# Each window renders as a vertical block character (▁–█) mapping
+# usage to 8 levels, the percentage, and the time remaining until
+# the window resets. The two segments are concatenated, 5-hour
+# first and weekly second.
+#
+# A window is omitted entirely when its rate_limits entry is absent
+# (API key users, or before the first API response in a session),
+# so subscribers see both while everyone else sees neither.
 # =========================================================
 
-rate_limit_display=""
-if [ -n "$rate_limit_pct" ]; then
+# Read the weekly (seven-day) window alongside the 5-hour one parsed above.
+rate_limit_week_pct=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
+rate_limit_week_resets_at=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
+
+# Format the seconds remaining until a reset epoch as a compact span such
+# as "47m", "2h13m", or "3d4h12m". Larger units are dropped while zero, so
+# the 5-hour window naturally never shows a day component. A window that
+# has already lapsed (or whose epoch is in the past) renders as "0m".
+format_remaining() {
+    local target="$1"
+    local now remaining days hours mins out=""
+
+    now=$(/bin/date +%s)
+    remaining=$(( target - now ))
+    if [ "$remaining" -lt 0 ]; then remaining=0; fi
+
+    days=$(( remaining / 86400 ))
+    hours=$(( (remaining % 86400) / 3600 ))
+    mins=$(( (remaining % 3600) / 60 ))
+
+    if [ "$days" -gt 0 ]; then out="${out}${days}d"; fi
+    if [ "$days" -gt 0 ] || [ "$hours" -gt 0 ]; then out="${out}${hours}h"; fi
+    out="${out}${mins}m"
+
+    printf '%s' "$out"
+}
+
+# Render a single window segment: leading separator, colored level bar,
+# percentage, and the time remaining. Prints nothing when the window's
+# percentage is unavailable.
+build_rate_segment() {
+    local pct="$1" resets_at="$2"
+    [ -z "$pct" ] && return 0
+
     # Vertical progress bar: map 0–100% to one of 8 block characters
-    rate_limit_bar=$(awk -v pct="$rate_limit_pct" 'BEGIN {
+    local bar rounded color remaining
+    bar=$(awk -v pct="$pct" 'BEGIN {
         split("▁ ▂ ▃ ▄ ▅ ▆ ▇ █", bars, " ")
         idx = int(pct / 100 * 8)
         if (idx < 1) idx = 1
@@ -170,48 +207,30 @@ if [ -n "$rate_limit_pct" ]; then
         printf "%s", bars[idx]
     }')
 
-    rate_limit_rounded=$(awk -v pct="$rate_limit_pct" 'BEGIN { printf "%.0f", pct }')
+    rounded=$(awk -v pct="$pct" 'BEGIN { printf "%.0f", pct }')
 
-    # Color the rate limit segment using the same thresholds as the context bar
-    if   [ "$rate_limit_rounded" -ge 80 ]; then rate_color="$RED"
-    elif [ "$rate_limit_rounded" -ge 70 ]; then rate_color="$ORANGE"
-    elif [ "$rate_limit_rounded" -ge 60 ]; then rate_color="$YELLOW"
-    else                                        rate_color="$GREEN"
+    # Color each segment using the same thresholds as the context bar
+    if   [ "$rounded" -ge 80 ]; then color="$RED"
+    elif [ "$rounded" -ge 70 ]; then color="$ORANGE"
+    elif [ "$rounded" -ge 60 ]; then color="$YELLOW"
+    else                            color="$GREEN"
     fi
 
-    # Format reset time as a compact local clock time (e.g. "4pm", "2:30pm",
-    # "11am"). Minutes are shown only when non-zero so full-hour resets stay
-    # terse.
-    reset_time=""
-    if [ -n "$rate_limit_resets_at" ]; then
-        # Convert Unix epoch to local time. BSD date (macOS) wants
-        # `-j -f "%s" <epoch>`; GNU date (Linux, incl. the devcontainer
-        # that bind-mounts this script) wants `-d "@<epoch>"`. Try BSD
-        # first; if it exits non-zero fall back to GNU so the script
-        # works unchanged on both hosts.
-        reset_parts=$(/bin/date -j -f "%s" "$rate_limit_resets_at" "+%l|%M|%p" 2>/dev/null \
-            || /bin/date -d "@$rate_limit_resets_at" "+%l|%M|%p" 2>/dev/null)
-        if [ -n "$reset_parts" ]; then
-            IFS='|' read -r reset_hour reset_min reset_ampm <<< "$reset_parts"
-            # %l emits a space-padded hour; trim it and lowercase AM/PM.
-            reset_hour="${reset_hour## }"
-            reset_ampm=$(printf '%s' "$reset_ampm" | tr '[:upper:]' '[:lower:]')
-            if [ "$reset_min" = "00" ]; then
-                reset_time="${reset_hour}${reset_ampm}"
-            else
-                reset_time="${reset_hour}:${reset_min}${reset_ampm}"
-            fi
-        fi
+    remaining=""
+    if [ -n "$resets_at" ]; then
+        remaining=$(format_remaining "$resets_at")
     fi
 
-    if [ -n "$reset_time" ]; then
-        rate_limit_display=$(printf "  ${rate_color}%s${RESET} ${DIM}%s%%${RESET} ${DIM}(%s)${RESET}" \
-            "$rate_limit_bar" "$rate_limit_rounded" "$reset_time")
+    if [ -n "$remaining" ]; then
+        printf "  ${color}%s${RESET} ${DIM}%s%%${RESET} ${DIM}(%s)${RESET}" \
+            "$bar" "$rounded" "$remaining"
     else
-        rate_limit_display=$(printf "  ${rate_color}%s${RESET} ${DIM}%s%%${RESET}" \
-            "$rate_limit_bar" "$rate_limit_rounded")
+        printf "  ${color}%s${RESET} ${DIM}%s%%${RESET}" \
+            "$bar" "$rounded"
     fi
-fi
+}
+
+rate_limit_display="$(build_rate_segment "$rate_limit_pct" "$rate_limit_resets_at")$(build_rate_segment "$rate_limit_week_pct" "$rate_limit_week_resets_at")"
 
 # =========================================================
 # Shorten directory for display:
