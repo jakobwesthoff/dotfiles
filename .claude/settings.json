@@ -11,28 +11,20 @@
       "Bash(wc:*)",
       "Bash(bats:*)",
       "Bash(xargs cat:*)",
-      "Bash(npm run build:*)",
       "Bash(git:*)",
-      "WebFetch(domain:crates.io)",
       "Bash(mkulid -l -n 8)",
       "Bash(mkulid -l)",
-      "Bash(mkulid:*)",
-      "mcp__rfx__index_project",
-      "mcp__rfx__search_regex"
+      "Bash(mkulid:*)"
     ],
     "deny": [],
     "defaultMode": "default"
   },
-  "model": "claude-opus-4-6[1m]",
+  "model": "opus",
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
   },
   "enabledPlugins": {
-    "typescript-lsp@claude-plugins-official": false,
-    "php-lsp@claude-plugins-official": true,
-    "lua-lsp@claude-plugins-official": true,
-    "clangd-lsp@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
@@ -45,13 +37,13 @@
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
-  "advisorModel": "opus",
   "showClearContextOnPlanAccept": true,
-  "autoDreamEnabled": true,
-  "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
   "voice": {
     "enabled": true,
     "mode": "hold"
-  }
+  },
+  "autoDreamEnabled": true,
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true,
+  "agentPushNotifEnabled": true
 }
