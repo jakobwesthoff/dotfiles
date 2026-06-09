@@ -6,23 +6,31 @@ font-feature = "calt"
 font-feature = "clig"
 font-feature = "liga"
 
+# Styles are named explicitly via font-style-* rather than baked into the
+# family name. This picks the cursive "Italic" faces over the plain-slant
+# "Oblique" faces, and stops Ghostty from synthesizing a fake slant from
+# the upright face when it cannot resolve a combined family name.
+
 # Victor Mono (Nerd Font, cursive italics as the comment variant)
-font-family = "VictorMono NFM SemiBold"
-font-family-bold = "VictorMono NFM Bold"
-font-family-italic = "VictorMono NFM SemiBold Italic"
-font-family-bold-italic = "VictorMono NFM Bold Italic"
+font-family = "VictorMono Nerd Font Mono"
+font-style = "SemiBold"
+font-style-bold = "Bold"
+font-style-italic = "SemiBold Italic"
+font-style-bold-italic = "Bold Italic"
 
 # JetBrainsMono (Nerd Font)
-# font-family = "JetBrainsMono NFM SemiBold"
-# font-family-bold = "JetBrainsMono NFM Bold"
-# font-family-italic = "JetBrainsMono NFM SemiBold Italic"
-# font-family-bold-italic = "JetBrainsMono NFM Bold Italic"
+# font-family = "JetBrainsMono Nerd Font Mono"
+# font-style = "SemiBold"
+# font-style-bold = "Bold"
+# font-style-italic = "SemiBold Italic"
+# font-style-bold-italic = "Bold Italic"
 
 # Cascadia Code (Nerd Font, also has cursive italics)
-# font-family = "Cascadia Code NF SemiBold"
-# font-family-bold = "Cascadia Code NF Bold"
-# font-family-italic = "Cascadia Code NF SemiBold Italic"
-# font-family-bold-italic = "Cascadia Code NF Bold Italic"
+# font-family = "Cascadia Code NF"
+# font-style = "SemiBold"
+# font-style-bold = "Bold"
+# font-style-italic = "SemiBold Italic"
+# font-style-bold-italic = "Bold Italic"
 
 # Colorscheme (Gruvbox Material Hard dark)
 background = #1d2021
