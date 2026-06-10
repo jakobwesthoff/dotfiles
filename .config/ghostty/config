@@ -32,6 +32,14 @@ font-style-bold-italic = "Bold Italic"
 # font-style-italic = "SemiBold Italic"
 # font-style-bold-italic = "Bold Italic"
 
+# Lilex (Nerd Font, serif-like cursive italics as the comment variant).
+# Lilex has no SemiBold face, so Medium stands in as the upright weight.
+# font-family = "Lilex Nerd Font Mono"
+# font-style = "Medium"
+# font-style-bold = "Bold"
+# font-style-italic = "Medium Italic"
+# font-style-bold-italic = "Bold Italic"
+
 # Colorscheme (Gruvbox Material Hard dark)
 background = #1d2021
 foreground = #d4be98
