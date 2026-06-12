@@ -25,6 +25,7 @@ brew "sesh"
 brew "fd"
 brew "screen"
 brew "yazi"
+brew "dialog"
 
 # =========================================================
 # Core CLI Utilities
