@@ -145,7 +145,20 @@ return {
   -- ```
   {
     "mrcjkb/rustaceanvim",
-    version = "^5", -- Recommended
+    -- Pin to the current major to avoid surprise breaking-major upgrades.
+    version = "^9",
     lazy = false, -- This plugin is already lazy
+    init = function()
+      -- rustaceanvim starts rust-analyzer itself rather than through
+      -- vim.lsp.config/enable, so the wildcard vim.lsp.config("*")
+      -- capabilities never reach it (and v6+ no longer auto-registers
+      -- client capabilities). Hand blink.cmp's capabilities to its server
+      -- directly. vim.g.rustaceanvim is read before the plugin loads.
+      vim.g.rustaceanvim = {
+        server = {
+          capabilities = require("blink.cmp").get_lsp_capabilities(),
+        },
+      }
+    end,
   },
 }
