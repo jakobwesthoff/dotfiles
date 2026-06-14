@@ -30,19 +30,20 @@ From the actual specs in `lua/mrjakob/plugins/`:
 
 - **Declarative event/keys/ft/cmd lazy loading**: used by conform
   (`event = BufWritePre`, `cmd`, `keys`), autopairs + ts-autotag
-  (`InsertEnter`), flash (`VeryLazy` + `keys`), crates
-  (`BufRead Cargo.toml`), which-key (`VimEnter`), zen-mode (`keys`),
-  lazydev (`ft = lua`). With vim.pack each of these becomes manual
-  autocmd + `packadd`/setup code, or simply eager loading.
+  (`InsertEnter`), crates (`BufRead Cargo.toml`), which-key (`VimEnter`),
+  lazydev (`ft = lua`), template-string (`ft`), and todo-comments +
+  nvim-highlight-colors (`BufReadPre`/`BufReadPost`/`BufNewFile`). With
+  vim.pack each of these becomes manual autocmd + `packadd`/setup code,
+  or simply eager loading.
 - **Dependency ordering** (`dependencies = ...`) incl. transparent
   install of nvim-web-devicons, plenary, snacks-as-dependency.
 - **`opts` sugar** calling `setup()` automatically.
 - **Priority/ordering** for the colorscheme (`priority = 1000`).
 - Lockfile UI, `:Lazy` update interface, semver `version = "v1.*"`
-  pins (blink.cmp, rustaceanvim `^5`).
+  pins (blink.cmp, rustaceanvim `^9`).
 
 Functionally replaceable, but each item is hand-written code after a
-migration. This config is small (24 specs); startup is presumably fine
+migration. This config is small (~22 specs); startup is presumably fine
 either way (not measured — measure before deciding).
 
 ## Honest assessment
@@ -60,7 +61,7 @@ you.
 
 1. Measure current startup (`nvim --startuptime`) as a baseline.
 2. Branch the dotfiles repo; rewrite `setup.lua` with `vim.pack.add`
-   listing all 24 plugins (src URLs from `lazy-lock.json`), explicit
+   listing every plugin (src URLs from `lazy-lock.json`), explicit
    `require(...).setup(...)` calls in dependency order, and a
    `PackChanged` autocmd for the treesitter/blink build steps.
 3. Decide afterwards with data: startup delta, perceived complexity of
