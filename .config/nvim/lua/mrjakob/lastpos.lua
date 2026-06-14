@@ -35,7 +35,7 @@ local function run()
     elseif buff_last_line - last_line > ((win_last_line - win_first_line) / 2) - 1 then
       vim.cmd([[normal! g`"zz]])
     else
-      vim.cmd([[normal! G'"<c-e>]])
+      vim.cmd([[execute "normal! G'\"\<c-e>"]])
     end
   end
 end
