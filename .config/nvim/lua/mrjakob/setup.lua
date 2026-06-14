@@ -1,5 +1,8 @@
--- Map the leader key as it is needed by lazy
+-- Map the leader key as it is needed by lazy. Set the local leader here too
+-- (lazy snapshots both at setup) so filetype-local <localleader> maps share
+-- the same prefix instead of falling back to the default backslash.
 vim.g.mapleader = ","
+vim.g.maplocalleader = ","
 
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
