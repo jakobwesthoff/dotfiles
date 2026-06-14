@@ -1,5 +1,8 @@
 return {
   "folke/snacks.nvim",
+  -- snacks recommends loading early and eagerly for its UI modules.
+  priority = 1000,
+  lazy = false,
   ---@type snacks.Config
   opts = {
     indent = {

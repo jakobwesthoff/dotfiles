@@ -1,7 +1,8 @@
 return {
   "obsidian-nvim/obsidian.nvim",
+  -- Eager so the :Obsidian* commands are usable from any buffer, not only
+  -- after a markdown file has been opened.
   lazy = false,
-  ft = "markdown",
   -- event = {
   --   -- If you want to use the home shortcut '~' here you need to call 'vim.fn.expand'.
   --   -- E.g. "BufReadPre " .. vim.fn.expand "~" .. "/my-vault/*.md"
