@@ -34,20 +34,19 @@ vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup("keymaps-lsp-attach", { clear = true }),
-  callback = function()
-    -- Jump to the definition of the word under your cursor.
-    --  This is where a variable was first declared, or where a function is defined, etc.
-    --  To jump back, press <C-t>.
-
-    --
+  callback = function(event)
     -- All of the follwoing gX keybindings are a little more
     -- involved, as we are checking first if there is only one
     -- match. If there is we directly go there. Otherwise we open
     -- fzf-lua for the results.
-    --
+
+    local function map(mode, lhs, rhs, desc)
+      vim.keymap.set(mode, lhs, rhs, { buffer = event.buf, desc = desc })
+    end
+    -- use map(...) for gd / gr / gI / gD / <leader>D / <leader>cr / <leader>ca
 
     -- [G]oto [D]efinition(s)
-    vim.keymap.set("n", "gd", function()
+    map("n", "gd", function()
       local params = vim.lsp.util.make_position_params()
       vim.lsp.buf_request(0, "textDocument/definition", params, function(_, result)
         local items = result
@@ -69,17 +68,17 @@ vim.api.nvim_create_autocmd("LspAttach", {
     local gr_mappings = { "grr", "gra", "gri", "grn", "grt", "grx" }
     for _, keymap in ipairs(gr_mappings) do
       pcall(function()
-        vim.keymap.del("n", keymap)
+        vim.keymap.del("n", keymap, { buffer = event.buf })
       end)
     end
 
     -- [G]oto [R]eference(s)
-    vim.keymap.set("n", "gr", function()
+    map("n", "gr", function()
       require("fzf-lua").lsp_references()
     end, { desc = "[G]oto [R]eference(s)" })
 
     -- [G]oto [I]mplementation(s)
-    vim.keymap.set("n", "gI", function()
+    map("n", "gI", function()
       local params = vim.lsp.util.make_position_params()
       vim.lsp.buf_request(0, "textDocument/implementation", params, function(_, result)
         local items = result
@@ -98,7 +97,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end, { desc = "[G]oto [I]mplementation(s)" })
 
     -- [G]oto [D]eclaration
-    vim.keymap.set("n", "gD", function()
+    map("n", "gD", function()
       -- Check if declaration is supported
       local clients = vim.lsp.get_clients({ bufnr = 0 })
       local has_support = false
@@ -134,15 +133,15 @@ vim.api.nvim_create_autocmd("LspAttach", {
     -- Jump to the type of the word under your cursor.
     --  Useful when you're not sure what type a variable is and you want to see
     --  the definition of its *type*, not where it was *defined*.
-    vim.keymap.set("n", "<leader>D", require("fzf-lua").lsp_typedefs, { desc = "Type [D]efinition" })
+    map("n", "<leader>D", require("fzf-lua").lsp_typedefs, { desc = "Type [D]efinition" })
 
     -- Rename the variable under your cursor.
     --  Most Language Servers support renaming across files, etc.
-    vim.keymap.set("n", "<leader>cr", vim.lsp.buf.rename, { desc = "[R]ename" })
+    map("n", "<leader>cr", vim.lsp.buf.rename, { desc = "[R]ename" })
 
     -- Execute a code action, usually your cursor needs to be on top of an error
     -- or a suggestion from your LSP for this to activate.
-    vim.keymap.set({ "n", "x" }, "<leader>ca", vim.lsp.buf.code_action, { desc = "[C]ode [A]ction" })
+    map({ "n", "x" }, "<leader>ca", vim.lsp.buf.code_action, { desc = "[C]ode [A]ction" })
   end,
 })
 

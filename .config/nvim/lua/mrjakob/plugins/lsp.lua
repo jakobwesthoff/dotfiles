@@ -127,8 +127,9 @@ return {
 
           if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
             vim.keymap.set("n", "<leader>uh", function()
-              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = event.buf }))
-            end, { desc = "Toggle [U]i Inlay [H]ints" })
+              local buf = vim.api.nvim_get_current_buf()
+              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = buf }), { bufnr = buf })
+            end, { buffer = event.buf, desc = "Toggle [U]i Inlay [H]ints" })
           end
         end,
       })
