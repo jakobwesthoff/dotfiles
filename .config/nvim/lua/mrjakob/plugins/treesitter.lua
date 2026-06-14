@@ -44,17 +44,25 @@ return {
       callback = function(ev)
         local lang = vim.treesitter.language.get_lang(ev.match) or ev.match
 
-        -- If parser isn't loaded yet, try to install it. install() is
-        -- async and idempotent — already-installed parsers are skipped.
-        if not pcall(vim.treesitter.language.inspect, lang) then
-          -- Only attempt install if a grammar actually exists for this
-          -- language — avoids "skipping unsupported language" warnings.
-          if require("nvim-treesitter.parsers")[lang] then
-            pcall(require("nvim-treesitter").install, { lang })
-          end
+        if pcall(vim.treesitter.language.inspect, lang) then
+          pcall(vim.treesitter.start, ev.buf, lang)
+          return
         end
 
-        pcall(vim.treesitter.start)
+        -- A missing parser is installed on demand, but install() is
+        -- asynchronous: starting highlighting on the next line would run before
+        -- the parser exists, leaving the first buffer of a freshly installed
+        -- language unhighlighted until it is reloaded. Await the install and
+        -- start in its callback instead. The parsers[lang] guard skips
+        -- languages that have no grammar, avoiding "unsupported language" noise.
+        if require("nvim-treesitter.parsers")[lang] then
+          require("nvim-treesitter").install({ lang }):await(function()
+            -- The buffer may have been wiped during the async install.
+            if vim.api.nvim_buf_is_valid(ev.buf) then
+              pcall(vim.treesitter.start, ev.buf, lang)
+            end
+          end)
+        end
       end,
     })
   end,
