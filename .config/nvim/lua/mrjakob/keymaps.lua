@@ -48,32 +48,13 @@ vim.api.nvim_create_autocmd("LspAttach", {
       vim.keymap.set(mode, lhs, rhs, opts)
     end
 
-    -- Build position params for the current cursor. make_position_params now
-    -- requires the client's position encoding; take it from a client attached
-    -- to the buffer (falling back to UTF-16, the LSP default).
-    local function position_params()
-      local clients = vim.lsp.get_clients({ bufnr = 0 })
-      local encoding = clients[1] and clients[1].offset_encoding or "utf-16"
-      return vim.lsp.util.make_position_params(0, encoding)
-    end
+    -- fzf-lua's LSP pickers jump straight to the location on a single result
+    -- (jump1) and open the picker otherwise, so they replace the hand-rolled
+    -- single-vs-many logic these mappings used to carry.
 
     -- [G]oto [D]efinition(s)
     map("n", "gd", function()
-      local params = position_params()
-      vim.lsp.buf_request(0, "textDocument/definition", params, function(_, result)
-        local items = result
-        if type(result) == "table" and result.result then
-          items = result.result
-        end
-
-        if not items or vim.tbl_isempty(items) then
-          vim.notify("No definition found", vim.log.levels.ERROR)
-        elseif #items == 1 then
-          vim.lsp.buf.definition(params)
-        else
-          require("fzf-lua").lsp_definitions()
-        end
-      end)
+      require("fzf-lua").lsp_definitions()
     end, { desc = "[G]oto [D]efinition(s)" })
 
     -- Unmap default gr* since 0.11
@@ -91,55 +72,12 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
     -- [G]oto [I]mplementation(s)
     map("n", "gI", function()
-      local params = position_params()
-      vim.lsp.buf_request(0, "textDocument/implementation", params, function(_, result)
-        local items = result
-        if type(result) == "table" and result.result then
-          items = result.result
-        end
-
-        if not items or vim.tbl_isempty(items) then
-          vim.notify("No implementation found", vim.log.levels.ERROR)
-        elseif #items == 1 then
-          vim.lsp.buf.implementation(params)
-        else
-          require("fzf-lua").lsp_implementations()
-        end
-      end)
+      require("fzf-lua").lsp_implementations()
     end, { desc = "[G]oto [I]mplementation(s)" })
 
     -- [G]oto [D]eclaration
     map("n", "gD", function()
-      -- Check if declaration is supported
-      local clients = vim.lsp.get_clients({ bufnr = 0 })
-      local has_support = false
-      for _, client in ipairs(clients) do
-        if client:supports_method("textDocument/declaration", 0) then
-          has_support = true
-          break
-        end
-      end
-
-      if not has_support then
-        vim.notify("LSP method textDocument/declaration not supported", vim.log.levels.ERROR)
-        return
-      end
-
-      local params = position_params()
-      vim.lsp.buf_request(0, "textDocument/declaration", params, function(_, result)
-        local items = result
-        if type(result) == "table" and result.result then
-          items = result.result
-        end
-
-        if not items or vim.tbl_isempty(items) then
-          vim.notify("No declaration found", vim.log.levels.ERROR)
-        elseif #items == 1 then
-          vim.lsp.buf.declaration(params)
-        else
-          require("fzf-lua").lsp_declarations()
-        end
-      end)
+      require("fzf-lua").lsp_declarations()
     end, { desc = "[G]oto [D]eclaration" })
 
     -- Jump to the type of the word under your cursor.
