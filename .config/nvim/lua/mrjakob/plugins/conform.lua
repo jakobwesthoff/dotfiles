@@ -69,6 +69,16 @@ return { -- Autoformat
         command = "/Users/jakob/Development/gitlab/ekkogmbh/scf/scripts/docker-wrapper.sh",
         args = { "format", "--filepath-for-matcher", "$FILENAME" },
         stdin = true,
+        -- Without this guard a missing wrapper makes the formatter silently
+        -- unavailable (no warning fires for formatters_by_ft entries) and PHP
+        -- saves quietly fall through to LSP formatting. Surface it instead.
+        condition = function(self, ctx)
+          if vim.fn.executable(self.command) == 1 then
+            return true
+          end
+          vim.notify_once("scf-docker formatter missing: " .. self.command, vim.log.levels.WARN)
+          return false
+        end,
       },
     },
   },
