@@ -35,3 +35,16 @@ require("mrjakob.autocmds")
 require("mrjakob.keymaps")
 require("mrjakob.lastpos")
 require("mrjakob.lsp")
+
+-- EXPERIMENTAL: native redesigned message/cmdline UI (vim._core.ui2). It is an
+-- unstable, in-development feature: the module already moved once
+-- (vim._extui -> vim._core.ui2) and its API may keep changing or break across
+-- nvim updates, hence the pcall. Keep an eye on it (message rendering, fzf-lua
+-- floats, fidget, tmux); remove this block to fall back to the classic
+-- message UI.
+pcall(function()
+  require("vim._core.ui2").enable({
+    -- Route messages to the ephemeral msg window.
+    msg = { targets = "msg" },
+  })
+end)
