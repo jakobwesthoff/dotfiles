@@ -44,6 +44,12 @@ return {
       callback = function(ev)
         local lang = vim.treesitter.language.get_lang(ev.match) or ev.match
 
+        -- Tree-sitter based folding for this window. foldexpr() returns 0 for
+        -- buffers without a parser, so setting it here is harmless for
+        -- filetypes that never start tree-sitter.
+        vim.wo.foldmethod = "expr"
+        vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+
         if pcall(vim.treesitter.language.inspect, lang) then
           pcall(vim.treesitter.start, ev.buf, lang)
           return
