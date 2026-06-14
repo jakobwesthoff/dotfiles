@@ -10,7 +10,7 @@ return {
     local search_flip_flipped = false
 
     require("gruvbox-material").setup({
-      constrast = "hard",
+      contrast = "hard",
 
       background = {
         transparent = gruvbox_material_transparent,
