@@ -1,5 +1,7 @@
 return {
   "nvim-treesitter/nvim-treesitter",
+  -- Track the `main` rewrite branch; `master` is frozen and the config
+  -- uses the new-branch API.
   branch = "main",
   build = ":TSUpdate",
   config = function()

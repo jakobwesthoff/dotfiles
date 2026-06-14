@@ -1,6 +1,8 @@
 -- Some nice to have features on Cargo Crates.io files
 return {
   "saecki/crates.nvim",
+  -- Follow upstream's stable release channel only rather than tracking
+  -- the default branch.
   tag = "stable",
   event = { "BufRead Cargo.toml" },
   config = function()
