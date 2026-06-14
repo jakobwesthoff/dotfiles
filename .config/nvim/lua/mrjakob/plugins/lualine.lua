@@ -53,6 +53,14 @@ return {
   "nvim-lualine/lualine.nvim",
   dependencies = { "nvim-tree/nvim-web-devicons" },
   config = function()
+    -- The accent cells use the editor background as their text color so it
+    -- reads against the bright mode color. With a transparent background
+    -- Normal has no bg attribute, so fall back to black (a usable contrast
+    -- against the accent) instead of leaving the text at the default light fg.
+    local function normalBg()
+      return require("mrjakob.util").getColor("Normal", "bg") or "#000000"
+    end
+
     -- "Primary" accent color for inactive statusline cells. Defined as a
     -- function so lualine re-evaluates it on every draw: lualine re-runs its
     -- highlight resolution on ColorScheme/background changes, keeping the
@@ -60,7 +68,7 @@ return {
     -- captured at setup time.
     local function inactive_primary_color()
       return {
-        fg = require("mrjakob.util").getColor("Normal", "bg"),
+        fg = normalBg(),
         bg = require("mrjakob.util").getColor("Grey", "fg"),
       }
     end
@@ -76,7 +84,7 @@ return {
             visual = require("mrjakob.util").getColor("Purple", "fg"),
             replace = require("mrjakob.util").getColor("Red", "fg"),
             command = require("mrjakob.util").getColor("Orange", "fg"),
-            bg = require("mrjakob.util").getColor("Normal", "bg"),
+            bg = normalBg(),
           }
 
           local base = require("lualine.themes.auto")
