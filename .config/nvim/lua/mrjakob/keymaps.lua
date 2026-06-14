@@ -40,10 +40,13 @@ vim.api.nvim_create_autocmd("LspAttach", {
     -- match. If there is we directly go there. Otherwise we open
     -- fzf-lua for the results.
 
-    local function map(mode, lhs, rhs, desc)
-      vim.keymap.set(mode, lhs, rhs, { buffer = event.buf, desc = desc })
+    -- Buffer-local keymap helper for the LSP mappings below; callers pass a
+    -- normal opts table and the attaching buffer is injected automatically.
+    local function map(mode, lhs, rhs, opts)
+      opts = opts or {}
+      opts.buffer = event.buf
+      vim.keymap.set(mode, lhs, rhs, opts)
     end
-    -- use map(...) for gd / gr / gI / gD / <leader>D / <leader>cr / <leader>ca
 
     -- [G]oto [D]efinition(s)
     map("n", "gd", function()
