@@ -1,5 +1,5 @@
 return {
-  "williamboman/mason.nvim",
+  "mason-org/mason.nvim",
   dependencies = {
     "WhoIsSethDaniel/mason-tool-installer.nvim",
   },

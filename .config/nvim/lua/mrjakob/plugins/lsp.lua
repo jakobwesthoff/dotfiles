@@ -3,8 +3,8 @@ return {
     -- Main LSP Configuration
     "neovim/nvim-lspconfig",
     dependencies = {
-      "williamboman/mason.nvim",
-      "williamboman/mason-lspconfig.nvim",
+      "mason-org/mason.nvim",
+      "mason-org/mason-lspconfig.nvim",
 
       -- Useful status updates for LSP.
       -- LSP and notify updates in the down right corner
