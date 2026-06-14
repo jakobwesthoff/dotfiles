@@ -1,0 +1,438 @@
+#!/usr/bin/env bash
+#
+# update-brewfile-from-system
+#
+# Interactively reconcile the Brewfile in the current working directory
+# with the packages actually installed via Homebrew on this machine.
+#
+# The installed-package inventory is read directly from Homebrew's
+# INSTALL_RECEIPT.json files (Cellar kegs and Caskroom metadata) rather
+# than `brew bundle dump`, which silently omits formulae from third-party
+# taps on Homebrew 6. Receipts carry the `installed_on_request` flag used
+# to filter out packages that are only present as dependencies, plus the
+# originating tap of every package.
+#
+# Workflow:
+#   1. Scan installed formulae and casks (on-request only).
+#   2. Parse the Brewfile, preserving every line verbatim.
+#   3. Show a dialog(1) checklist seeded with the Brewfile state.
+#   4. Apply the result: remove unchecked entries, append newly checked
+#      packages to an "Unsorted" section, and add any taps the new
+#      packages require. Taps are never removed.
+#
+# Dependencies: bash >= 4, brew, jq, dialog.
+
+# Associative arrays require bash 4; macOS ships 3.2, so check before any
+# `declare -A` executes (brew's bash on PATH satisfies this).
+if ((BASH_VERSINFO[0] < 4)); then
+  echo "Error: bash >= 4 required (found $BASH_VERSION). Install via: brew install bash" >&2
+  exit 1
+fi
+
+set -euo pipefail
+shopt -s nullglob
+
+readonly BREWFILE="Brewfile"
+readonly CORE_TAPS="homebrew/core homebrew/cask"
+
+# =========================================================
+# Shared state
+#
+# Bash functions cannot return structured data, so each pipeline stage
+# fills the globals below and later stages read them.
+# =========================================================
+
+# System inventory, keyed "brew/<name>" or "cask/<token>".
+declare -A SYSTEM_PRESENT=() # key -> 1
+declare -A SYSTEM_TAP=()     # key -> originating tap (only when known)
+declare -A SYSTEM_HEAD=()    # key -> 1 when a HEAD-built keg exists
+declare -A SYSTEM_NONHEAD=() # key -> 1 when a non-HEAD keg exists
+
+# Brewfile document model.
+declare -a BREWFILE_LINES=() # verbatim file content
+declare -A ENTRY_LINES=()    # key -> space-separated line indexes
+declare -A ENTRY_NAME=()     # key -> name as written (possibly tap-qualified)
+declare -A DECLARED_TAPS=()  # tap name -> 1
+LAST_TAP_LINE=""             # index of the last `tap` line, for insertions
+
+# Selection and resulting plan.
+declare -a ALL_KEYS=()     # sorted union of system and Brewfile keys
+declare -a DIALOG_ITEMS=() # tag/description/state triples for dialog
+declare -A CHECKED=()      # key -> 1 for the user's final selection
+declare -A REMOVED_LINES=() # line index -> 1
+declare -a ADDITION_LINES=() # rendered Brewfile lines to append
+declare -a NEW_TAPS=()       # taps required by additions, not yet declared
+declare -a PLAN_SUMMARY=()   # human-readable +/- lines
+
+fail() {
+  echo "Error: $*" >&2
+  exit 1
+}
+
+# =========================================================
+# Preconditions
+# =========================================================
+
+check_dependencies() {
+  local cmd
+  for cmd in brew jq dialog; do
+    if ! command -v "$cmd" >/dev/null; then
+      fail "required command \"$cmd\" not found. Install via: brew install $cmd"
+    fi
+  done
+}
+
+# =========================================================
+# System inventory
+# =========================================================
+
+# Read every formula keg's install receipt and keep the formulae that
+# were installed on request (not merely as a dependency of something
+# else). A formula can have several kegs, e.g. a stable and a HEAD
+# build; it counts as on-request when any keg's receipt says so.
+scan_formulae() {
+  local cellar="$1"
+  local receipts=("$cellar"/*/*/INSTALL_RECEIPT.json)
+  if ((${#receipts[@]} == 0)); then
+    return 0
+  fi
+
+  local output
+  output=$(jq -r '
+    select(.installed_on_request == true and (.installed_as_dependency != true))
+    | [input_filename, (.source.tap // ""), (.source.spec // "")]
+    | @tsv
+  ' "${receipts[@]}") || fail "failed to parse a formula install receipt under $cellar"
+
+  local path tap spec name key
+  while IFS=$'\t' read -r path tap spec; do
+    if [[ -z $path ]]; then
+      continue
+    fi
+    # .../Cellar/<name>/<version>/INSTALL_RECEIPT.json -> <name>
+    path=${path%/*/INSTALL_RECEIPT.json}
+    name=${path##*/}
+    key="brew/$name"
+
+    SYSTEM_PRESENT[$key]=1
+    if [[ -n $tap ]]; then
+      SYSTEM_TAP[$key]=$tap
+    fi
+    if [[ $spec == "head" ]]; then
+      SYSTEM_HEAD[$key]=1
+    else
+      SYSTEM_NONHEAD[$key]=1
+    fi
+  done <<<"$output"
+}
+
+# Casks are always installed explicitly, so every Caskroom entry counts.
+# Receipts (where present) only contribute the originating tap; casks
+# installed by pre-receipt Homebrew versions simply have an unknown tap.
+scan_casks() {
+  local caskroom="$1"
+
+  declare -A cask_tap=()
+  local receipts=("$caskroom"/*/.metadata/INSTALL_RECEIPT.json)
+  if ((${#receipts[@]} > 0)); then
+    local output path tap name
+    output=$(jq -r '
+      [input_filename, (.source.tap // "")] | @tsv
+    ' "${receipts[@]}") || fail "failed to parse a cask install receipt under $caskroom"
+    while IFS=$'\t' read -r path tap; do
+      if [[ -z $path ]]; then
+        continue
+      fi
+      path=${path%/.metadata/INSTALL_RECEIPT.json}
+      name=${path##*/}
+      if [[ -n $tap ]]; then
+        cask_tap[$name]=$tap
+      fi
+    done <<<"$output"
+  fi
+
+  local dir token key
+  for dir in "$caskroom"/*/; do
+    token=${dir%/}
+    token=${token##*/}
+    key="cask/$token"
+    SYSTEM_PRESENT[$key]=1
+    if [[ -n ${cask_tap[$token]:-} ]]; then
+      SYSTEM_TAP[$key]=${cask_tap[$token]}
+    fi
+  done
+}
+
+# =========================================================
+# Brewfile parsing
+# =========================================================
+
+# Index the tap/brew/cask lines of the Brewfile. Matching is by
+# (type, short name) so a tap-qualified entry like
+# `brew "koekeishiya/formulae/skhd"` pairs with the installed keg
+# "skhd". All other lines (comments, banners, mas/vscode/... entries)
+# pass through untouched.
+parse_brewfile() {
+  mapfile -t BREWFILE_LINES <"$BREWFILE"
+
+  local i line type name short key
+  for i in "${!BREWFILE_LINES[@]}"; do
+    line=${BREWFILE_LINES[$i]}
+    if [[ ! $line =~ ^[[:space:]]*(tap|brew|cask)[[:space:]]+\"([^\"]+)\" ]]; then
+      continue
+    fi
+    type=${BASH_REMATCH[1]}
+    name=${BASH_REMATCH[2]}
+
+    if [[ $type == "tap" ]]; then
+      DECLARED_TAPS[$name]=1
+      LAST_TAP_LINE=$i
+    else
+      short=${name##*/}
+      key="$type/$short"
+      ENTRY_LINES[$key]+="$i "
+      ENTRY_NAME[$key]=$name
+    fi
+  done
+}
+
+# =========================================================
+# Selection model
+# =========================================================
+
+is_core_tap() {
+  local tap="$1" core
+  for core in $CORE_TAPS; do
+    if [[ $tap == "$core" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# True when a formula was installed exclusively from HEAD; such
+# additions are rendered with `args: ["HEAD"]`.
+is_head_only() {
+  local key="$1"
+  [[ -n ${SYSTEM_HEAD[$key]:-} && -z ${SYSTEM_NONHEAD[$key]:-} ]]
+}
+
+# Merge system inventory and Brewfile entries into the sorted key union
+# and the dialog item list. Tag = key; the description column carries
+# status annotations; entries already in the Brewfile start checked.
+build_checklist() {
+  mapfile -t ALL_KEYS < <(
+    printf '%s\n' "${!SYSTEM_PRESENT[@]}" "${!ENTRY_LINES[@]}" | sort -u
+  )
+
+  local key state desc tap
+  for key in "${ALL_KEYS[@]}"; do
+    if [[ -z $key ]]; then
+      continue
+    fi
+
+    desc=""
+    if [[ -z ${ENTRY_LINES[$key]:-} ]]; then
+      state="off"
+      desc="new"
+    elif [[ -z ${SYSTEM_PRESENT[$key]:-} ]]; then
+      state="on"
+      desc="not installed"
+    else
+      state="on"
+    fi
+
+    tap=${SYSTEM_TAP[$key]:-}
+    if [[ -n $tap ]] && ! is_core_tap "$tap"; then
+      desc+="${desc:+ · }$tap"
+    fi
+    if is_head_only "$key"; then
+      desc+="${desc:+ · }HEAD"
+    fi
+
+    DIALOG_ITEMS+=("$key" "${desc:- }" "$state")
+  done
+}
+
+# Run the dialog checklist. Fills CHECKED on confirmation; returns
+# non-zero when the user cancels (Esc or the Cancel button), in which
+# case the Brewfile must stay untouched.
+run_selector() {
+  local output status=0
+
+  # dialog draws its UI on stdout and writes results to stderr; swap
+  # the two so command substitution captures the results while the UI
+  # reaches the terminal (fd 3 holds the original stdout).
+  exec 3>&1
+  output=$(dialog \
+    --backtitle "update-brewfile-from-system" \
+    --separate-output \
+    --checklist "Packages installed on request vs. $BREWFILE (checked = kept in Brewfile)" \
+    0 0 0 \
+    "${DIALOG_ITEMS[@]}" \
+    2>&1 1>&3) || status=$?
+  exec 3>&-
+
+  if ((status != 0)); then
+    return 1
+  fi
+
+  local key
+  while IFS= read -r key; do
+    if [[ -n $key ]]; then
+      CHECKED[$key]=1
+    fi
+  done <<<"$output"
+}
+
+# Translate the final selection into Brewfile mutations: rendered lines
+# to append, line indexes to drop, and the taps the additions require.
+# Taps are only ever added, never removed.
+compute_plan() {
+  local key type short tap name line indexes idx
+  for key in "${ALL_KEYS[@]}"; do
+    if [[ -z $key ]]; then
+      continue
+    fi
+
+    if [[ -n ${CHECKED[$key]:-} && -z ${ENTRY_LINES[$key]:-} ]]; then
+      type=${key%%/*}
+      short=${key#*/}
+      tap=${SYSTEM_TAP[$key]:-}
+
+      name=$short
+      if [[ -n $tap ]] && ! is_core_tap "$tap"; then
+        name="$tap/$short"
+        if [[ -z ${DECLARED_TAPS[$tap]:-} ]]; then
+          DECLARED_TAPS[$tap]=1 # also dedupes within this loop
+          NEW_TAPS+=("$tap")
+          PLAN_SUMMARY+=("  + tap  $tap")
+        fi
+      fi
+
+      line="$type \"$name\""
+      if is_head_only "$key"; then
+        line+=', args: ["HEAD"]'
+      fi
+      ADDITION_LINES+=("$line")
+      PLAN_SUMMARY+=("  + $type $name")
+    fi
+
+    if [[ -z ${CHECKED[$key]:-} && -n ${ENTRY_LINES[$key]:-} ]]; then
+      read -ra indexes <<<"${ENTRY_LINES[$key]}"
+      for idx in "${indexes[@]}"; do
+        REMOVED_LINES[$idx]=1
+      done
+      PLAN_SUMMARY+=("  - ${key%%/*} ${ENTRY_NAME[$key]}")
+    fi
+  done
+}
+
+# =========================================================
+# Brewfile rewriting
+# =========================================================
+
+# Render the updated Brewfile and replace the original atomically.
+# Removals drop the matched lines only; surrounding comments and blank
+# lines stay. New taps land after the last existing tap line (or at the
+# top when none exists). Additions go to the end under an "Unsorted"
+# banner, reused if the file already has one, for manual sorting into
+# the proper sections later.
+apply_plan() {
+  local out=() i tap line
+
+  for i in "${!BREWFILE_LINES[@]}"; do
+    if [[ -n ${REMOVED_LINES[$i]:-} ]]; then
+      continue
+    fi
+    out+=("${BREWFILE_LINES[$i]}")
+    if [[ $i == "$LAST_TAP_LINE" ]]; then
+      for tap in "${NEW_TAPS[@]}"; do
+        out+=("tap \"$tap\"")
+      done
+    fi
+  done
+  if [[ -z $LAST_TAP_LINE && ${#NEW_TAPS[@]} -gt 0 ]]; then
+    local tap_lines=()
+    for tap in "${NEW_TAPS[@]}"; do
+      tap_lines+=("tap \"$tap\"")
+    done
+    out=("${tap_lines[@]}" "" "${out[@]}")
+  fi
+
+  if ((${#ADDITION_LINES[@]} > 0)); then
+    # Trim trailing blank lines so the appended section's spacing is
+    # deterministic.
+    while ((${#out[@]} > 0)) && [[ -z ${out[-1]//[[:space:]]/} ]]; do
+      unset 'out[-1]'
+    done
+
+    local has_banner=""
+    for line in "${out[@]}"; do
+      if [[ $line =~ ^#[[:space:]]*Unsorted[[:space:]]*$ ]]; then
+        has_banner=1
+        break
+      fi
+    done
+
+    out+=("")
+    if [[ -z $has_banner ]]; then
+      out+=("# =========================================================")
+      out+=("# Unsorted")
+      out+=("# =========================================================")
+      out+=("")
+    fi
+    out+=("${ADDITION_LINES[@]}")
+  fi
+
+  local tmp="$BREWFILE.tmp.$$"
+  printf '%s\n' "${out[@]}" >"$tmp"
+  mv "$tmp" "$BREWFILE"
+}
+
+# =========================================================
+# Workflow
+# =========================================================
+
+main() {
+  check_dependencies
+
+  if [[ ! -f $BREWFILE ]]; then
+    fail "no Brewfile found in $PWD. Run this from the directory containing the Brewfile you want to update (e.g. your dotfiles checkout)."
+  fi
+  if [[ ! -t 0 || ! -t 1 ]]; then
+    fail "interactive checklist requires a terminal."
+  fi
+
+  local prefix
+  prefix=${HOMEBREW_PREFIX:-$(brew --prefix)}
+  scan_formulae "$prefix/Cellar"
+  scan_casks "$prefix/Caskroom"
+  parse_brewfile
+  build_checklist
+
+  if ! run_selector; then
+    echo "Aborted. $BREWFILE not modified."
+    return 0
+  fi
+
+  compute_plan
+  if ((${#PLAN_SUMMARY[@]} == 0)); then
+    echo "No changes. $BREWFILE left untouched."
+    return 0
+  fi
+
+  apply_plan
+  echo "Updated $PWD/$BREWFILE:"
+  printf '%s\n' "${PLAN_SUMMARY[@]}"
+  if ((${#ADDITION_LINES[@]} > 0)); then
+    echo
+    echo "New entries were appended to the \"Unsorted\" section — sort them into their categories when convenient."
+  fi
+}
+
+# Execute only when run directly; sourcing the file exposes the
+# functions for testing.
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  main "$@"
+fi

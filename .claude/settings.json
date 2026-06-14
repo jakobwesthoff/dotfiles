@@ -38,12 +38,9 @@
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
   "showClearContextOnPlanAccept": true,
-  "voice": {
-    "enabled": true,
-    "mode": "hold"
-  },
   "autoDreamEnabled": true,
+  "remoteControlAtStartup": false,
+  "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
-  "agentPushNotifEnabled": true
+  "voiceEnabled": true
 }

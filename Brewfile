@@ -25,6 +25,7 @@ brew "sesh"
 brew "fd"
 brew "screen"
 brew "yazi"
+brew "dialog"
 
 # =========================================================
 # Core CLI Utilities
@@ -276,4 +277,5 @@ cask "font-fira-code"
 cask "font-fira-code-nerd-font"
 cask "font-jetbrains-mono"
 cask "font-jetbrains-mono-nerd-font"
+cask "font-victor-mono-nerd-font"
 
