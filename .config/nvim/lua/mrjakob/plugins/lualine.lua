@@ -2,8 +2,11 @@
 -- elements?
 local lualine_trunc_margin = 80
 
+-- Measure the window the statusline is drawn for, not the whole terminal:
+-- with per-window statuslines (globalstatus = false) a vertical split makes
+-- each statusline far narrower than vim.o.columns.
 local function truncateCondition()
-  return vim.o.columns >= lualine_trunc_margin
+  return vim.api.nvim_win_get_width(0) >= lualine_trunc_margin
 end
 
 -- Used for shortening Mode in smaller terminals
@@ -19,7 +22,7 @@ local mode_map = {
 }
 
 local function formatMode(str)
-  if vim.o.columns < lualine_trunc_margin then
+  if vim.api.nvim_win_get_width(0) < lualine_trunc_margin then
     return mode_map[str] or str
   end
   return str
