@@ -22,8 +22,6 @@ use it for. Specs live in `lua/mrjakob/plugins/`.
   groups.
 - **snacks.nvim** — plugin collection; we only enable its `indent`
   module for current-scope indent guides.
-- **zen-mode.nvim** — distraction-free editing on `<leader>z` (width
-  100, disables indent guides while active).
 - **fidget.nvim** — LSP progress display bottom-right; also renders all
   `vim.notify` messages (`override_vim_notify = true`).
 - **dressing.nvim** — styled `vim.ui.input` (LSP rename prompt).
