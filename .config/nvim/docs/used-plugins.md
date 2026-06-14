@@ -41,9 +41,6 @@ use it for. Specs live in `lua/mrjakob/plugins/`.
   directory in a float.
 - **flash.nvim** — jump motions: `s` jump, `S` treesitter node select,
   `R` treesitter search in operator/visual mode.
-- **harpoon (harpoon2 branch)** — pin frequently used files;
-  `<leader>a` add, `<leader>l` list, `<leader>q/w/e/r/t` jump to pins
-  1-5.
 - **todo-comments.nvim** — highlights TODO/FIXME/HACK comments;
   `]t`/`[t` navigation and an fzf picker on `<leader>ft`.
 - **taproot.nvim** (own plugin) — automatic project-root detection and
@@ -95,8 +92,8 @@ use it for. Specs live in `lua/mrjakob/plugins/`.
   update actions via its in-process LSP.
 - **conform.nvim** — formatting on save and `<leader>cf`, with
   LSP fallback.
-- **plenary.nvim** — Lua utility library (dependency of harpoon,
-  obsidian, todo-comments).
+- **plenary.nvim** — Lua utility library (dependency of obsidian,
+  todo-comments).
 
 ## Notes
 
