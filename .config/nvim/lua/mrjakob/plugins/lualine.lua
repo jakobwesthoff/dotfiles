@@ -53,12 +53,17 @@ return {
   "nvim-lualine/lualine.nvim",
   dependencies = { "nvim-tree/nvim-web-devicons" },
   config = function()
-    -- Needs to be done within the setup function, as this depends on the theme
-    -- "Primary" accent color to be used for inactive statusline cells
-    local inactive_primary_color = {
-      fg = require("mrjakob.util").getColor("Normal", "bg"),
-      bg = require("mrjakob.util").getColor("Grey", "fg"),
-    }
+    -- "Primary" accent color for inactive statusline cells. Defined as a
+    -- function so lualine re-evaluates it on every draw: lualine re-runs its
+    -- highlight resolution on ColorScheme/background changes, keeping the
+    -- color in sync with the active palette instead of freezing the value
+    -- captured at setup time.
+    local function inactive_primary_color()
+      return {
+        fg = require("mrjakob.util").getColor("Normal", "bg"),
+        bg = require("mrjakob.util").getColor("Grey", "fg"),
+      }
+    end
 
     require("lualine").setup({
       options = {
@@ -189,7 +194,9 @@ return {
               unnamed = "[No Name]", -- Show when Buffer has no name
               newfile = "[New]", -- Show when file hasn't been saved yet
             },
-            color = { fg = require("mrjakob.util").getColor("Grey", "fg") },
+            color = function()
+              return { fg = require("mrjakob.util").getColor("Grey", "fg") }
+            end,
           },
         },
         lualine_x = {},
