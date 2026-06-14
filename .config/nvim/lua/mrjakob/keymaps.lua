@@ -48,9 +48,18 @@ vim.api.nvim_create_autocmd("LspAttach", {
       vim.keymap.set(mode, lhs, rhs, opts)
     end
 
+    -- Build position params for the current cursor. make_position_params now
+    -- requires the client's position encoding; take it from a client attached
+    -- to the buffer (falling back to UTF-16, the LSP default).
+    local function position_params()
+      local clients = vim.lsp.get_clients({ bufnr = 0 })
+      local encoding = clients[1] and clients[1].offset_encoding or "utf-16"
+      return vim.lsp.util.make_position_params(0, encoding)
+    end
+
     -- [G]oto [D]efinition(s)
     map("n", "gd", function()
-      local params = vim.lsp.util.make_position_params()
+      local params = position_params()
       vim.lsp.buf_request(0, "textDocument/definition", params, function(_, result)
         local items = result
         if type(result) == "table" and result.result then
@@ -82,7 +91,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
     -- [G]oto [I]mplementation(s)
     map("n", "gI", function()
-      local params = vim.lsp.util.make_position_params()
+      local params = position_params()
       vim.lsp.buf_request(0, "textDocument/implementation", params, function(_, result)
         local items = result
         if type(result) == "table" and result.result then
@@ -116,7 +125,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
         return
       end
 
-      local params = vim.lsp.util.make_position_params()
+      local params = position_params()
       vim.lsp.buf_request(0, "textDocument/declaration", params, function(_, result)
         local items = result
         if type(result) == "table" and result.result then
