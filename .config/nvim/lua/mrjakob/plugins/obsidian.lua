@@ -23,12 +23,6 @@ return {
         path = "/Users/jakob/Library/Mobile Documents/iCloud~md~obsidian/Documents/private",
       },
     },
-    -- Optional, completion of wiki links, local markdown links, and tags using nvim-cmp.
-    completion = {
-      -- Enables completion using blink.cmp
-      blink = true,
-    },
-
     -- Suppress deprecation warning. It is now "footer"
     statusline = {
       enabled = false,
