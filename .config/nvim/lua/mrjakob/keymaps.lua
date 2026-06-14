@@ -102,7 +102,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
       local clients = vim.lsp.get_clients({ bufnr = 0 })
       local has_support = false
       for _, client in ipairs(clients) do
-        if client.supports_method("textDocument/declaration") then
+        if client:supports_method("textDocument/declaration", 0) then
           has_support = true
           break
         end
