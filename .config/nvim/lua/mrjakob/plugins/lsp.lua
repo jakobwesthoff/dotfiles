@@ -10,34 +10,9 @@ return {
       -- LSP and notify updates in the down right corner
       {
         "j-hui/fidget.nvim",
-        -- Workaround for neovim/neovim#18576: `hl_blend_attrs()` in
-        -- `src/nvim/highlight.c` forces bg=NONE to -1 before calling
-        -- `rgb_blend()`, which produces black via bitwise arithmetic on
-        -- the negative value. With a transparent colorscheme (Normal
-        -- bg=NONE) this makes any floating window using winblend show a
-        -- black background instead of being transparent.
-        --
-        -- Fixed upstream in PR #34302 (merged June 2025, milestone 0.12).
-        -- Not backported to 0.11.x. Until we upgrade to 0.12, we use
-        -- normal_hl="NormalFloat" (has real bg via gruvbox-material
-        -- customize callback) and winblend=0 (blending is pointless when
-        -- the underlying bg is NONE anyway).
-        --
-        -- Separate issue: vim.o.winborder leaks into fidget's window on
-        -- reposition because fidget's `nvim_win_set_config()` omits the
-        -- border field. Fix on jakobwesthoff/fidget.nvim branch
-        -- fix/preserve-border-on-reposition, not yet upstreamed.
-        --
-        -- TODO: Remove this workaround after upgrading to Neovim 0.12+
-        --   and revert to fidget defaults (winblend=100, normal_hl="Comment").
-        -- TODO: Upstream the fidget winborder reposition fix.
         opts = {
           notification = {
             override_vim_notify = true,
-            -- window = {
-            --   normal_hl = "NormalFloat",
-            --   winblend = 0,
-            -- },
           },
         },
       },
