@@ -16,7 +16,6 @@ end
 function M.newColorWithBase(hl, base, overrides)
   overrides = overrides or {}
   local new_color = {}
-  new_color.link = nil
   -- Copy all properties from base highlight group
   local subst = vim.api.nvim_get_hl(0, { name = base })
   for k, v in pairs(subst) do

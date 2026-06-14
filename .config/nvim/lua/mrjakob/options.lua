@@ -20,7 +20,7 @@ vim.opt.relativenumber = true
 
 -- Show line under cursor
 vim.opt.cursorline = true
--- Show column of cursor cursor
+-- Show column of cursor
 -- vim.opt.cursorcolumn = true
 
 -- Store undos between sessions

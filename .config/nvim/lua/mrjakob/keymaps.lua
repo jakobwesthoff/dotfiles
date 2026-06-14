@@ -12,9 +12,9 @@ vim.keymap.set("n", "<Leader>ud", function()
   vim.diagnostic.enable(not vim.diagnostic.is_enabled())
 end, { desc = "Toggle [D]iagnostics" })
 
--- Delete words with CTRL-Backspace/Alt-Backspace in insert mode
+-- Delete words with CTRL-Backspace/Alt-Backspace in insert and command-line mode
 vim.keymap.set("i", "<C-BS>", "<C-w>", { noremap = true, silent = true })
-vim.keymap.set("x", "<C-BS>", "<C-w>", { noremap = true, silent = true })
+vim.keymap.set("c", "<C-BS>", "<C-w>", { noremap = true, silent = true })
 vim.keymap.set("i", "<M-BS>", "<C-w>", { noremap = true, silent = true })
 
 -- Jump to windows based on their window number using <Leader>number
@@ -22,7 +22,7 @@ vim.keymap.set("i", "<M-BS>", "<C-w>", { noremap = true, silent = true })
 for i = 1, 6 do
   local keys = "<Leader>" .. i
   local target = i .. "<C-W>w"
-  vim.keymap.set("n", keys, target, { desc = "Jump to to Window " .. i })
+  vim.keymap.set("n", keys, target, { desc = "Jump to Window " .. i })
 end
 
 -- Clear highlights on search when pressing <Esc> in normal mode
@@ -35,7 +35,7 @@ vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup("keymaps-lsp-attach", { clear = true }),
   callback = function(event)
-    -- All of the follwoing gX keybindings are a little more
+    -- All of the following gX keybindings are a little more
     -- involved, as we are checking first if there is only one
     -- match. If there is we directly go there. Otherwise we open
     -- fzf-lua for the results.
@@ -161,8 +161,8 @@ vim.keymap.set("n", "<leader>fr", fzf.resume, { desc = "[F]ind [R]esume" })
 vim.keymap.set("n", "<leader>fo", fzf.oldfiles, { desc = "[F]ind [O]ld Files" })
 vim.keymap.set("n", "<leader><leader>", fzf.buffers, { desc = "[,] Find existing buffers" })
 vim.keymap.set("n", "<leader>/", fzf.lgrep_curbuf, { desc = "[/] Live grep the current buffer" })
-vim.keymap.set("n", "<leader>fS", require("fzf-lua").lsp_workspace_symbols, { desc = "[F]ind Workspace [S]ymbols" })
-vim.keymap.set("n", "<leader>fs", require("fzf-lua").lsp_document_symbols, { desc = "[F]ind Document [S]ymbols" })
+vim.keymap.set("n", "<leader>fS", fzf.lsp_workspace_symbols, { desc = "[F]ind Workspace [S]ymbols" })
+vim.keymap.set("n", "<leader>fs", fzf.lsp_document_symbols, { desc = "[F]ind Document [S]ymbols" })
 -- Search in neovim config
 vim.keymap.set("n", "<leader>fc", function()
   fzf.files({ cwd = vim.fn.stdpath("config") })

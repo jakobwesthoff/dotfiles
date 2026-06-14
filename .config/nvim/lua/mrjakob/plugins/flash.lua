@@ -1,7 +1,6 @@
 return {
   "folke/flash.nvim",
   event = "VeryLazy",
-  ---@type Flash.Config
   config = function()
     local U = require("mrjakob.util")
     U.newColorWithBase("FlashLabel", "Search", { bg = U.getColor("Yellow", "fg") })

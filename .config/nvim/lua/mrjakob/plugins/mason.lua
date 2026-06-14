@@ -14,7 +14,6 @@ return {
         "ts_ls",
         "taplo",
         "phpactor",
-        "shellcheck",
         "bashls",
         "dockerls",
         "docker_compose_language_service",
@@ -23,6 +22,7 @@ return {
         "jsonls",
         "clangd",
         -- Formatters / linters
+        "shellcheck",
         "stylua",
         "prettierd",
         -- Build tools

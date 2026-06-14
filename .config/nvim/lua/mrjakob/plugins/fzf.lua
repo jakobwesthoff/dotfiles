@@ -44,6 +44,13 @@ return {
         end,
       }
 
+      -- The directory listing is built from `fd`; without it fzf_exec would
+      -- open an empty picker with no indication why.
+      if vim.fn.executable("fd") ~= 1 then
+        vim.notify("fd is not installed; FzfDirectories unavailable", vim.log.levels.WARN)
+        return
+      end
+
       fzf_lua.fzf_exec("fd --type d", opts)
     end
 

@@ -18,9 +18,7 @@ return {
     },
 
     completion = {
-      menu = {
-        border = "rounded",
-      },
+      menu = {},
       ghost_text = {
         enabled = true,
       },
@@ -28,7 +26,6 @@ return {
         auto_show = true,
         auto_show_delay_ms = 500,
         window = {
-          border = "rounded",
           desired_min_width = 30,
         },
       },

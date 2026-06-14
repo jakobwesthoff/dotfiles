@@ -8,11 +8,6 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   desc = "Highlight yank",
 })
 
--- Emit OSC 52 escape sequence when yanking to system clipboard registers (* and +).
--- This tells the terminal emulator to set the system clipboard contents, which works
--- even over SSH or in environments without direct clipboard access. This runs in
--- addition to Neovim's auto-detected native clipboard provider.
---
 -- Write an OSC 52 escape sequence to Neovim's terminal channel when yanking to
 -- system clipboard registers (* and +). This tells the terminal emulator to set
 -- the system clipboard contents, which works even over SSH or in environments
