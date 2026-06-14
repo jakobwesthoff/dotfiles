@@ -36,6 +36,9 @@ local diagnostic_signs = {}
 for type, icon in pairs(signs) do
   diagnostic_signs[vim.diagnostic.severity[type]] = icon
 end
+-- Inline virtual_text/virtual_lines are intentionally left off: diagnostics
+-- are surfaced through the gutter signs, the `gl` float on demand, the lualine
+-- component, and [d/]d navigation, which keeps buffer text uncluttered.
 vim.diagnostic.config({ signs = { text = diagnostic_signs } })
 
 -- Enable every server from the registry. nvim-lspconfig supplies each server's
