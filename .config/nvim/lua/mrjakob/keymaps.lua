@@ -129,11 +129,10 @@ vim.keymap.set("n", "[t", function()
   require("todo-comments").jump_prev()
 end, { desc = "Previous todo comment" })
 
--- Toggle undotree
--- FIXME: Maybe there is a faster more current way of showing this undo history?
+-- Browse undo history with fzf-lua's undotree picker (diff preview per state)
 vim.keymap.set("n", "<leader>uu", function()
-  vim.cmd.UndotreeToggle()
-end, { remap = false, desc = "Toggle [U]ndoTree [U]i" })
+  require("fzf-lua").undotree()
+end, { remap = false, desc = "[U]ndo history [U]i" })
 
 -- Keep the selection if indentlevel is changed
 vim.keymap.set("v", "<", "<gv")
