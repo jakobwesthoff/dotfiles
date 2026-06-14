@@ -6,28 +6,28 @@ return {
   config = function()
     require("mason").setup()
 
+    -- Mason installs two groups of packages:
+    --
+    --   1. The LSP server binaries, taken straight from the server registry
+    --      (lua/mrjakob/servers.lua) so the install list can never drift from
+    --      the enabled list. Add a server there, not here.
+    --
+    --   2. Standalone CLI tools (formatters, linters, build tooling) that are
+    --      not language servers. Add those to `tools` below, using the Mason
+    --      package name (look it up with `:Mason`).
+    local servers = require("mrjakob.servers")
+
+    local tools = {
+      "shellcheck",
+      "stylua",
+      "prettierd",
+      "tree-sitter-cli",
+    }
+
+    local ensure_installed = vim.list_extend(vim.tbl_values(servers), tools)
+
     require("mason-tool-installer").setup({
-      ensure_installed = {
-        -- LSP servers
-        "lua_ls",
-        "marksman",
-        "ts_ls",
-        "taplo",
-        "phpactor",
-        "bashls",
-        "dockerls",
-        "docker_compose_language_service",
-        "helm_ls",
-        "yamlls",
-        "jsonls",
-        "clangd",
-        -- Formatters / linters
-        "shellcheck",
-        "stylua",
-        "prettierd",
-        -- Build tools
-        "tree-sitter-cli",
-      },
+      ensure_installed = ensure_installed,
     })
   end,
 }

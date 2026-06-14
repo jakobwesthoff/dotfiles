@@ -1,13 +1,16 @@
 return {
   {
-    -- Main LSP Configuration
+    -- nvim-lspconfig is used purely as a data provider: it ships the per-server
+    -- base configs under its `lsp/` directory. The actual wiring (capabilities,
+    -- attach behavior, diagnostics, enabling) lives in lua/mrjakob/lsp.lua, the
+    -- enabled-server list in lua/mrjakob/servers.lua, and per-server overrides
+    -- in after/lsp/<name>.lua. Loaded eagerly so its configs are on the
+    -- runtimepath when servers attach.
     "neovim/nvim-lspconfig",
+    lazy = false,
     dependencies = {
       "mason-org/mason.nvim",
-      "mason-org/mason-lspconfig.nvim",
-
-      -- Useful status updates for LSP.
-      -- LSP and notify updates in the down right corner
+      -- LSP progress + notifications in the bottom-right corner.
       {
         "j-hui/fidget.nvim",
         opts = {
@@ -16,91 +19,9 @@ return {
           },
         },
       },
-
-      -- Allows extra capabilities provided by blink.cmp
+      -- Provides the completion capabilities broadcast in lua/mrjakob/lsp.lua.
       "saghen/blink.cmp",
     },
-    config = function()
-      -- =========================================================
-      -- Per-server LSP configuration via vim.lsp.config()
-      -- =========================================================
-
-      -- Broadcast blink.cmp capabilities to all servers via wildcard config.
-      -- This replaces the old per-server capabilities merging loop.
-      vim.lsp.config("*", {
-        capabilities = require("blink.cmp").get_lsp_capabilities(),
-      })
-
-      -- --query-driver tells clangd which compilers it may invoke to discover
-      -- built-in include paths and predefined macros. Without it, clangd only
-      -- knows about the host clang and cannot introspect cross-compilers like
-      -- xtensa-esp32-elf-g++, leading to missing toolchain headers and false
-      -- diagnostics in embedded projects.
-      --
-      -- The glob pattern is broad on purpose: it matches any compiler binary
-      -- under ~/.platformio as well as common system paths. For projects that
-      -- use a regular host compiler, the pattern simply never matches anything
-      -- extra, so clangd falls back to its normal built-in driver detection.
-      -- In other words, this flag is a no-op for non-embedded C/C++ projects.
-      vim.lsp.config("clangd", {
-        cmd = {
-          "clangd",
-          "--query-driver=**/**/xtensa-*,**/arm-none-eabi-*",
-          "--background-index",
-        },
-      })
-
-      vim.lsp.config("lua_ls", {
-        settings = {
-          Lua = {
-            completion = {
-              callSnippet = "Replace",
-            },
-            diagnostics = { disable = { "missing-fields" } },
-          },
-        },
-      })
-
-      -- Restrict yamlls to the "yaml" filetype so it never attaches to helm
-      -- templates (which have filetype "helm" via ftdetect/helm.lua).
-      vim.lsp.config("yamlls", {
-        filetypes = { "yaml" },
-      })
-
-      -- =========================================================
-      -- LspAttach autocmd — buffer-local behavior on attach
-      -- =========================================================
-
-      vim.api.nvim_create_autocmd("LspAttach", {
-        group = vim.api.nvim_create_augroup("kickstart-lsp-attach", { clear = true }),
-        callback = function(event)
-          local client = vim.lsp.get_client_by_id(event.data.client_id)
-          if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
-            vim.keymap.set("n", "<leader>uh", function()
-              local buf = vim.api.nvim_get_current_buf()
-              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = buf }), { bufnr = buf })
-            end, { buffer = event.buf, desc = "Toggle [U]i Inlay [H]ints" })
-          end
-        end,
-      })
-
-      -- =========================================================
-      -- Diagnostic config
-      -- =========================================================
-
-      -- Change diagnostic symbols in the sign column (gutter)
-      local signs = { ERROR = "", WARN = "", INFO = "", HINT = "" }
-      local diagnostic_signs = {}
-      for type, icon in pairs(signs) do
-        diagnostic_signs[vim.diagnostic.severity[type]] = icon
-      end
-      vim.diagnostic.config({ signs = { text = diagnostic_signs } })
-
-      -- mason-lspconfig's automatic_enable (default: true) calls
-      -- vim.lsp.enable() for installed servers, picking up the
-      -- vim.lsp.config() settings defined above.
-      require("mason-lspconfig").setup({})
-    end,
   },
   -- LSP Plugins
   {
