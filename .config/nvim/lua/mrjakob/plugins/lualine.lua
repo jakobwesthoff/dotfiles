@@ -52,6 +52,17 @@ local function getWindowNumber()
   return vim.api.nvim_win_get_number(0)
 end
 
+-- Macro recording indicator. reg_recording() returns the active register name
+-- ("q", "a", ...) while a macro is being recorded and "" otherwise, so the
+-- component renders only mid-recording.
+local function macroRecording()
+  return "@" .. vim.fn.reg_recording()
+end
+
+local function isRecording()
+  return vim.fn.reg_recording() ~= ""
+end
+
 return {
   "nvim-lualine/lualine.nvim",
   dependencies = { "nvim-tree/nvim-web-devicons" },
@@ -118,7 +129,29 @@ return {
             fmt = formatMode,
           },
         },
-        lualine_b = {},
+        lualine_b = {
+          {
+            -- Lives in its own section so lualine wraps it in the same
+            -- diagonal section separators as the mode cell. The red accent
+            -- with the editor background as text color mirrors the mode cells.
+            macroRecording,
+            cond = isRecording,
+            color = function()
+              return {
+                fg = normalBg(),
+                bg = require("mrjakob.util").getColor("Red", "fg"),
+                gui = "bold",
+              }
+            end,
+            -- A custom-colored component does not pick up the section
+            -- separator automatically (same quirk worked around for the
+            -- window number in the inactive section), so set the diagonal
+            -- explicitly to match the mode cell.
+            separator = {
+              right = "\u{e0bc}",
+            },
+          },
+        },
         lualine_c = {
           {
             "diagnostics",
@@ -226,6 +259,19 @@ return {
       extensions = {
         "oil",
       },
+    })
+
+    -- lualine's refresh timer is too coarse to toggle the recording cell
+    -- promptly, and on RecordingLeave the register is still set when the event
+    -- fires. Schedule the refresh so it runs after Neovim has cleared the
+    -- state, otherwise the indicator lingers for one frame after recording
+    -- stops.
+    vim.api.nvim_create_autocmd({ "RecordingEnter", "RecordingLeave" }, {
+      callback = function()
+        vim.schedule(function()
+          require("lualine").refresh()
+        end)
+      end,
     })
   end,
 }
