@@ -24,7 +24,10 @@ return {
       "tree-sitter-cli",
     }
 
-    local ensure_installed = vim.list_extend(vim.tbl_values(servers), tools)
+    -- Servers with value `false` are managed outside Mason (e.g. via cargo);
+    -- filter them out so mason-tool-installer only sees valid package names.
+    local mason_packages = vim.tbl_filter(function(v) return v ~= false end, vim.tbl_values(servers))
+    local ensure_installed = vim.list_extend(mason_packages, tools)
 
     require("mason-tool-installer").setup({
       ensure_installed = ensure_installed,
