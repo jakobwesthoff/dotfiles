@@ -148,8 +148,8 @@ ctrl + alt - t : yabai -m window --toggle float
 
 
 # Rotate windows clockwise and anticlockwise
-alt - r         : yabai -m space --rotate 270
-shift + alt - r : yabai -m space --rotate 90
+# alt - r         : yabai -m space --rotate 270
+# shift + alt - r : yabai -m space --rotate 90
 
 # Allow flipping the rotation
 shift + alt - s : yabai -m window --toggle split
