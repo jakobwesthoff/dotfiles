@@ -58,9 +58,44 @@ build:
   cargo build
 ```
 
-When multiple `#` lines precede a recipe with no blank line between them,
-only the **last** line becomes the doc comment in `--list`. Use
-`[doc("text")]` for explicit control over multi-line descriptions.
+Only a **single** comment line becomes the doc shown in `just --list`:
+the one immediately above the recipe header. When multiple `#` lines
+precede a recipe with no blank line between them, only that **last** line
+is shown — every earlier line is silently dropped from `--list` (it stays
+in the file as an ordinary comment).
+
+```just
+# GOOD — single-line doc; the whole description survives in --list.
+# Render one Markdown file to PDF (FILE with or without the .md extension).
+pdf FILE:
+  pandoc "{{FILE}}.md" -o "{{FILE}}.pdf"
+```
+
+```just
+# BAD — the first line is the real summary, but --list only shows the
+# second line, so the recipe appears documented by a dangling fragment.
+# Render one Markdown file to PDF. FILE may be given with or
+# without the .md extension.
+pdf FILE:
+  pandoc "{{FILE}}.md" -o "{{FILE}}.pdf"
+```
+
+For the BAD case, `just --list` prints:
+
+```
+pdf FILE # without the .md extension.
+```
+
+The leading "Render one Markdown file to PDF…" is gone and the remaining
+fragment reads as a broken sentence. Fix it by collapsing the description
+to one line (as in GOOD), or use `[doc("…")]` for explicit control over a
+multi-line description:
+
+```just
+[doc('Render one Markdown file to PDF (FILE with or without .md).')]
+pdf FILE:
+  pandoc "{{FILE}}.md" -o "{{FILE}}.pdf"
+```
 
 Override or suppress with `[doc]`:
 
