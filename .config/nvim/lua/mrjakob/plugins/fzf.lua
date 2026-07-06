@@ -4,7 +4,7 @@ return {
   config = function()
     require("fzf-lua").setup({
       -- Register fzf-lua as the vim.ui.select provider
-      ui_select = true,
+      ui_select = {},
       -- Uncomment to display paths filename-first across all file pickers,
       -- e.g. `init.lua  lua/mrjakob/` instead of the default `lua/mrjakob/init.lua`.
       -- This belongs at the top level; fzf-lua does not read it from `winopts`.
