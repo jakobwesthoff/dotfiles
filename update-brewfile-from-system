@@ -32,7 +32,7 @@ fi
 set -euo pipefail
 shopt -s nullglob
 
-readonly BREWFILE="Brewfile"
+BREWFILE="Brewfile"
 readonly CORE_TAPS="homebrew/core homebrew/cask"
 
 # =========================================================
@@ -99,7 +99,7 @@ scan_formulae() {
 
   local output
   output=$(jq -r '
-    select(.installed_on_request == true and (.installed_as_dependency != true))
+    select(.installed_on_request == true)
     | [input_filename, (.source.tap // ""), (.source.spec // "")]
     | @tsv
   ' "${receipts[@]}") || fail "failed to parse a formula install receipt under $cellar"
@@ -400,6 +400,7 @@ main() {
   if [[ ! -f $BREWFILE ]]; then
     fail "no Brewfile found in $PWD. Run this from the directory containing the Brewfile you want to update (e.g. your dotfiles checkout)."
   fi
+  BREWFILE=$(readlink -f "$BREWFILE" 2>/dev/null || echo "$BREWFILE")
   if [[ ! -t 0 || ! -t 1 ]]; then
     fail "interactive checklist requires a terminal."
   fi
