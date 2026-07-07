@@ -382,6 +382,10 @@ const output = fibonacci(7)
 show("{output}") // 13
 ```
 
+Defining and calling functions needs no `#include` — the dictionary-
+based dispatch machinery the compiler generates for Run Shortcut is
+included automatically.
+
 Note: function parameters become variables inside the function body.
 Both bare name and `@` prefix work (e.g., `n` or `@n` for parameter `n`).
 The test suite tends to use `@` form inside function bodies.

@@ -56,15 +56,26 @@ don't know the exact action name.
 ### Caveats about `--docs` and `--action`
 
 - `--action` and `--docs` do NOT show which `#include` an action
-  belongs to. If unsure, search the docs categories one at a time with
-  separate commands — do NOT chain multiple cherri calls into one.
+  belongs to — `cherri --action=jsonRequest --no-ansi` prints only the
+  title, description, enum, and signature. If unsure, search the docs
+  categories one at a time with separate commands — do NOT chain
+  multiple cherri calls into one. If no category listing turns it up,
+  `grep -l <actionName>` over the compiler source checkout's
+  `actions/*.cherri` files is the definitive answer.
 - Some actions do not appear in `--docs` category output at all (e.g.,
   `randomNumber` is missing from every category). Use `--action=name`
   as fallback to confirm an action exists and get its signature.
+- `cherri --action= --no-ansi` (empty name) is documented as printing
+  all definitions, but on v2.3.0 it panics partway through (`index out
+  of range`, exit code 2) after printing roughly a hundred entries —
+  it is not a reliable way to dump the full action list. Use
+  `--docs=<category>` per category, or grep the source checkout's
+  `actions/*.cherri` files, instead.
 - When the compiler reports "requires include: `#include 'actions/X'`"
   in an error, the suggested include may be wrong — it sometimes cycles
-  through incorrect suggestions. Try `#include 'actions/scripting'`
-  first as a fallback for actions that seem miscategorized.
+  through incorrect suggestions on successive compiles. If the first
+  suggestion doesn't work, the definitive fix is `grep -l <actionName>`
+  over the compiler source checkout's `actions/*.cherri` files.
 
 ## Include system
 
@@ -99,9 +110,10 @@ Actions outside the basic category require explicit includes:
 ```
 
 NEVER call an action without its include — the compiler will throw an
-"undefined action" error. When unsure which include an action needs,
-use `cherri --action=actionName --no-ansi` — the output shows the
-category.
+"undefined action" error. `--action=actionName --no-ansi` confirms the
+action exists and shows its signature, but not its category (see
+"Caveats about `--docs` and `--action`" above for how to find the
+include).
 
 ### Including Cherri files
 
@@ -110,7 +122,14 @@ category.
 ```
 
 - File must exist and have `.cherri` extension
-- Each file can only be included once
+- Each path can only be included once — this applies to every include
+  path (user files, `actions/...` categories, `stdlib`), not just
+  `.cherri` files, and the dedup is global across the whole include
+  tree: if the main file includes `actions/web` and a helper file it
+  includes also includes `actions/web`, compilation fails with `Path
+  'actions/web' has already been included.`. For multi-file projects,
+  keep all `actions/...`/`stdlib` includes in the main file and none
+  in helper files.
 - Use `..` for parent directory paths
 
 ## Key usage patterns
@@ -135,9 +154,16 @@ const data = downloadURL("https://api.example.com/data", headers)
 
 Methods: `POST`, `PUT`, `PATCH`, `DELETE`. GET uses `downloadURL()`.
 
+`formRequest(url, method, body, headers)` sends a form-encoded
+(`application/x-www-form-urlencoded`) body instead of JSON, and
+`fileRequest(url, method, body, headers)` sends a file upload body —
+both share `jsonRequest`'s signature shape and are defined alongside it
+in `actions/web`.
+
 Note the `dictionary!` type on HTTP action params — headers and body
-require **literal dictionary values** (inline dicts or constants), not
-`@` variable references.
+(for `jsonRequest`, `formRequest`, and `fileRequest` alike) require
+**literal dictionary values** (inline dicts or constants), not `@`
+variable references.
 
 ### Dictionaries
 
@@ -262,14 +288,21 @@ rawAction("is.workflow.actions.alert", {
 })
 ```
 
-For variable values in raw action parameters, use the `${}` prefix:
+For variable values in raw action parameters, use the `${@varName}`
+prefix:
 
 ```ruby
 @file = nil
 rawAction("is.workflow.actions.documentpicker.save", {
-    "WFInput": "${file}"
+    "WFInput": "${@file}"
 })
 ```
+
+Only a single variable reference is permitted per parameter value.
+Combining two (e.g. `"${@file}${@title}"`) is not caught at compile
+time — it silently corrupts the output (the variable name and an
+extra, unintended action get mangled into the compiled Shortcut), so
+never chain multiple `${@var}` references in one value.
 
 `${}` is ONLY for raw action variable references. NEVER use it for
 normal string interpolation.
@@ -296,6 +329,8 @@ Higher-level functions built on standard actions:
 
 ```ruby
 #include 'stdlib'
+#include 'actions/text'
+#include 'actions/web'
 
 // Run JavaScript in a web view
 @jsResult = runJS("console.log('hello')")
@@ -305,12 +340,21 @@ Higher-level functions built on standard actions:
 repeat i for 3 {
     @items += makeVCard("Title {i}", "Subtitle {i}")
 }
-@choice = chooseFromVCard(items, "Prompt")
+@choice = chooseFromVCard(@items, "Prompt")
 ```
 
-The stdlib internally uses actions from `actions/text`, `actions/web`,
-and `actions/scripting`. The compiler resolves these — you typically
-only need `#include 'stdlib'`.
+`stdlib` functions are plain Cherri (see `stdlib.cherri` in the
+compiler source) that call regular actions internally — the compiler
+does NOT resolve their action dependencies
+for you. `#include 'stdlib'` alone is not enough; you must also
+include whatever action categories the stdlib function you call uses
+internally. `runJS` calls `replaceText()` and `urlDecode()`, so it
+needs `actions/text` and `actions/web` in addition to `stdlib`.
+`chooseFromVCard` needs no extra include beyond `stdlib` — the actions
+it calls (`setName`, `chooseFromList`) require none. When a stdlib
+function fails with a missing-include error, add the suggested
+include and recompile; repeat until it succeeds, since one function
+can depend on several categories.
 
 ## Copy/paste macros
 
@@ -324,6 +368,10 @@ copy carbon {
 paste carbon
 paste carbon
 ```
+
+A `paste` must come after the `copy` it references — pasting before
+the declaration fails with `Unable to paste undefined copy '<name>'`.
+Avoid long chains of pastables pasting other pastables.
 
 Use pastables for code reuse WITHOUT arguments. Use functions when you
 need arguments. Pastables duplicate actions at each paste site; functions

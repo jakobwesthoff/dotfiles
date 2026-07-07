@@ -210,3 +210,6 @@ paste flashDot
 paste flashDot
 paste flashDot
 ```
+
+A `paste` must be declared after its `copy` — pasting first is a
+compile error. Avoid chaining pastables that paste other pastables.

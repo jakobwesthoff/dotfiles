@@ -259,22 +259,7 @@ its signature. The `--action=` flag supports substring matching.
 When the compiler reports "requires include: `#include 'actions/X'`",
 the suggested include may be wrong. The compiler sometimes cycles
 through incorrect suggestions on successive compiles. If the first
-suggestion doesn't work, try `#include 'actions/scripting'` as a
-common fallback, or use `cherri --action=name --no-ansi` to check
-whether the action is a built-in that needs no include.
-
-## `formatNumber` has a deep dependency chain
-
-`formatNumber` requires multiple includes (settings, shortcuts, text,
-web) — the compiler reveals them one at a time. Consider manual
-arithmetic for formatting instead:
-
-```ruby
-// Instead of formatNumber(value, 2), do:
-@cents: number
-@cents = @value * 100
-@rounded: number
-@rounded = round(@cents)
-@formatted: number
-@formatted = @rounded / 100
-```
+suggestion doesn't work, `grep -l <actionName>` over the compiler
+source checkout's `actions/*.cherri` files gives the definitive
+category, and `cherri --action=name --no-ansi` confirms whether the
+action exists at all.
