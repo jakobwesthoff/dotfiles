@@ -127,6 +127,11 @@ ALWAYS prefer `const` when the value is assigned once and never mutated.
 Constants CANNOT be arrays (arrays require Add to Variable) or variable
 references (the value can change).
 
+Constants cannot be reassigned or redefined, including once per
+if/else branch — a second `const name = ...` anywhere in scope fails
+with `Cannot redefine constant 'name'.`; use `@var` when a value
+differs per branch.
+
 ## String interpolation
 
 Use `{variableName}` inside double-quoted strings. Both `{varName}` and

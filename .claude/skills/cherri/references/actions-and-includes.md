@@ -22,7 +22,7 @@ Browse all actions in a category:
 cherri --docs=web --no-ansi
 ```
 
-Available categories: `basic`, `web`, `scripting`, `text`, `documents`,
+Available categories: `basic`, `web`, `text`, `documents`,
 `calendar`, `contacts`, `crypto`, `sharing`, `shortcuts`, `intelligence`,
 `translation`, `pdf`, `math`, `mac`, `images`, `photos`, `music`,
 `media`, `network`, `device`, `settings`, `location`, `a11y`, `dropbox`.
@@ -79,11 +79,13 @@ don't know the exact action name.
 
 ## Include system
 
-Actions outside the basic category require explicit includes:
+Actions outside the basic category require explicit includes. Dictionary
+and list actions (`getValue`, `setValue`, `getKeys`, `getValues`,
+`getFirstItem`, `getListItem`, `list`, etc.) are in `basic` and need no
+include.
 
 ```ruby
 #include 'actions/web'        // HTTP requests, URLs, Safari
-#include 'actions/scripting'  // dictionaries, lists, apps, numbers
 #include 'actions/text'       // text manipulation, regex, rich text
 #include 'actions/network'    // IP, WiFi, cellular, SSH
 #include 'actions/sharing'    // share sheet, clipboard, email, SMS
@@ -139,17 +141,17 @@ include).
 ```ruby
 #include 'actions/web'
 
-const headers = {
-    "Authorization": "Bearer {token}",
-    "Content-Type": "application/json"
-}
-const body = {"url": "{pageUrl}"}
+@token = "my-token"
+@pageUrl = "https://example.com/page"
 
 // JSON POST (most common for APIs)
-const response = jsonRequest("https://api.example.com", "POST", body, headers)
+const response = jsonRequest("https://api.example.com", "POST",
+    {"url": "{@pageUrl}"},
+    {"Authorization": "Bearer {@token}", "Content-Type": "application/json"})
 
 // GET request
-const data = downloadURL("https://api.example.com/data", headers)
+const data = downloadURL("https://api.example.com/data",
+    {"Authorization": "Bearer {@token}"})
 ```
 
 Methods: `POST`, `PUT`, `PATCH`, `DELETE`. GET uses `downloadURL()`.
@@ -160,31 +162,37 @@ Methods: `POST`, `PUT`, `PATCH`, `DELETE`. GET uses `downloadURL()`.
 both share `jsonRequest`'s signature shape and are defined alongside it
 in `actions/web`.
 
-Note the `dictionary!` type on HTTP action params — headers and body
-(for `jsonRequest`, `formRequest`, and `fileRequest` alike) require
-**literal dictionary values** (inline dicts or constants), not `@`
-variable references.
+The `body`/`headers` parameters are marked `dictionary!` in the source
+(`actions/web.cherri` in the compiler repo), meaning they accept
+**only inline dictionary literals** written directly in the call —
+neither a `const` dict nor an `@var` dict compiles. Both fail with
+`Shortcuts does not allow variable values for this argument, use a
+literal for the argument value.` The `!` marker does not show up in
+`cherri --action=jsonRequest --no-ansi` output (it prints `dictionary
+?body, dictionary ?headers` with no `!`), so the CLI signature cannot
+be used to detect this restriction. Dynamic values still reach the
+dict through string interpolation (`{@varName}` or `{constName}`)
+inside the inline literal, as shown above.
 
 ### Dictionaries
 
 ```ruby
-#include 'actions/scripting'
-
 @dictVar = {"key1": "value", "count": 5}
+@someKeyVar = "key1"
 
 // Bracket syntax — key MUST be a literal string, dict MUST be a variable
-@val = dictVar['key1']
+@val = @dictVar['key1']
 
 // getValue — works with both variables and constants for the dict,
 // and supports variable keys (not just literal strings)
 const dict = {"key": "value"}
 const val = getValue(dict, "key")
-@val2 = getValue(dictVar, someKeyVar)
+@val2 = getValue(@dictVar, @someKeyVar)
 
 // Modify and inspect
-setValue(dictVar, "newKey", "newValue")
-@keys = getKeys(dictVar)
-@values = getValues(dictVar)
+setValue(@dictVar, "newKey", "newValue")
+@keys = getKeys(@dictVar)
+@values = getValues(@dictVar)
 ```
 
 Use `getValue` when: the dictionary is a `const`, OR the key is a
@@ -194,11 +202,9 @@ literal string keys.
 ### Lists
 
 ```ruby
-#include 'actions/scripting'
-
 @listVar = list("Item 1", "Item 2", "Item 3")
-const first = getFirstItem(listVar)
-const second = getListItem(listVar, 2)  // 1-indexed!
+const first = getFirstItem(@listVar)
+const second = getListItem(@listVar, 2)  // 1-indexed!
 ```
 
 IMPORTANT: Shortcuts list indexes start at 1, not 0.

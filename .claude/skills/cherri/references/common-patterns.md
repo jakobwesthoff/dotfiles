@@ -9,16 +9,14 @@ metadata:
 
 ```ruby
 #include 'actions/web'
-#include 'actions/scripting'
 
+@apiEndpoint = "https://api.example.com"
+@pageUrl = "https://example.com/page"
 @token = "my-token"
-const headers = {
-    "Authorization": "Bearer {@token}",
-    "Content-Type": "application/json"
-}
-const body = {"url": "{@pageUrl}"}
 
-const response = jsonRequest(@apiEndpoint, "POST", body, headers)
+const response = jsonRequest(@apiEndpoint, "POST",
+    {"url": "{@pageUrl}"},
+    {"Authorization": "Bearer {@token}", "Content-Type": "application/json"})
 const dict = getDictionary(response)
 const errorField = getValue(dict, "error")
 
@@ -29,11 +27,15 @@ if errorField {
 }
 ```
 
+`jsonRequest`'s `body`/`headers` params only accept inline dictionary
+literals — a `const` or `@var` dict fails with `Shortcuts does not
+allow variable values for this argument`. Dynamic values reach the
+dict through string interpolation inside the literal, as above.
+
 ## Extract URL from share sheet input
 
 ```ruby
 #include 'actions/web'
-#include 'actions/scripting'
 
 #define inputs url, text
 #define from sharesheet
@@ -48,13 +50,11 @@ if !pageUrl {
 }
 ```
 
-Note: `getFirstItem()` requires `#include 'actions/scripting'`.
+Note: `getFirstItem()` is in `basic` and needs no include.
 
 ## Dictionary manipulation
 
 ```ruby
-#include 'actions/scripting'
-
 @dictVar = {
     "key1": "value",
     "key2": 5,
@@ -108,7 +108,6 @@ alert("You chose: {@result}", "Color")
 
 ```ruby
 #include 'stdlib'
-#include 'actions/scripting'
 #include 'actions/text'
 #include 'actions/web'
 
@@ -140,28 +139,47 @@ darkMode()
 
 ## Date difference (days between two dates)
 
-There is no `getTimeBetweenDates` action. Use Unix epoch seconds via
-custom date formatting to calculate differences:
+There is no built-in `getTimeBetweenDates`/`between`/`dateDifference`
+action (`cherri --action=<name> --no-ansi` finds none of these, and
+none appear in the compiler source checkout's `actions/*.cherri`
+files). The underlying Shortcuts action exists but isn't wired up in
+Cherri, so bind it directly with a custom action definition
+(`is.workflow.actions.gettimebetweendates`):
 
 ```ruby
 #include 'actions/calendar'
 
+enum timeUnit {
+    'Total Time',
+    'Seconds',
+    'Minutes',
+    'Hours',
+    'Days',
+    'Weeks',
+    'Months',
+    'Years'
+}
+
+action 'is.workflow.actions.gettimebetweendates' getTimeBetweenDates(
+    date date: 'WFInput',
+    timeUnit ?unit: 'WFTimeUntilUnit' = "Minutes",
+    text ?referenceDate: 'WFTimeUntilReferenceDate' = "Right Now",
+    date ?customDate: 'WFTimeUntilCustomDate'
+): number
+
 const eventDate = date("2025-12-25")
-@now = CurrentDate
-
-// Format as Unix epoch seconds (custom format "U")
-const eventSec = formatDate(eventDate, "Custom", "U")
-const nowSec = formatDate(@now, "Custom", "U")
-
-// Convert to numbers and compute difference in days
-@eventNum: number
-@eventNum = number(eventSec)
-@nowNum: number
-@nowNum = number(nowSec)
-
-@days = @eventNum / 86400 - @nowNum / 86400
-alert("{@days} days until event", "Countdown")
+const daysUntil = getTimeBetweenDates(eventDate, "Days")
+alert("{daysUntil} days until event", "Countdown")
 ```
+
+`referenceDate` defaults to `"Right Now"`, so the call above measures
+the difference between `eventDate` and the current moment; pass
+`customDate` and set `referenceDate` to `"Other"` to compare two
+explicit dates instead. This has only been verified at compile time
+(`--skip-sign --no-ansi`, exit 0) — the parameter keys and enum values
+come from third-party Shortcuts action documentation, not from running
+the compiled shortcut on a device, so the runtime output (whether
+`"Days"` yields a signed integer day count as expected) is unverified.
 
 ## Prompt for user input
 
@@ -180,8 +198,6 @@ Input types: `Text` (default), `Number`, `URL`, `Date`, `Time`,
 ## Working with lists
 
 ```ruby
-#include 'actions/scripting'
-
 // Create a list and let user pick
 @options = list("Option A", "Option B", "Option C")
 @chosen = chooseFromList(@options, "Pick one")

@@ -22,7 +22,6 @@ to create a bookmark.
 // creates a bookmark in Squirly via the API.
 
 #include 'actions/web'
-#include 'actions/scripting'
 #include 'actions/text'
 
 // ---------------------------------------------------------
@@ -72,15 +71,13 @@ if !pageUrl {
 // ---------------------------------------------------------
 
 const endpoint = "{storedApiUrl}/api/v1/bookmarks"
-const headers = {
+
+const response = jsonRequest(endpoint, "POST", {
+    "url": "{pageUrl}"
+}, {
     "Authorization": "Bearer {storedToken}",
     "Content-Type": "application/json"
-}
-const body = {
-    "url": "{pageUrl}"
-}
-
-const response = jsonRequest(endpoint, "POST", body, headers)
+})
 
 // ---------------------------------------------------------
 // Handle response
@@ -115,8 +112,8 @@ apps may pass text containing URLs. `getURLs()` handles both cases by
 extracting all URLs from the input, then `getFirstItem()` picks the
 primary one.
 
-Both `getURLs()` and `getFirstItem()` require their includes
-(`actions/web` and `actions/scripting` respectively).
+`getURLs()` requires `#include 'actions/web'`. `getFirstItem()` is a
+built-in action and needs no include.
 
 ### Error handling
 
@@ -132,44 +129,67 @@ alert for errors.
 
 ### String building
 
-The endpoint URL, headers, and body all use `const` — they're assigned
-once and never mutated. String interpolation works fine with constants.
+The endpoint URL uses `const` — it's assigned once and never mutated.
+`jsonRequest`'s `body`/`headers` accept only inline dictionary
+literals (see the jsonRequest call above), so they're written directly
+in the call rather than stored in a `const` first. String
+interpolation works fine in both cases.
 
 ## Adapting the pattern
 
 ### Adding page title
 
-If the Squirly API accepts a title, extract it from the shared content:
+If the Squirly API accepts a title, extract it from the shared content
+and add it to the inline dict passed to `jsonRequest` (a `const body`
+variable does not work here; see the jsonRequest call in the complete
+example above):
 
 ```ruby
+#include 'actions/text'
+
 // Some apps share text that includes the page title
 const inputText = getText(ShortcutInput)
 const lines = splitText(inputText, "\n")
 const pageTitle = getFirstItem(lines)
 
-const body = {
+const response = jsonRequest(endpoint, "POST", {
     "url": "{pageUrl}",
     "title": "{pageTitle}"
-}
+}, {
+    "Authorization": "Bearer {storedToken}",
+    "Content-Type": "application/json"
+})
 ```
+
+`splitText`'s second argument is redundant here (`"\n"` is already the
+default separator) and only produces a harmless warning. Dropping it
+entirely — `splitText(inputText)` — crashes the compiler on v2.3.0
+(`panic: runtime error: index out of range [1] with length 1`), so the
+explicit separator must stay.
 
 ### Adding tags or categories
 
 ```ruby
-// Prompt user for optional tags before saving
+// Prompt user for optional tags before saving; @tags is "" when skipped
 @tags = prompt("Tags (comma-separated, or leave empty):", "Text", "")
 
-if @tags {
-    const body = {
-        "url": "{pageUrl}",
-        "tags": "{@tags}"
-    }
-} else {
-    const body = {
-        "url": "{pageUrl}"
-    }
-}
+const response = jsonRequest(endpoint, "POST", {
+    "url": "{pageUrl}",
+    "tags": "{@tags}"
+}, {
+    "Authorization": "Bearer {storedToken}",
+    "Content-Type": "application/json"
+})
 ```
+
+A single inline dict with `@tags` interpolated avoids two problems: a
+`const body` declared in both branches of an if/else fails with
+`Cannot redefine constant 'body'.` (constants are single-assignment,
+with no branch-local scoping — see language-fundamentals.md), and a
+`body` stored in a variable or constant cannot be passed to
+`jsonRequest` at all (see the jsonRequest note above). When the user
+skips the prompt, `tags` is sent as an empty string rather than
+omitted.
 
 ### Clipboard fallback
 
