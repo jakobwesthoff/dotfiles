@@ -23,21 +23,35 @@ Claude follows links on demand to pull in additional files.
 
 ## SKILL.md Frontmatter
 
-At minimum, provide `name` and `description`:
+All fields are optional in Claude Code; only `description` is recommended. The
+`/command` name comes from where the skill file lives — the directory name for
+a project or personal skill — not from the `name` field. Still set `name` equal
+to the directory name: the Agent Skills open standard (agentskills.io) requires
+that match for portability, even though Claude Code itself only uses `name` as
+a display label in skill listings (defaulting to the directory name if
+omitted).
 
 ```yaml
 ---
-name: my-skill                      # Required. Becomes /my-skill command
-description: What this skill does   # Required. Used for auto-invocation decisions
-license: MIT                        # Optional
-compatibility: Requires git, node   # Optional
-dependencies: python>=3.8, pandas   # Optional
-disable-model-invocation: true      # Optional. Manual /name only (no auto-trigger)
-user-invocable: false               # Optional. Hidden from menu (Claude-only)
-allowed-tools: Read Grep Bash(bun:*)  # Optional. Space-delimited pre-approved tools
-context: fork                       # Optional. Run in isolated subagent context
-agent: Explore                      # Optional. Subagent type
-argument-hint: "[issue-number]"     # Optional. Autocomplete hint for arguments
+name: my-skill                       # Optional. Display label; defaults to directory name
+description: What this skill does    # Recommended. Used for auto-invocation decisions
+when_to_use: Additional trigger context appended to description  # Optional
+license: MIT                         # Optional
+compatibility: Requires git, node    # Optional
+disable-model-invocation: true       # Optional. Manual /name only (no auto-trigger)
+user-invocable: false                # Optional. Hidden from menu (Claude-only)
+allowed-tools: Bash(git add *) Bash(git commit *)  # Optional. Pre-approved tools (grant, not restriction)
+disallowed-tools: Bash(rm *)         # Optional. Removed from the pool while the skill is active
+context: fork                        # Optional. Run in isolated subagent context
+agent: Explore                       # Optional. Subagent type
+model: inherit                       # Optional. Model override while the skill is active
+effort: high                         # Optional. low | medium | high | xhigh | max
+argument-hint: "[issue-number]"      # Optional. Autocomplete hint for arguments
+arguments: issue-number priority     # Optional. Named positional args for $name substitution
+paths: "src/frontend/**"             # Optional. Glob limiting automatic activation
+shell: bash                          # Optional. bash (default) or powershell for !`command`
+hooks:                               # Optional. Hooks scoped to the skill's lifecycle
+  ...
 metadata:
   author: my-org
   version: "1.0"
@@ -45,17 +59,55 @@ metadata:
 ---
 ```
 
+If `description` is omitted, Claude Code uses the first paragraph of the
+skill's markdown body instead.
+
 ### Field Constraints
 
 | Field | Required | Constraints |
 |-------|:--------:|-------------|
-| `name` | Yes | Max 64 chars. Lowercase alphanumeric + hyphens only. Must match directory name. No leading/trailing/consecutive hyphens. |
-| `description` | Yes | Max 1024 chars (spec), **200 chars for Claude.ai**. Describe WHAT it does AND WHEN to use it. Include trigger keywords. |
+| `name` | No | Display name shown in skill listings; defaults to the directory name. The Agent Skills spec (not Claude Code) requires it, max 64 chars, lowercase alphanumeric + hyphens, matching the directory name, no leading/trailing/consecutive hyphens — worth following for portability. |
+| `description` | Recommended | Max 1024 chars (spec), **200 chars for Claude.ai**. Describe WHAT it does AND WHEN to use it. Include trigger keywords. Falls back to the body's first paragraph if omitted. |
+| `when_to_use` | No | Additional trigger context, appended to `description` in the skill listing. Counts toward the combined 1,536-character cap. |
 | `license` | No | License name or reference to bundled license file. |
-| `compatibility` | No | Max 500 chars. Environment requirements. |
-| `dependencies` | No | Packages the agent can install (PyPI, npm). |
-| `allowed-tools` | No | Space-delimited pre-approved tools. |
+| `compatibility` | No | Max 500 chars. Environment requirements (intended product, required system packages, network access needs). Most skills do not need this field. |
+| `allowed-tools` | No | Pre-approves the listed tools while the skill is active. Does not restrict — every other tool remains callable per normal permission settings. Accepts a space- or comma-separated string, or a YAML list. See "allowed-tools semantics" below. |
+| `disallowed-tools` | No | Removes the listed tools from Claude's available pool while the skill is active. Restriction clears on the next user message. The counterpart to `allowed-tools`. |
+| `model` | No | Model override while the skill is active, for the rest of the turn. Accepts `/model` values or `inherit`. |
+| `effort` | No | Effort-level override: `low`, `medium`, `high`, `xhigh`, `max`. |
+| `hooks` | No | Hooks scoped to the skill's lifecycle. |
+| `paths` | No | Glob patterns limiting automatic activation to when Claude works with matching files. Useful for scoping a project skill to one subsystem (e.g. a frontend-only skill). |
+| `shell` | No | `bash` (default) or `powershell` for `` !`command` `` execution. |
+| `arguments` | No | Named positional arguments enabling `$name` substitution in the body. Space-separated string or YAML list; names map to positions in order. |
 | `metadata` | No | Arbitrary string key-value mapping. |
+
+Dependency handling has no dedicated frontmatter field. List required packages
+and install commands in the SKILL.md body (a "Prerequisites" section works
+well); use `compatibility` only for genuine environment requirements.
+
+### `allowed-tools` Semantics
+
+`allowed-tools` is a grant, not a restriction: it pre-approves the listed
+tools for the duration of the skill's activation, but every other tool
+remains callable and governed by the normal permission settings. To actually
+limit what a skill can do, use `disallowed-tools` or a permission deny rule.
+
+Scope Bash grants to narrow command prefixes rather than broad tool names,
+e.g. `Bash(git add *)` rather than `Bash`. The space form (`Bash(git add *)`)
+and the `:*` suffix form (`Bash(git add:*)`) are equivalent for a trailing
+wildcard; the space form is what the permission dialog writes and what the
+official docs use, so prefer it for consistency. `:*` is only recognized at
+the end of a pattern — `Bash(git:* push)` treats the colon as a literal
+character. Claude Code is aware of shell operators, so a rule like
+`Bash(safe-cmd *)` does not grant `safe-cmd && other-cmd`; each subcommand
+must match its own rule. `${CLAUDE_PROJECT_DIR}` substitution also works
+inside `allowed-tools`, enabling rules like
+`Bash(${CLAUDE_PROJECT_DIR}/scripts/lint.sh *)`.
+
+For skills checked into a project's `.claude/skills/` directory,
+`allowed-tools` takes effect only after the workspace trust dialog for that
+folder has been accepted. Review a project skill's `allowed-tools` before
+trusting the repository, since a skill can grant itself broad tool access.
 
 ### Dynamic Content
 

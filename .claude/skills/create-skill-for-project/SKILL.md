@@ -62,7 +62,7 @@ to the user.
 ## Critical Rules
 
 - Create the skill in `.claude/skills/<name>/` — NEVER at the project root
-- Directory name MUST match the `name` frontmatter field exactly
+- The directory name determines the `/command`, not the `name` frontmatter field. Still set `name` equal to the directory name — the Agent Skills spec requires the match for portability, even though Claude Code itself only uses `name` as a display label
 - Start with the simplest tier (Tier 1) unless the domain clearly needs more
 - Use the project's real code patterns, not generic examples
 - Include anti-patterns with strong language (FORBIDDEN, NEVER, MUST NOT)

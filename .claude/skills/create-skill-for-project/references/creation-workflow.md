@@ -131,6 +131,12 @@ Draft the `description` field. It MUST include:
 - Trigger keywords matching WHEN users need it
 - Keep under 200 characters for Claude.ai compatibility
 
+### Consider Scoping with `paths`
+
+If the skill applies to only part of the project (e.g. a frontend-only or
+backend-only skill), decide whether to set the `paths` frontmatter field to a
+glob so the skill activates only when Claude is working with matching files.
+
 ---
 
 ## Phase 4: Write the Skill Files
@@ -141,7 +147,10 @@ Draft the `description` field. It MUST include:
 .claude/skills/<skill-name>/
 ```
 
-The directory name MUST match the `name` frontmatter field exactly.
+The directory name — not the `name` frontmatter field — determines the
+`/command`. Still set `name` to match the directory name: the Agent Skills
+open standard requires it for portability, even though Claude Code itself
+only uses `name` as a display label.
 
 ### Step 2: Write reference files first (Tier 2/3)
 
@@ -210,7 +219,9 @@ Write it last so you can accurately reference all existing files.
 
 ### Structural Checks
 
-- [ ] Directory name matches `name` frontmatter field
+- [ ] `name` frontmatter field matches the directory name (a spec-portability
+      convention; Claude Code itself derives the `/command` from the
+      directory name, not from `name`)
 - [ ] `name` is lowercase alphanumeric + hyphens, max 64 chars
 - [ ] `description` specifies WHAT and WHEN
 - [ ] `SKILL.md` body is under 500 lines
@@ -225,6 +236,8 @@ Write it last so you can accurately reference all existing files.
 - [ ] The "right way" appears before variations in every file
 - [ ] Anti-patterns use strong language (FORBIDDEN, NEVER, MUST NOT)
 - [ ] No hardcoded secrets or credentials
+- [ ] `allowed-tools` grants are minimal for what the skill actually runs —
+      scoped to narrow command prefixes, not broad tool names
 - [ ] No generic advice that could apply to any project — everything is specific
 - [ ] Each reference file covers exactly one concept
 

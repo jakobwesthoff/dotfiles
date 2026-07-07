@@ -207,7 +207,9 @@ description: >-
 **Bad — name doesn't match directory:**
 ```yaml
 ---
-name: deployment    # Directory is deploy-workflow/ — MUST match
+name: deployment    # Directory is deploy-workflow/ — the /command is still
+                    # /deploy-workflow; this mismatch only breaks portability
+                    # with the Agent Skills spec and confuses the skill listing
 description: Deploys stuff.
 ---
 ```
