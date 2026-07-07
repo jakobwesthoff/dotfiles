@@ -9,8 +9,6 @@ tap "azure/kubelogin"
 tap "felixkratz/formulae"
 tap "koekeishiya/formulae"
 tap "mutagen-io/mutagen"
-tap "xorpse/formulae"
-tap "yt-dlp/taps"
 
 # =========================================================
 # Shell & Terminal
@@ -22,7 +20,6 @@ brew "fzf"
 brew "zoxide"
 brew "tmux"
 brew "sesh"
-brew "fd"
 brew "screen"
 brew "yazi"
 brew "dialog"
