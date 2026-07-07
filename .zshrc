@@ -17,7 +17,7 @@ if [ -n "${ENABLE_TMUX_STARTUP}" ] && [ -z "${TMUX}" ]; then
     fi
   done
 
-  fzf_options=("--no-sort" "--layout=reverse-list" "--border=sharp" "--color=light")
+  fzf_options=("--no-sort" "--layout=reverse-list" "--border=sharp")
   initial_tmux_session="main"
 
   unset ENABLE_TMUX_STARTUP
