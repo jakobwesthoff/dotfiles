@@ -67,7 +67,7 @@ fi
 # SSH keys
 if [ -f ~/.ssh/id_rsa ] || [ -f ~/.ssh/id_ed25519 ]; then
 	ok "SSH keys found"
-	ssh-add --apple-use-keychain 2>/dev/null
+	ssh-add --apple-use-keychain 2>/dev/null || true
 else
 	warn "No SSH keys found in ~/.ssh (expected id_rsa or id_ed25519)"
 	ask "Add your SSH private keys, then press ENTER"
@@ -256,22 +256,6 @@ PAM
 fi
 
 # =========================================================
-# Keyboard
-# =========================================================
-
-section "Keyboard"
-
-# normal minimum is 15 (225 ms)
-defaults write -g InitialKeyRepeat -int 12
-# normal minimum is 2 (30 ms)
-defaults write -g KeyRepeat -int 2
-ok "Key repeat: InitialKeyRepeat=12, KeyRepeat=2 (relogin to apply)"
-
-# Disable press-and-hold for keys in favor of key repeat
-defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
-ok "Press-and-hold disabled (key repeat preferred)"
-
-# =========================================================
 # Manual settings (optional)
 # =========================================================
 
@@ -311,6 +295,22 @@ while true; do
 done 2>/dev/null &
 
 info "Configuring system-wide defaults..."
+
+# =========================================================
+# Keyboard
+# =========================================================
+
+section "Keyboard"
+
+# normal minimum is 15 (225 ms)
+defaults write -g InitialKeyRepeat -int 12
+# normal minimum is 2 (30 ms)
+defaults write -g KeyRepeat -int 2
+ok "Key repeat: InitialKeyRepeat=12, KeyRepeat=2 (relogin to apply)"
+
+# Disable press-and-hold for keys in favor of key repeat
+defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
+ok "Press-and-hold disabled (key repeat preferred)"
 
 # Save/print dialogs
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
