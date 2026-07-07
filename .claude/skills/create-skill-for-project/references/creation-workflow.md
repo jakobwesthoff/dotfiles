@@ -57,8 +57,12 @@ explore the codebase to extract patterns the skill will encode.
 - [ ] Build scripts and tooling
 
 **Existing skills:**
-- [ ] `.claude/skills/` — what skills already exist?
-- [ ] `.claude/commands/` — any legacy commands?
+- [ ] `.claude/skills/` — what skills already exist in the project?
+- [ ] `~/.claude/skills/` — any personal skills that would overlap or be
+      shadowed by the planned project skill?
+- [ ] `.claude/commands/` — any commands that already cover this ground?
+      (Commands and skills are merged-equivalent: both produce a `/command`,
+      and a skill overrides a same-named command.)
 - [ ] Avoid duplicating or conflicting with existing skills
 
 **Codebase analysis (focused on the skill's domain):**
@@ -93,6 +97,14 @@ Using what you learned in Phases 1 and 2, make these design decisions:
 | Produces files, code, or documents | **Generative** |
 | Guides behavior, enforces patterns | **Knowledge** |
 | Both reads and produces artifacts | **Hybrid** |
+
+### Choose the Name
+
+See "Choosing the Name" in `references/skill-structure.md` for the naming
+conventions (gerund/noun-phrase form, vague-name avoidance, collision
+checks). This is also where the Phase 2 findings on existing project,
+personal, and plugin skills feed back in: pick a name that is free, or
+confirm that shadowing an existing skill is intentional.
 
 ### Choose the Tier
 
@@ -136,6 +148,29 @@ Draft the `description` field. It MUST include:
 If the skill applies to only part of the project (e.g. a frontend-only or
 backend-only skill), decide whether to set the `paths` frontmatter field to a
 glob so the skill activates only when Claude is working with matching files.
+
+### Choose Who Invokes the Skill
+
+Decide who should be able to trigger the skill (see "Controlling Who Can
+Invoke a Skill" in `references/skill-structure.md`):
+
+| Mode | Frontmatter | Use when |
+|------|-------------|----------|
+| Default | (none) | The skill should both auto-trigger from user phrasing and be runnable manually |
+| User-only | `disable-model-invocation: true` | The skill has side effects or timing that Claude should not decide on its own (e.g. `/commit`, `/deploy`) |
+| Model-only | `user-invocable: false` | The skill is background knowledge, not something a user would run as a command |
+
+A manual-only skill's description never participates in auto-trigger
+matching and costs zero listing tokens, so it needs less trigger-keyword
+engineering than a default-mode skill.
+
+### Decide Whether to Run in a Subagent
+
+If considering `context: fork`, confirm the skill is task-style (Generative
+or Hybrid archetype) rather than pure Knowledge — a forked knowledge skill
+returns no meaningful output. See "Running in a Subagent" in
+`references/skill-structure.md` for the `agent` default and the
+`Explore`/`Plan` CLAUDE.md caveat.
 
 ---
 
@@ -212,6 +247,10 @@ Write it last so you can accurately reference all existing files.
 - Scripts must be self-contained executables with `--help` support
 - Assets must be complete and runnable — not fragments
 - Use the project's actual language, framework, and patterns
+- Reference scripts from `SKILL.md` via `${CLAUDE_SKILL_DIR}` (e.g.
+  `python3 ${CLAUDE_SKILL_DIR}/scripts/validate.py`), never a relative path —
+  the skill's working directory at invocation is not guaranteed to be the
+  skill directory
 
 ---
 

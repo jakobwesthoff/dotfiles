@@ -14,8 +14,31 @@ from these locations:
 
 | Scope | Path | Visibility |
 |-------|------|------------|
-| Project | `.claude/skills/<name>/SKILL.md` | This project only |
+| Enterprise | Managed settings location | All users in the organization |
 | Personal | `~/.claude/skills/<name>/SKILL.md` | All your projects |
+| Project | `.claude/skills/<name>/SKILL.md` | This project only |
+| Plugin | `<plugin>/skills/<skill-name>/SKILL.md` | Namespaced as `plugin-name:skill-name`; cannot conflict with other levels |
+
+Project skills also load from `.claude/skills/` directories in parent
+directories up to the repo root, and on demand from subdirectories whose
+files Claude touches — this is what gives monorepos per-package skills. A
+name clash between nested skills is resolved with a directory-qualified name
+such as `apps/web:deploy`.
+
+### Skill Discovery and Precedence
+
+Enterprise overrides personal, and personal overrides project. A skill at
+any of these levels also overrides a bundled skill with the same name. This
+matters when deciding where to create a new skill: a project skill that
+happens to share a name with a personal or plugin skill is shadowed by it.
+
+A `<skill-name>` entry may be a symlink to a directory elsewhere on disk;
+Claude Code follows it like any other skill directory.
+
+Custom commands have been merged into skills: a command file at
+`.claude/commands/deploy.md` and a skill at `.claude/skills/deploy/SKILL.md`
+both create `/deploy`, and commands support the same frontmatter as skills.
+If a skill and a command share a name, the skill wins.
 
 When activated, Claude loads the `SKILL.md` into its context window. Everything
 that file links to via relative markdown links is available for lazy loading —
@@ -115,12 +138,32 @@ trusting the repository, since a skill can grant itself broad tool access.
 |----------|-------------|
 | `$ARGUMENTS` | All arguments passed at invocation |
 | `$ARGUMENTS[N]` or `$N` | Specific argument by index (0-based) |
-| `` !`command` `` | Output of a shell command, injected before the agent sees the skill |
+| `$name` | A named argument declared via the `arguments` frontmatter field; names map to argument positions in order |
+| `${CLAUDE_SKILL_DIR}` | The directory containing the skill's `SKILL.md`. Use it so bundled scripts resolve regardless of the current working directory (e.g. `python3 ${CLAUDE_SKILL_DIR}/scripts/visualize.py`) |
+| `${CLAUDE_PROJECT_DIR}` | The project root (v2.1.196+); also substituted inside `allowed-tools` |
+| `${CLAUDE_SESSION_ID}` | The current session identifier |
+| `${CLAUDE_EFFORT}` | The current effort level |
+| `` !`command` `` | Output of a single shell command, injected before the agent sees the skill |
+| ` ```! ` fenced block | Output of a multi-line shell script, for injection cases the single-command inline form can't express |
+
+Any generated Tier 2/3 skill with a `scripts/` directory MUST reference those
+scripts via `${CLAUDE_SKILL_DIR}` rather than a relative path, since the
+skill's working directory at invocation is not guaranteed to be the skill
+directory.
+
+Notes on the substitutions above:
+
+- If the skill body has no `$ARGUMENTS` placeholder but arguments were passed
+  at invocation, Claude Code appends `ARGUMENTS: <value>` to the skill content
+  instead of silently dropping them.
+- Inline `` !`cmd` `` is only recognized at the start of a line or after
+  whitespace; `` KEY=!`cmd` `` stays literal.
 
 ### Description as Trigger Mechanism
 
-The `description` field is loaded for ALL installed skills on every interaction.
-It is how the agent decides which skill matches the current task.
+The `description` field is loaded for all skills that allow model invocation
+(`disable-model-invocation` not set). It is how the agent decides which skill
+matches the current task.
 
 A good description includes **what** the skill does and **when** to use it:
 
@@ -135,6 +178,65 @@ description: Helps with documents.
 ```
 
 Include the exact terms users are likely to say so the agent can match on them.
+
+### Controlling Who Can Invoke a Skill
+
+| Frontmatter | You can invoke | Claude can invoke | Context loading |
+|-------------|:--------------:|:------------------:|------------------|
+| (default) | Yes | Yes | Description always in context; full skill loads on invocation |
+| `disable-model-invocation: true` | Yes | No | Description not in context; full skill loads when you invoke |
+| `user-invocable: false` | No | Yes | Description always in context; full skill loads on invocation |
+
+`disable-model-invocation: true` costs zero listing tokens and never
+auto-triggers. It is the recommended mode for workflows with side effects or
+whose timing you want to control (e.g. `/commit`, `/deploy`) — cases where
+Claude should not decide on its own that the moment is right. `user-invocable:
+false` fits background knowledge that isn't actionable as a command; it stays
+in the auto-trigger listing but never appears for manual invocation.
+
+### Running in a Subagent
+
+The `context: fork` field (paired with `agent`, see the frontmatter table
+above) runs the skill in an isolated subagent rather than the main
+conversation.
+
+- `context: fork` only makes sense for skills with explicit task
+  instructions. A knowledge-archetype skill ("use these API conventions")
+  has no task for the subagent to execute: it receives the guidelines but no
+  actionable prompt and returns without meaningful output. Reserve forking
+  for task-style (generative) skills with explicit steps.
+- The forked subagent has no access to the conversation history. The skill
+  content becomes the subagent's entire prompt.
+- `agent` selects the execution environment (model, tools, permissions):
+  built-in `Explore`, `Plan`, `general-purpose`, or any custom subagent
+  defined in `.claude/agents/`. If omitted, it defaults to `general-purpose`.
+- `Explore` and `Plan` skip loading `CLAUDE.md` and git status at startup, so
+  a skill forked with `agent: Explore` or `agent: Plan` sees only the
+  SKILL.md content and that agent's system prompt. Project conventions from
+  `CLAUDE.md` do not apply unless the skill restates them.
+
+### Choosing the Name
+
+The directory name is the `/command` users type, so optimize for that:
+comfortable to type, unambiguous, consistent with the naming pattern already
+used by the project's other skills.
+
+- Prefer the **gerund form** (verb + `-ing`): `processing-pdfs`,
+  `analyzing-spreadsheets`, `testing-code`. It clearly describes the activity
+  or capability.
+- Acceptable alternatives: noun phrases (`pdf-processing`) or action-oriented
+  names (`process-pdfs`).
+- Avoid vague names (`helper`, `utils`, `tools`) and overly generic names
+  (`documents`, `data`, `files`) — they don't trigger reliably and don't
+  distinguish the skill from others.
+- Check for collisions before creating the skill: a project skill sharing a
+  name with a bundled, personal, or plugin skill overrides/shadows it (see
+  "Skill Discovery and Precedence" above). Verify the name is free, or that
+  shadowing is intentional.
+- The platform validation rules for claude.ai / the Agent Skills spec bar
+  "anthropic" and "claude" in skill names. This is a portability constraint
+  for that platform, not something Claude Code itself enforces — Claude Code
+  ships a bundled `claude-api` skill under that same name.
 
 ## Skill Archetypes
 
@@ -209,7 +311,8 @@ it actually needs:
 
 ```
 Layer 1: Metadata (~100 tokens)
-    │     name + description loaded at startup for ALL installed skills
+    │     name + description loaded at startup for all skills that allow
+    │     model invocation (`disable-model-invocation` not set)
     ▼
 Layer 2: Instructions (<5,000 tokens recommended)
     │     Full SKILL.md body loaded when activated — keep it lean

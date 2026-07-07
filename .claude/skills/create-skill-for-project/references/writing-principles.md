@@ -85,8 +85,9 @@ Rules:
 
 ## Write a Good Description
 
-The `description` field is loaded for ALL installed skills on every interaction.
-It acts as a **trigger rule**. Include:
+The `description` field is loaded on every interaction for all skills that
+allow model invocation (skills with `disable-model-invocation: true` are
+excluded). It acts as a **trigger rule**. Include:
 
 1. **WHAT** the skill does (action verbs)
 2. **WHEN** to use it (trigger keywords, file types, user phrases)
