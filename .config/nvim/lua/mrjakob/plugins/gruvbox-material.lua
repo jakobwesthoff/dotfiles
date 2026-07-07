@@ -53,11 +53,6 @@ return {
           -- opts.fg = colors.bg0
         end
 
-        -- Change partial cmp matches
-        if group == "CmpItemAbbrMatch" or group == "CmpItemAbbrMatchFuzzy" then
-          opts.fg = colors.orange
-        end
-
         -- Set search and incsearch to more appropriate colors
         if group == "Search" then
           opts.bg = colors.aqua
