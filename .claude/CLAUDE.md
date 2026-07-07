@@ -235,8 +235,9 @@ Always run shell scripts through `shellcheck`.
 ### Bash tool calls
 
 Prefer issuing separate Bash tool calls over chaining commands with
-`&&`, `;`, or `||`. Chained commands bypass blanket permission rules,
-forcing manual approval each time. Use chaining only when there is no
+`&&`, `;`, or `||`. A chained command is only auto-approved if every
+subcommand matches an allow rule, so one uncovered part forces a
+prompt for the whole chain. Use chaining only when there is no
 practical alternative (e.g., a tight dependency where splitting calls
 would be incorrect).
 
