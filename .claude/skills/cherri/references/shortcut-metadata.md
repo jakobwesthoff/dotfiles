@@ -100,10 +100,10 @@ definition.
 Override the filename-based name:
 
 ```ruby
-#define name Add to Squirly
+#define name Add Bookmark
 ```
 
-This produces `Add to Squirly.shortcut` regardless of the `.cherri` filename.
+This produces `Add Bookmark.shortcut` regardless of the `.cherri` filename.
 
 ## Platform targeting
 
@@ -115,10 +115,14 @@ This produces `Add to Squirly.shortcut` regardless of the `.cherri` filename.
 ## Minimum iOS version
 
 ```ruby
-#define version 16.0
+#define version 16
 ```
 
-Warns if you use actions unsupported in the target version.
+Warns if you use actions unsupported in the target version. The value
+must be an exact match against a fixed list of accepted version
+strings; anything else is a hard compile error that prints the list.
+Accepted versions (Cherri v2.3.0): `26`, `18.4`, `18`, `17`, `16.5`,
+`16.4`, `16.3`, `16.2`, `16`, `15.7.2`, `15`, `14`, `13`, `12`.
 
 ## Import questions (first-run setup)
 
@@ -126,7 +130,7 @@ Import questions prompt the user ONCE when they first install the Shortcut.
 Values persist across runs.
 
 ```ruby
-#question apiUrl "Enter your Squirly API URL" "https://squirly.example.com"
+#question apiUrl "Enter your bookmarking API URL" "https://api.example.com"
 #question apiToken "Enter your API token" ""
 ```
 
@@ -189,16 +193,16 @@ primarily for third-party app integrations.
 
 ## Complete share sheet shortcut metadata
 
-A typical share sheet shortcut for Squirly:
+A typical share sheet shortcut that posts to an HTTP API:
 
 ```ruby
-#define name Add to Squirly
+#define name Add Bookmark
 #define color blue
 #define glyph bookmark
 #define inputs url, text
 #define from sharesheet
 #define noinput askfor url
 
-#question apiUrl "Enter your Squirly instance URL" "https://app.squirly.example.com"
+#question apiUrl "Enter your bookmarking API URL" "https://api.example.com"
 #question apiToken "Paste your API token" ""
 ```

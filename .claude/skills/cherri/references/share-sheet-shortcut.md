@@ -1,25 +1,25 @@
 ---
 name: share-sheet-shortcut
-description: Complete pattern for building a Squirly share sheet bookmark shortcut with Cherri
+description: Complete pattern for building a share sheet bookmark shortcut that posts to an HTTP API with Cherri
 metadata:
-  tags: cherri, share-sheet, bookmark, squirly, api, shortcut
+  tags: cherri, share-sheet, bookmark, api, shortcut
 ---
 
 ## Overview
 
 This reference describes the complete pattern for building an iOS Shortcut
-that accepts a URL from the share sheet and sends it to the Squirly API
-to create a bookmark.
+that accepts a URL from the share sheet and sends it to an HTTP API to
+create a bookmark.
 
 ## Complete example
 
 ```ruby
 // =========================================================
-// Squirly — Add Bookmark via Share Sheet
+// Add Bookmark via Share Sheet
 // =========================================================
 //
 // This Shortcut accepts a URL from the iOS share sheet and
-// creates a bookmark in Squirly via the API.
+// creates a bookmark via an HTTP API.
 
 #include 'actions/web'
 #include 'actions/text'
@@ -28,7 +28,7 @@ to create a bookmark.
 // Shortcut Metadata
 // ---------------------------------------------------------
 
-#define name Add to Squirly
+#define name Add Bookmark
 #define color blue
 #define glyph bookmark
 #define inputs url, text
@@ -39,8 +39,8 @@ to create a bookmark.
 // Import Questions (prompted on first install)
 // ---------------------------------------------------------
 
-#question apiUrl "Enter your Squirly API URL" "https://squirly.example.com"
-#question apiToken "Paste your Squirly API token" ""
+#question apiUrl "Enter your bookmarking API URL" "https://api.example.com"
+#question apiToken "Paste your API token" ""
 
 // ---------------------------------------------------------
 // Store import question values for reuse in strings
@@ -67,10 +67,10 @@ if !pageUrl {
 }
 
 // ---------------------------------------------------------
-// Send bookmark to Squirly API
+// Send bookmark to the API
 // ---------------------------------------------------------
 
-const endpoint = "{storedApiUrl}/api/v1/bookmarks"
+const endpoint = "{storedApiUrl}/v1/bookmarks"
 
 const response = jsonRequest(endpoint, "POST", {
     "url": "{pageUrl}"
@@ -89,7 +89,7 @@ const errorField = getValue(dict, "error")
 if errorField {
     alert("Failed to save bookmark:\n{errorField}", "Error")
 } else {
-    showNotification("Bookmark saved!", "Squirly")
+    showNotification("Bookmark saved!", "Bookmarks")
 }
 ```
 
@@ -139,10 +139,10 @@ interpolation works fine in both cases.
 
 ### Adding page title
 
-If the Squirly API accepts a title, extract it from the shared content
-and add it to the inline dict passed to `jsonRequest` (a `const body`
-variable does not work here; see the jsonRequest call in the complete
-example above):
+If the API accepts a title, extract it from the shared content and add
+it to the inline dict passed to `jsonRequest` (a `const body` variable
+does not work here; see the jsonRequest call in the complete example
+above):
 
 ```ruby
 #include 'actions/text'
@@ -206,20 +206,14 @@ Alternatively, use clipboard:
 ### Compile
 
 ```bash
-cherri add-to-squirly.cherri                    # macOS (auto-signs)
-cherri add-to-squirly.cherri --share=anyone      # macOS (signed for public)
-cherri add-to-squirly.cherri --hubsign           # Linux/CI (remote sign)
+cherri add-bookmark.cherri                    # macOS (auto-signs)
+cherri add-bookmark.cherri --share=anyone      # macOS (signed for public)
+cherri add-bookmark.cherri --hubsign           # Linux/CI (remote sign)
 ```
 
 ### Distribute
 
 The compiled `.shortcut` file can be:
-- Hosted as a static file download on the Squirly web UI
+- Hosted as a static file download on a web page
 - Shared via AirDrop, iCloud Drive, email, or messaging
 - Uploaded to iCloud for a shareable link
-
-The Squirly settings page should:
-1. Generate a scoped API token for the user
-2. Display the token value
-3. Provide a download link for the pre-built shortcut
-4. Instruct the user to enter their API URL and token when prompted
