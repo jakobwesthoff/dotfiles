@@ -40,7 +40,9 @@ cherri --glyph=bookmark --no-ansi
 ```
 
 Use `--no-ansi` with `--action`, `--docs`, and `--glyph` to get clean
-output. Do NOT use `--no-ansi` when compiling `.cherri` files.
+output. Also pass `--no-ansi` when compiling `.cherri` files: it
+produces plain text instead of ANSI-escaped output, with no effect on
+exit codes or compilation results.
 
 Substring search: `--action=` accepts partial names and suggests matches:
 

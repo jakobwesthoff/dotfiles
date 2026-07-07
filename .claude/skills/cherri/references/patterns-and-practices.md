@@ -95,10 +95,16 @@ permission issues with shell command execution:
   These trigger permission prompts. Just run the bare command.
 - NEVER use `for` loops or other shell constructs to iterate over
   multiple `cherri` calls. Issue them as separate Bash tool calls.
-- Use `--no-ansi` ONLY with `--action`, `--docs`, and `--glyph` lookups.
-  Do NOT use `--no-ansi` when compiling `.cherri` files.
-- Silent output (no stdout, exit code 0) means compilation succeeded.
-  Error messages appear on stdout when compilation fails.
+- ALWAYS pass `--no-ansi`, on lookups (`--action`, `--docs`, `--glyph`)
+  AND compiles. It produces plain text instead of ANSI-escaped output,
+  with no effect on exit codes or compilation results.
+- Compilation success = exit code 0 AND a `.shortcut` file written.
+  Compiles are not necessarily silent on success: warnings (e.g.
+  dead-code after `stop()`/`output()`) print to stdout while still
+  exiting 0. Error messages print to stdout and exit 1 (compiler
+  panics exit 2). `--action` lookups print the requested doc block but
+  exit 1 even when the action is found; judge lookup success by the
+  output, not the exit code. `--docs` lookups exit 0.
 
 ### CLI usage
 
@@ -111,7 +117,15 @@ cherri input.cherri --debug              # Debug mode (stack traces, plist outpu
 cherri input.cherri --open               # Open in Shortcuts after compile (macOS)
 cherri input.cherri --comments           # Include // comments as Shortcut comment actions
 cherri input.cherri --share=anyone       # Sign for public distribution (vs contacts-only default)
+cherri --import=<icloud-link-or-file>    # [BETA] Convert an existing Shortcut to Cherri source
 ```
+
+`--import=` accepts an iCloud link or a local file path. Local
+`.shortcut` files must be unsigned; signed files need an iCloud link
+instead (share the Shortcut and select "Copy iCloud Link"). Review and
+test-compile the generated source, since the feature is beta.
+`--no-toolkit` skips the Shortcuts ToolKit SQLite database used to
+decompile non-standard actions, for machines without one.
 
 ### Signing
 

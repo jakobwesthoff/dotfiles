@@ -1,14 +1,15 @@
 ---
 name: cherri
 description: >-
-  Write, edit, and debug Cherri (.cherri) iOS Shortcut source files. Use when
-  working with Shortcuts, .cherri files, or the share sheet integration.
+  Write, edit, compile, and debug Cherri (.cherri) source files, a language
+  that compiles to Apple Shortcuts for iOS/macOS. Use for .cherri files, the
+  cherri compiler, and building or signing Apple Shortcuts automations.
 ---
 
 ## When to use
 
-Use this skill when creating or modifying `.cherri` files, building iOS
-Shortcuts, or working on the Squirly share sheet integration.
+Use this skill when creating or modifying `.cherri` files or building Apple
+Shortcuts automations for iOS/macOS.
 
 Cherri is a compiled language that produces signed `.shortcut` files for
 iOS/macOS. Source files use the `.cherri` extension and compile via the
@@ -37,8 +38,22 @@ other shell constructs. Write source to a file first, then compile:
 cherri /path/to/file.cherri --skip-sign
 ```
 
-Silent output = success. Errors print to stdout. Use `--no-ansi` ONLY
-with `--action`, `--docs`, and `--glyph` lookups, NOT when compiling.
+Compilation success = exit code 0 AND a `.shortcut` file written.
+Compiles are not necessarily silent on success: warnings (e.g. dead-code
+after `stop()`/`output()`) print to stdout while still exiting 0. Errors
+print to stdout and exit 1 (compiler panics exit 2). `--action` lookups
+print the requested doc block but exit 1 even when the action is found;
+judge lookup success by the output, not the exit code. `--docs` lookups
+exit 0.
+
+ALWAYS pass `--no-ansi`, including when compiling: it produces plain
+text instead of ANSI-escaped output, with no effect on exit codes or
+compilation results.
+
+To decompile an existing Shortcut back into Cherri source, use
+`cherri --import=<icloud-link-or-file>` ([BETA]). Local `.shortcut`
+files must be unsigned; signed files need an iCloud link instead. Review
+and test-compile the generated source, since the feature is beta.
 
 ## Critical rules
 
@@ -107,3 +122,11 @@ The `scripting` category was removed in v2.3.0. `#include
 'scripting'"). Most of its actions (e.g. `getValue`, `getFirstItem`)
 moved to `basic` and need no include; others moved elsewhere (e.g.
 `runShellScript` now requires `#include 'actions/mac'`).
+
+## Official language documentation
+
+For language syntax and features not covered by this skill, consult
+https://cherrilang.org/language/. The site tracks the latest compiler
+release, which can be ahead of or behind the installed version — check
+the installed version with `cherri -v` and verify anything taken from
+the site with a test compile before relying on it.
