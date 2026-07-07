@@ -21,7 +21,7 @@ checkout_or_update https://github.com/jakobwesthoff/colorizer.git .colorizer
 checkout_or_update https://github.com/jakobwesthoff/prettytable.sh.git .prettytable
 
 echo
-echo "Installing zgen"
-checkout_or_update https://github.com/tarjoilija/zgen.git .zgen
+echo "Installing zgenom"
+checkout_or_update https://github.com/jandamm/zgenom.git .zgenom
 
 popd &>/dev/null

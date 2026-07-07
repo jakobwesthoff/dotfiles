@@ -64,7 +64,7 @@ if [ -n "${ENABLE_TMUX_STARTUP}" ] && [ -z "${TMUX}" ]; then
   fi
 fi
 
-source ~/.zgen/zgen.zsh
+source ~/.zgenom/zgenom.zsh
 
 source ~/.colorizer/Library/colorizer.sh
 if [ -e ~/.prettytable/prettytable ]; then
@@ -85,8 +85,8 @@ while read -rd $'\0' file; do
     source "${file}"
 done < <(find -L "${HOME}/.zshrc.d" -mindepth 1 -maxdepth 1 -name '*.sh' -type f -print0 | LC_ALL=C sort -z)
 
-if ! zgen saved; then
-    zgen save
+if ! zgenom saved; then
+    zgenom save
 fi
 
 HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='bg=green,fg=white,bold'

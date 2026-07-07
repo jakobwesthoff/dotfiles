@@ -1,5 +1,5 @@
-if ! zgen saved; then
-    zgen load romkatv/powerlevel10k powerlevel10k
+if ! zgenom saved; then
+    zgenom load romkatv/powerlevel10k powerlevel10k
 fi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.

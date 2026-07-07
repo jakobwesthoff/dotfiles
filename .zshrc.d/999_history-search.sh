@@ -1,5 +1,5 @@
-if ! zgen saved; then
-    zgen load zsh-users/zsh-history-substring-search zsh-history-substring-search.zsh
+if ! zgenom saved; then
+    zgenom load zsh-users/zsh-history-substring-search zsh-history-substring-search.zsh
 fi
 
 setopt HIST_FIND_NO_DUPS

@@ -1,5 +1,5 @@
-if ! zgen saved; then
-    zgen load zsh-users/zsh-autosuggestions zsh-autosuggestions.zsh
+if ! zgenom saved; then
+    zgenom load zsh-users/zsh-autosuggestions zsh-autosuggestions.zsh
 fi
 
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#d33682"

@@ -1,5 +1,5 @@
-if ! zgen saved; then
-    zgen load mollifier/cd-gitroot
+if ! zgenom saved; then
+    zgenom load mollifier/cd-gitroot
 fi
 
 alias cdg="cd-gitroot"

@@ -1,3 +1,3 @@
-if ! zgen saved; then
-    zgen load zsh-users/zsh-syntax-highlighting
+if ! zgenom saved; then
+    zgenom load zsh-users/zsh-syntax-highlighting
 fi
