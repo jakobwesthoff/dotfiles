@@ -57,18 +57,14 @@ vim.api.nvim_create_autocmd("LspAttach", {
       require("fzf-lua").lsp_definitions()
     end, { desc = "[G]oto [D]efinition(s)" })
 
-    -- Unmap default gr* since 0.11
-    local gr_mappings = { "grr", "gra", "gri", "grn", "grt", "grx" }
-    for _, keymap in ipairs(gr_mappings) do
-      pcall(function()
-        vim.keymap.del("n", keymap, { buffer = event.buf })
-      end)
-    end
-
-    -- [G]oto [R]eference(s)
+    -- [G]oto [R]eference(s). nowait makes this buffer-local mapping fire
+    -- immediately instead of waiting on Neovim's global grr/grn/gra/gri/grt/grx
+    -- defaults, which share the gr prefix: those defaults are unreachable in
+    -- LSP-attached buffers (Vim never waits for the third key), but remain
+    -- defined globally and usable in buffers without this mapping.
     map("n", "gr", function()
       require("fzf-lua").lsp_references()
-    end, { desc = "[G]oto [R]eference(s)" })
+    end, { desc = "[G]oto [R]eference(s)", nowait = true })
 
     -- [G]oto [I]mplementation(s)
     map("n", "gI", function()
