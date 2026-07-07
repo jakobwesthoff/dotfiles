@@ -1,4 +1,4 @@
-# INCLUDE GUARD END
+# INCLUDE GUARD BEGIN
 if which kubectl &>/dev/null; then
 
 # Kubernetes
@@ -345,7 +345,7 @@ kcfg() {
         else
             possibilities+=("$filename")
         fi
-    done < <(find "$search_dir" -maxdepth 1 -mindepth 1 -type f -name "*.yaml" -o -name "*.yml")
+    done < <(find "$search_dir" -maxdepth 1 -mindepth 1 -type f \( -name "*.yaml" -o -name "*.yml" \))
 
     local selected_config
     selected_config="$(printf "%s\n" "${possibilities[@]}" | fzf --ansi --preview 'yq ".contexts[].context" '"${search_dir}"'/{}' --preview-window up)"
