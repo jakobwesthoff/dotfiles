@@ -68,6 +68,7 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 fi
 
 # Source the config file
+# shellcheck source=/dev/null
 source "$CONFIG_FILE"
 
 # Check if required variables are set
@@ -96,10 +97,8 @@ fi
 CURL_CMD+=("https://api.pushover.net/1/messages.json")
 
 # Send the notification
-RESPONSE=$("${CURL_CMD[@]}")
-
 # Check if curl was successful
-if [[ $? -eq 0 ]]; then
+if RESPONSE=$("${CURL_CMD[@]}"); then
     # Parse response to check for errors
     if echo "$RESPONSE" | grep -q '"status":1'; then
         echo "Notification sent successfully"

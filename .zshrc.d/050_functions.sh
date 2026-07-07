@@ -97,7 +97,7 @@ gitmvcase() {
 
 wait_for() {
     if [ ${#} -ne 1 ]; then
-        echo "usage: ${FUNCNAME[0]} <hostname>"
+        echo "usage: $0 <hostname>"
         return 1
     fi
 
@@ -124,7 +124,7 @@ compdef _known_hosts wait_for
 
 wait_for_port() {
     if [ ${#} -ne 2 ]; then
-        echo "usage: ${FUNCNAME[0]} <hostname> <port>"
+        echo "usage: $0 <hostname> <port>"
         return 1
     fi
 

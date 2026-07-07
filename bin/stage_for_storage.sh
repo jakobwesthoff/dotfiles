@@ -2,6 +2,7 @@
 set -ueo pipefail
 
 _escape_for_regexp() {
+  # shellcheck disable=SC2016
   gsed 's/\[\|\]\|[/.|${}*^]/\\&/g' <<<"$*"
 }
 
