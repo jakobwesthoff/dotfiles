@@ -1,7 +1,7 @@
 # Track dressing.nvim replacement (archived upstream; snacks.input bug still unfixed)
 
-Created: 2026-06-11, from the full-config code review
-(`docs/code-review-2026-06-11.md`).
+Created: 2026-06-11, from the 2026-06-11 full-config code review, since
+resolved and removed.
 
 ## Situation
 

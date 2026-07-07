@@ -1,8 +1,8 @@
 # Evaluate migrating from lazy.nvim to the native vim.pack plugin manager
 
-Created: 2026-06-11, from the full-config code review
-(`docs/code-review-2026-06-11.md`). This is an evaluation/experiment
-todo — no decision has been made.
+Created: 2026-06-11, from the 2026-06-11 full-config code review, since
+resolved and removed. This is an evaluation/experiment todo — no
+decision has been made.
 
 ## What vim.pack provides on the running build
 

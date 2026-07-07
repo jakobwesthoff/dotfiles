@@ -1,7 +1,7 @@
 # Replace manual OSC 52 yank autocmd with native clipboard support
 
-Created: 2026-06-11, from the full-config code review
-(`docs/code-review-2026-06-11.md`).
+Created: 2026-06-11, from the 2026-06-11 full-config code review, since
+resolved and removed.
 
 ## Problem
 
@@ -32,9 +32,6 @@ The manual implementation is strictly worse than the native provider:
   GUI frontends) where stderr is not a terminal.
 - No paste support (native provider handles paste via OSC 52 queries
   where the terminal allows it).
-
-Also: the explanatory comment block is duplicated nearly verbatim
-(autocmds.lua:11-14 and :16-20).
 
 ## The current setup's stated intent
 
@@ -73,6 +70,6 @@ Decide which behavior is actually wanted:
 ## Suggested resolution
 
 Test option 1 (plain deletion) first in the real environments this
-matters in — local iTerm/WezTerm+tmux and an SSH session — and only
-fall back to `vim.g.clipboard = 'osc52'` or a fixed manual autocmd if
-the auto-detection doesn't cover the actual workflow.
+matters in — local ghostty+tmux and an SSH session — and only fall
+back to `vim.g.clipboard = 'osc52'` or a fixed manual autocmd if the
+auto-detection doesn't cover the actual workflow.
