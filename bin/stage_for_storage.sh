@@ -46,7 +46,7 @@ main() {
   list_tmp="$(mktemp)"
 
   echo "Scanning files..."
-  find -s "${src}" -type f -not -iname ".*" |sort -Vs >"${list_tmp}"
+  find "${src}" -type f -not -iname ".*" |sort -Vs >"${list_tmp}"
   
   if [ -n "$start" ]; then
     local filtered_list_tmp
