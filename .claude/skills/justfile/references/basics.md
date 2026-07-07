@@ -47,6 +47,10 @@ default:
   @just --list
 ```
 
+On just 1.52.0+, `set default-list` is the native alternative: it makes
+bare `just` print the recipe list directly, without needing a `default`
+recipe. Use the recipe idiom above when supporting older versions.
+
 ## Comments
 
 Lines starting with `#` are comments. A `#` comment immediately before a

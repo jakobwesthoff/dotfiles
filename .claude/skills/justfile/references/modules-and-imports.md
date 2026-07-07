@@ -97,8 +97,10 @@ Submodules are **fully isolated**:
 - Variables in a submodule are NOT accessible outside it.
 - Parent variables are NOT accessible inside a submodule.
 - Each module has its own independent settings.
-- Dotenv loading happens ONLY at the root, but loaded env vars are
-  available in all submodules.
+- Submodules can load their own environment files via their own dotenv
+  settings. Variables from environment files loaded in a parent module
+  are inherited by submodules, and a submodule's own environment file
+  may override values inherited from the parent.
 
 ### Working directory
 
@@ -183,9 +185,6 @@ Only the existing file loads.
 
 NEVER expect parent variables to be visible inside a submodule — they are
 isolated. Use `import` if sharing is needed.
-
-NEVER put dotenv settings in submodules — they are ignored. Only root
-justfile dotenv settings are honored.
 
 NEVER use `justfile_directory()` inside a submodule expecting the module's
 directory — it always returns the root. Use `source_directory()` instead.
