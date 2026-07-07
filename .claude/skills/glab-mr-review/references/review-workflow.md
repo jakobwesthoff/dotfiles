@@ -26,6 +26,12 @@ When analyzing the diff, look for:
 - **Style/documentation**: misleading names, missing doc for non-obvious
   behavior, dead code
 
+These categories are search lenses for the analysis pass, not the severity
+scale. Severity (Must address / Should address / Nit — see SKILL.md's
+Severity levels) is judged per finding, independent of which category
+surfaced it: a "Bug" is usually Must address, but a hypothetical edge case
+found while looking for bugs may only be Should address.
+
 ## Approval-loop question format
 
 Each finding presented during the interactive approval loop follows this
@@ -36,6 +42,19 @@ format:
 > Full comment body including any `suggestion` block, shown in the
 > description.
 
+Offer exactly two options, plus the tool's built-in "Other" free-text channel
+for revision feedback:
+
+| Option | Effect |
+|--------|--------|
+| **Post this comment** | Queue for posting |
+| **Skip this comment** | Drop entirely, remove from summary |
+| *(Other — free text)* | User provides revision feedback |
+
+When the user answers with free text via "Other", revise the comment
+incorporating their feedback and re-present it with the same two options,
+looping until the user picks "Post this comment" or "Skip this comment".
+
 ## Generating approved JSON payloads
 
 Use a single Python script to generate payloads for approved comments only.
@@ -44,7 +63,9 @@ all comments.
 
 ```python
 import json
+import os
 
+TMP_DIR = "..."  # from `mktemp -d`
 BASE_SHA = "..."
 HEAD_SHA = "..."
 START_SHA = "..."
@@ -69,10 +90,16 @@ comments = [
 ]
 
 for i, c in enumerate(comments):
-    path = f"/tmp/mr-review-comment-{i+1}.json"
+    path = os.path.join(TMP_DIR, f"mr-review-comment-{i+1}.json")
     with open(path, "w") as f:
         json.dump(c, f)
     print(f"Wrote {path}")
+
+summary = {"body": "## Code Review Summary\n\n..."}
+summary_path = os.path.join(TMP_DIR, "mr-review-summary.json")
+with open(summary_path, "w") as f:
+    json.dump(summary, f)
+print(f"Wrote {summary_path}")
 ```
 
 ## Review summary template
