@@ -121,6 +121,8 @@ authentication in the backend.
 
 **references/endpoint-patterns.md** (one spoke):
 ```yaml
+# Optional house convention: this frontmatter has no runtime effect (Claude
+# Code reads frontmatter from SKILL.md only). Omitting it is equally valid.
 ---
 name: endpoint-patterns
 description: Route structure, validation, and response format for REST endpoints
@@ -159,7 +161,7 @@ row shape leaks internal column names and unhashed fields to clients.
 NEVER use `any` for request bodies — always define a Zod schema, so
 malformed input is rejected before it reaches business logic.
 
-For error responses, see [references/error-handling.md](references/error-handling.md).
+For error responses, see [error-handling.md](error-handling.md).
 ```
 
 **Total: ~70 lines for SKILL.md + ~80 lines per reference file.** Multiple distinct
@@ -189,7 +191,9 @@ For a complete Select component implementation, see
 ```
 
 The asset file (`assets/form-select.tsx`) is a complete, runnable component —
-not a fragment. It compiles as part of the project's build pipeline.
+not a fragment. It is self-contained and type-checks standalone; verify this
+once during Phase 5 with a one-off `tsc --noEmit assets/form-select.tsx` (or
+the project's equivalent), rather than wiring it into the project's build.
 
 **Use Tier 3 when:** code examples must be complete, runnable files (they
 compile, execute, or fill in as a template) rather than illustrative inline

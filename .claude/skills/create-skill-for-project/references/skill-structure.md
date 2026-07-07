@@ -134,6 +134,11 @@ trusting the repository, since a skill can grant itself broad tool access.
 
 ### Dynamic Content
 
+Substitutions and `` !`command` `` injection apply to `SKILL.md` only,
+rendered once at invocation. Reference and asset files are read verbatim
+later via file tools — a placeholder like `$ARGUMENTS` or `` !`git status` ``
+inside `references/` or `assets/` stays literal text, it is never resolved.
+
 | Variable | Resolves to |
 |----------|-------------|
 | `$ARGUMENTS` | All arguments passed at invocation |
@@ -349,7 +354,12 @@ information in at most two hops: `SKILL.md` -> reference file -> asset (if neede
 
 Every reference file follows this internal structure:
 
-1. **YAML frontmatter** — `name`, `description`, `tags`
+1. **YAML frontmatter** (optional house convention) — a reference file may
+   open with `name`, `description`, `tags` frontmatter for human maintainers
+   browsing the directory. This has no runtime effect: Claude Code reads
+   frontmatter from `SKILL.md` only, never from files under `references/`.
+   Official skills (e.g. Anthropic's skill-creator) ship reference files
+   without it; omitting it is equally valid.
 2. **Table of contents** (files over ~100 lines) — a short section list so
    the agent sees the file's full scope even on a partial read (e.g. a
    `head -100` preview). 100 lines is the house recommendation; Anthropic's

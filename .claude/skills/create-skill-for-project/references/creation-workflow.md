@@ -193,7 +193,8 @@ only uses `name` as a display label.
 
 For each reference file:
 
-1. Add YAML frontmatter:
+1. Optionally add YAML frontmatter (`name`, `description`, `tags`) as a house
+   convention for human maintainers browsing the directory:
    ```yaml
    ---
    name: kebab-case-topic-name
@@ -202,6 +203,9 @@ For each reference file:
      tags: relevant, keywords
    ---
    ```
+   This has no runtime effect — Claude Code reads frontmatter from `SKILL.md`
+   only — so omitting it is equally valid; official skills commonly ship
+   reference files without it.
 
 2. Follow this body structure:
    - Opening orientation (1-2 sentences)
@@ -216,7 +220,15 @@ For each reference file:
    paths, real function names, real patterns from the codebase. Generic examples
    are a last resort.
 
-4. Cross-reference related files with relative links.
+4. Cross-reference related files with relative links, resolved from this
+   file's own directory (not the skill root) — a link from one file in
+   `references/` to another is a bare filename (`error-handling.md`); reaching
+   `assets/` from `references/` needs `../assets/...`.
+
+5. Keep dynamic content out of reference files: `$ARGUMENTS`, `$name`,
+   `` !`command` ``, and `${CLAUDE_*}` substitutions render only in `SKILL.md`
+   at invocation. A reference file is read verbatim later, so any placeholder
+   syntax placed there stays literal text instead of resolving.
 
 ### Step 3: Write SKILL.md last
 
@@ -269,9 +281,13 @@ Write it last so you can accurately reference all existing files.
 - [ ] `description` specifies WHAT and WHEN
 - [ ] `description` is written in third person (no "I can help..." / "You can use...")
 - [ ] `SKILL.md` body is under 500 lines
-- [ ] Each reference file has YAML frontmatter (`name`, `description`, `tags`)
-- [ ] All relative links in SKILL.md resolve to existing files
+- [ ] All relative links, in `SKILL.md` and in every file under `references/`
+      and `assets/`, resolve to existing files relative to their own
+      containing directory
 - [ ] Reference files over ~100 lines start with a table of contents
+- [ ] No `$ARGUMENTS`, `$name`, `` !`command` ``, or `${CLAUDE_*}` placeholder
+      syntax appears inside `references/` or `assets/` — it would render as
+      literal text instead of substituting
 
 ### Content Checks
 
@@ -285,6 +301,9 @@ Write it last so you can accurately reference all existing files.
       scoped to narrow command prefixes, not broad tool names
 - [ ] No generic advice that could apply to any project — everything is specific
 - [ ] Each reference file covers exactly one concept
+- [ ] A code asset claimed as complete and runnable has been verified
+      standalone (e.g. `tsc --noEmit` for a `.tsx` asset), not asserted as
+      integrated into the project's build pipeline
 
 ### Functional Checks
 

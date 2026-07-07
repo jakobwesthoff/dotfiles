@@ -84,7 +84,10 @@ For caption display patterns, see [references/display-captions.md](references/di
 ```
 
 Rules:
-- Use relative paths from the skill root
+- Relative links resolve from the file that contains them, not from the
+  skill root. From `SKILL.md` the two coincide, since `SKILL.md` sits at the
+  skill root. From a file inside `references/`, link a sibling as a bare
+  filename (`display-captions.md`) and reach `assets/` with `../assets/...`.
 - Keep references **one level deep** — avoid chains where A links to B links to C
 - Two patterns: hub-to-spokes (general → specific) and bidirectional (peer ↔ peer)
 
@@ -195,7 +198,6 @@ Before shipping a skill, verify:
 - [ ] `description` specifies WHAT and WHEN, key use case first (max 1024 chars; combined `description` + `when_to_use` truncates at 1,536 chars in Claude Code)
 - [ ] `description` is written in third person (no "I can help..." / "You can use...")
 - [ ] `SKILL.md` body is under 500 lines — use reference files for detail
-- [ ] Every reference file has YAML frontmatter (`name`, `description`, `tags`)
 - [ ] Each reference file covers exactly one concept
 - [ ] The "right way" code example appears before any variations
 - [ ] Code examples include imports and are copy-paste ready
@@ -204,4 +206,5 @@ Before shipping a skill, verify:
 - [ ] Reference files over ~100 lines start with a table of contents
 - [ ] Complex examples are in runnable code assets
 - [ ] No hardcoded secrets or credentials
-- [ ] All relative links in SKILL.md resolve to existing files
+- [ ] All relative links, in `SKILL.md` and in every reference/asset file,
+      resolve to existing files relative to their own containing directory
