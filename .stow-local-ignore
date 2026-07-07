@@ -28,3 +28,14 @@ _darcs
 ^/initial_macos_setup\.sh$
 ^/update-brewfile-from-system$
 ^/todos$
+
+# Claude Code runtime artifacts that can appear under .claude/ when a
+# Claude Code session runs in this repo
+^/\.claude/settings\.local\.json$
+^/\.claude/scheduled_tasks\.lock$
+^/\.claude/scheduled_tasks\.json$
+^/\.claude/routines$
+^/\.claude/worktrees$
+^/\.claude/checkpoints$
+^/\.claude/mailbox$
+^/\.claude/agent-registry\.json$
