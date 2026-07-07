@@ -1,34 +1,22 @@
-# Code Review Workflow
+# Code Review Workflow Reference
 
-## Step-by-step process
+This reference supplements the step-by-step workflow in
+[SKILL.md](../SKILL.md). It covers material the workflow doesn't spell out:
+finding categories, the approval-loop question format, the payload-generation
+script, the summary template, review quality guidelines, and anti-patterns.
 
-### 1. Fetch MR metadata and diff
+## Table of contents
 
-Run in parallel:
+- [Finding categories](#finding-categories)
+- [Approval-loop question format](#approval-loop-question-format)
+- [Generating approved JSON payloads](#generating-approved-json-payloads)
+- [Review summary template](#review-summary-template)
+- [Review comment quality guidelines](#review-comment-quality-guidelines)
+- [Anti-patterns](#anti-patterns)
 
-```bash
-glab mr view <IID> --repo <group/project>
-```
+## Finding categories
 
-```bash
-glab mr diff <IID> --repo <group/project>
-```
-
-The `view` gives title, author, labels, state. The `diff` gives the full
-unified diff of all changed files.
-
-### 2. Extract SHA references for inline comments
-
-```bash
-glab api "projects/<ENCODED_PROJECT>/merge_requests/<IID>" --method GET
-```
-
-Parse `diff_refs.base_sha`, `diff_refs.head_sha`, `diff_refs.start_sha` from
-the response. These are required for every inline comment.
-
-### 3. Analyze the diff
-
-Read the diff carefully. For each changed file, identify:
+When analyzing the diff, look for:
 
 - **Bugs**: logic errors, off-by-one, null safety issues, edge cases
 - **Design concerns**: silent data loss, unclear error semantics, missing
@@ -38,53 +26,21 @@ Read the diff carefully. For each changed file, identify:
 - **Style/documentation**: misleading names, missing doc for non-obvious
   behavior, dead code
 
-### 4. Compute line numbers
+## Approval-loop question format
 
-For each comment, determine the exact `new_line` (for added/modified lines) or
-`old_line` (for removed lines) from the diff hunk headers.
-
-See [gitlab-api-comments.md](gitlab-api-comments.md) for the line-counting
-procedure.
-
-### 5. Ask: post directly or preview?
-
-Before posting anything, use AskUserQuestion to let the user choose:
-
-- **Post directly** — skip to step 7
-- **Preview first** — enter the interactive approval loop (step 6)
-
-### 6. Interactive approval loop
-
-Present each finding one at a time using AskUserQuestion. The question should
-contain the full context the user needs to decide:
-
-**Question format:**
+Each finding presented during the interactive approval loop follows this
+format:
 
 > **[Severity] `file:line`** — one-line title
 >
-> Full comment body including any `suggestion` block, shown in the description.
+> Full comment body including any `suggestion` block, shown in the
+> description.
 
-**Options (single-select):**
+## Generating approved JSON payloads
 
-| Option | Behavior |
-|--------|----------|
-| **Post this comment** | Queue for posting |
-| **Skip this comment** | Drop entirely, remove from summary |
-| *(Other — free text)* | User provides revision feedback |
-
-**Revision loop:** When the user selects "Other" and provides feedback,
-incorporate their input into a revised version of the comment, then re-present
-the updated comment with the same options. Repeat until the user either
-approves or skips.
-
-After all inline comments are decided, present the **review summary** the same
-way. The summary MUST only reference comments that were approved. Adjust
-severity sections — drop empty categories entirely.
-
-### 7. Generate approved JSON payloads
-
-Use a single Python script to generate payloads for **approved comments only**.
-This avoids shell escaping issues and ensures consistent SHA references.
+Use a single Python script to generate payloads for approved comments only.
+This avoids shell escaping issues and ensures consistent SHA references across
+all comments.
 
 ```python
 import json
@@ -119,22 +75,7 @@ for i, c in enumerate(comments):
     print(f"Wrote {path}")
 ```
 
-### 8. Post approved inline comments
-
-Post all approved comment files in parallel:
-
-```bash
-glab api "projects/<PROJECT>/merge_requests/<IID>/discussions" \
-  --method POST \
-  --input /tmp/mr-review-comment-1.json \
-  -H 'Content-Type: application/json'
-```
-
-Verify each returns a `discussion.id` in the response.
-
-### 9. Post the review summary
-
-Write a summary note categorizing findings by severity:
+## Review summary template
 
 ```markdown
 ## Code Review Summary — MR !<IID> "<title>"
@@ -149,15 +90,6 @@ Write a summary note categorizing findings by severity:
 
 ### Nit
 3. **Issue name** (`file:line`) — Description
-```
-
-Post via the Notes API:
-
-```bash
-glab api "projects/<PROJECT>/merge_requests/<IID>/notes" \
-  --method POST \
-  --input /tmp/mr-summary.json \
-  -H 'Content-Type: application/json'
 ```
 
 ## Review comment quality guidelines

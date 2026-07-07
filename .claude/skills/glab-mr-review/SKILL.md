@@ -25,6 +25,9 @@ glab mr view <IID> --repo <group/project>
 glab mr diff <IID> --repo <group/project>
 ```
 
+`view` gives title, author, labels, and state. `diff` gives the full unified
+diff of all changed files.
+
 ### 2. Extract SHA refs for positioning inline comments
 
 ```bash
@@ -78,6 +81,8 @@ payloads for comments that were approved in step 5. Include
 glab api "projects/<PROJECT>/merge_requests/<IID>/discussions" \
   --method POST --input /tmp/comment.json -H 'Content-Type: application/json'
 ```
+
+Verify each response returns a `discussion.id`.
 
 Summary via Notes API:
 
