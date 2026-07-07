@@ -146,12 +146,14 @@ if [ -d "$HOME/dotfiles" ]; then
 else
 	info "Cloning dotfiles..."
 	git clone git@github.com:jakobwesthoff/dotfiles.git dotfiles
-	pushd "$HOME/dotfiles"
-	./checkout_dependencies.sh
-	stow .
-	popd
-	ok "Dotfiles cloned and stowed"
+	ok "Dotfiles cloned"
 fi
+
+pushd "$HOME/dotfiles"
+./checkout_dependencies.sh
+stow -R .
+popd
+ok "Dotfiles dependencies checked out and stowed"
 
 cd "$HOME/dotfiles"
 
@@ -302,13 +304,11 @@ info "Closed System Settings to prevent conflicts"
 
 # Prompt for sudo (needed for chflags below)
 sudo -v
-if ! pgrep -f "sudo -n true.*sleep 60" &>/dev/null; then
-	while true; do
-		sudo -n true
-		sleep 60
-		kill -0 "$$" || exit
-	done 2>/dev/null &
-fi
+while true; do
+	sudo -n true
+	sleep 60
+	kill -0 "$$" || exit
+done 2>/dev/null &
 
 info "Configuring system-wide defaults..."
 
