@@ -1,11 +1,11 @@
--- Highlight text briefly after yanking to provide visual feedback
-vim.api.nvim_create_autocmd("TextYankPost", {
+-- Highlight text briefly after yanking or putting to provide visual feedback
+vim.api.nvim_create_autocmd({ "TextYankPost", "TextPutPost" }, {
   group = vim.api.nvim_create_augroup("YankHighlight", { clear = true }),
   pattern = "*",
   callback = function()
-    vim.hl.on_yank()
+    vim.hl.hl_op()
   end,
-  desc = "Highlight yank",
+  desc = "Highlight yank and put",
 })
 
 -- Write an OSC 52 escape sequence to Neovim's terminal channel when yanking to
