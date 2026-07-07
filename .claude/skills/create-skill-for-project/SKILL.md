@@ -66,7 +66,7 @@ to the user.
 - Start with the simplest tier (Tier 1) unless the domain clearly needs more
 - Use the project's real code patterns, not generic examples
 - Include anti-patterns with strong language (FORBIDDEN, NEVER, MUST NOT)
-- Keep `description` under 200 characters with WHAT + WHEN trigger keywords
+- Front-load the key use case in `description`. Stay within the spec's 1024-char limit; Claude Code truncates the combined `description` + `when_to_use` at 1,536 characters. (200 characters is a claude.ai upload limit, not a Claude Code constraint.)
 
 ## Reference Files
 

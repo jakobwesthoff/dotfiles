@@ -243,15 +243,23 @@ description: Generates API clients.
 description: Use when working with APIs.
 ```
 
-**Bad — too long (wastes tokens on every interaction):**
+**Bad — first person, and the key use case is buried:**
 ```yaml
 description: >-
-  This skill helps you generate TypeScript API clients from OpenAPI specifications.
-  It supports OpenAPI 3.0 and 3.1, handles complex nested types, generates both
-  request and response types, creates fetch-based client functions with proper
-  error handling, and can also generate React Query hooks for each endpoint.
-  Use this whenever you need to interact with a REST API that has an OpenAPI spec.
+  I can help you with a lot of things when it comes to REST APIs. I know about
+  OpenAPI 3.0 and 3.1, complex nested types, request and response types,
+  fetch-based client functions with proper error handling, and React Query
+  hooks for each endpoint. You should use me whenever you need to generate a
+  TypeScript API client from an OpenAPI spec.
 ```
+
+This is bad for two reasons, not its length (392 characters, well within the
+1024-char spec limit and the 1,536-char combined `description` +
+`when_to_use` truncation): it is written in first/second person ("I can help
+you", "You should use me") instead of third person, and the actual use case
+— generating a TypeScript API client — is buried at the end behind a
+capability list, instead of leading with it as "Put the key use case first"
+requires.
 
 ---
 

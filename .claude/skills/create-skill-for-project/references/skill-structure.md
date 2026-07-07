@@ -90,7 +90,7 @@ skill's markdown body instead.
 | Field | Required | Constraints |
 |-------|:--------:|-------------|
 | `name` | No | Display name shown in skill listings; defaults to the directory name. The Agent Skills spec (not Claude Code) requires it, max 64 chars, lowercase alphanumeric + hyphens, matching the directory name, no leading/trailing/consecutive hyphens — worth following for portability. |
-| `description` | Recommended | Max 1024 chars (spec), **200 chars for Claude.ai**. Describe WHAT it does AND WHEN to use it. Include trigger keywords. Falls back to the body's first paragraph if omitted. |
+| `description` | Recommended | Max 1024 chars (spec). Put the key use case first: Claude Code truncates the combined `description` + `when_to_use` at 1,536 chars in the skill listing. Describe WHAT it does AND WHEN to use it. Include trigger keywords. (200 chars is a separate limit for skills uploaded to claude.ai, not a Claude Code constraint.) Falls back to the body's first paragraph if omitted. |
 | `when_to_use` | No | Additional trigger context, appended to `description` in the skill listing. Counts toward the combined 1,536-character cap. |
 | `license` | No | License name or reference to bundled license file. |
 | `compatibility` | No | Max 500 chars. Environment requirements (intended product, required system packages, network access needs). Most skills do not need this field. |
@@ -178,6 +178,8 @@ description: Helps with documents.
 ```
 
 Include the exact terms users are likely to say so the agent can match on them.
+
+Write the description in third person, always — it is injected into the system prompt, and an inconsistent point of view causes discovery problems ("Processes Excel files", not "I can help you process Excel files"). Claude currently tends to undertrigger skills, so lean toward broader, slightly "pushy" trigger coverage — phrasings and intents, not just the skill's own name — rather than a narrow description. All when-to-use information must live in `description` (or `when_to_use`): the SKILL.md body is invisible until the skill has already triggered, so it cannot compensate for a description that omits a trigger phrase. See "Write a Good Description" in [references/writing-principles.md](references/writing-principles.md) for the full guidance.
 
 ### Controlling Who Can Invoke a Skill
 
@@ -326,7 +328,7 @@ Layer 3: Resources (as needed)
 
 | Layer | Target | Max |
 |-------|--------|-----|
-| `description` field | 1-2 sentences | 1024 chars (200 for Claude.ai) |
+| `description` field | 1-2 sentences, key use case first | 1024 chars (spec); combined with `when_to_use`, truncated at 1,536 chars in the Claude Code listing (200 chars applies only to claude.ai uploads) |
 | `SKILL.md` body | 30-80 lines | 500 lines |
 | Single reference file | 50-200 lines | ~400 lines |
 | Total across all files | 1,500-3,000 lines | ~5,000 lines |

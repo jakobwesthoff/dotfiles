@@ -141,7 +141,7 @@ my-skill/
 Draft the `description` field. It MUST include:
 - Action verbs describing WHAT the skill does
 - Trigger keywords matching WHEN users need it
-- Keep under 200 characters for Claude.ai compatibility
+- Front-load the key use case: the spec allows up to 1024 characters, and Claude Code truncates the combined `description` + `when_to_use` at 1,536 characters (200 characters is a separate claude.ai upload limit, not a Claude Code constraint)
 
 ### Consider Scoping with `paths`
 
@@ -263,6 +263,7 @@ Write it last so you can accurately reference all existing files.
       directory name, not from `name`)
 - [ ] `name` is lowercase alphanumeric + hyphens, max 64 chars
 - [ ] `description` specifies WHAT and WHEN
+- [ ] `description` is written in third person (no "I can help..." / "You can use...")
 - [ ] `SKILL.md` body is under 500 lines
 - [ ] Each reference file has YAML frontmatter (`name`, `description`, `tags`)
 - [ ] All relative links in SKILL.md resolve to existing files

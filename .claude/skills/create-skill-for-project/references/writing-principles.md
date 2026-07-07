@@ -102,7 +102,24 @@ description: >-
 description: Helps with documents.
 ```
 
-Keep descriptions under 200 characters for Claude.ai compatibility.
+Put the key use case first: Claude Code truncates the combined `description` and `when_to_use` text at 1,536 characters in the skill listing. The spec allows up to 1024 characters. (200 characters is a separate limit for skills uploaded to claude.ai, not a Claude Code constraint.)
+
+Write the description in **third person, always** — never "I can help you..." or "You can use this to...". The description is injected into the system prompt, and an inconsistent point of view can cause discovery problems.
+
+```yaml
+# Good — third person
+description: Processes Excel files and generates reports.
+
+# Bad — first person
+description: I can help you process Excel files and generate reports.
+
+# Bad — second person
+description: You can use this to process Excel files and generate reports.
+```
+
+Claude currently tends to **undertrigger** skills — to skip them even when they would help. Counteract this by writing descriptions a little "pushy": cover the phrasings and intents users actually use, including cases where they don't name the artifact directly, rather than a narrow restatement of the skill's name. For example, expand "Use when creating dashboards" to "Use whenever the user mentions dashboards, data visualization, internal metrics, or wants to display any kind of company data, even if they don't explicitly ask for a 'dashboard'."
+
+All when-to-use information belongs in the `description` (and `when_to_use`), never only in the body: the body is invisible until the skill has already triggered, so trigger phrasing left out of the description can never do its job.
 
 ## Use Templates for Complex Output
 
@@ -168,7 +185,8 @@ Before shipping a skill, verify:
 
 - [ ] Directory name matches the `name` field in frontmatter
 - [ ] `name` is lowercase alphanumeric + hyphens, max 64 chars
-- [ ] `description` specifies WHAT and WHEN (max 200 chars for Claude.ai)
+- [ ] `description` specifies WHAT and WHEN, key use case first (max 1024 chars; combined `description` + `when_to_use` truncates at 1,536 chars in Claude Code)
+- [ ] `description` is written in third person (no "I can help..." / "You can use...")
 - [ ] `SKILL.md` body is under 500 lines — use reference files for detail
 - [ ] Every reference file has YAML frontmatter (`name`, `description`, `tags`)
 - [ ] Each reference file covers exactly one concept
