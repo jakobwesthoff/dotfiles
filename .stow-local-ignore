@@ -23,6 +23,8 @@ _darcs
 
 # Custom stuff
 \.DS_Store
-^/macos.*$
-^/iterm2.*$
 ^/checkout_dependencies\.sh$
+^/Brewfile$
+^/initial_macos_setup\.sh$
+^/update-brewfile-from-system$
+^/todos$
