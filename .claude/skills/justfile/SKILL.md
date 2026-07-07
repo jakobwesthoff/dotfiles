@@ -20,20 +20,6 @@ These reference files are self-contained — prefer them over external sources.
 `make`: no file targets, no automatic variables, no implicit rules, spaces and
 tabs both work (but must be consistent per recipe).
 
-## Decision Tree
-
-| Task | Start here |
-|------|------------|
-| Writing a basic justfile | [references/basics.md](references/basics.md) |
-| Variables, strings, interpolation | [references/variables-and-expressions.md](references/variables-and-expressions.md) |
-| Using built-in functions | [references/functions.md](references/functions.md) |
-| Conditional logic, error handling | [references/conditionals-and-flow.md](references/conditionals-and-flow.md) |
-| Configuring shell, dotenv, quiet mode | [references/settings.md](references/settings.md) |
-| Recipe attributes (platform, groups, scripts) | [references/attributes.md](references/attributes.md) |
-| Splitting into multiple files | [references/modules-and-imports.md](references/modules-and-imports.md) |
-| Shebang recipes, cross-platform, idioms | [references/advanced-patterns.md](references/advanced-patterns.md) |
-| Understanding how users invoke recipes | [references/invocation-primer.md](references/invocation-primer.md) |
-
 ## Validating justfiles
 
 Run each `just` command as its own standalone Bash call with no shell
@@ -45,11 +31,17 @@ just --justfile /path/to/justfile --dump
 just --justfile /path/to/justfile --list
 just --justfile /path/to/justfile --dry-run recipe-name
 just --justfile /path/to/justfile --fmt --check
+just --justfile /path/to/justfile --evaluate
 ```
 
-Silent `--dump` output to stdout = valid parse. Errors print to stderr.
-Note: `--dump` only checks syntax — it does not evaluate variables, so
-`error()` and `assert()` at variable level are NOT triggered.
+`--dump` prints the formatted justfile to stdout and exits 0 on a valid
+parse; parse errors go to stderr with a non-zero exit. `--dump` only
+checks syntax — it does not evaluate variables, so `error()` and
+`assert()` at variable level are NOT triggered. `--evaluate` closes
+that gap by evaluating all top-level variables, so variable-level
+`error()`/`assert()` do trigger — but it also executes backticks and
+`shell()` calls, so inspect the justfile for side-effecting backticks
+before running it.
 
 ## Critical Rules
 
@@ -75,12 +67,14 @@ Note: `--dump` only checks syntax — it does not evaluate variables, so
 
 ## Reference Files
 
-- [references/basics.md](references/basics.md) — Recipes, dependencies, parameters, aliases, comments, line sigils
-- [references/variables-and-expressions.md](references/variables-and-expressions.md) — Assignment, string types, operators, backticks, interpolation
-- [references/functions.md](references/functions.md) — All ~70 built-in functions by category
-- [references/conditionals-and-flow.md](references/conditionals-and-flow.md) — If/else, assert, error(), guards
-- [references/settings.md](references/settings.md) — All `set` directives, shell config, dotenv, export
-- [references/attributes.md](references/attributes.md) — Platform targeting, groups, script execution, arg options
-- [references/modules-and-imports.md](references/modules-and-imports.md) — `mod`, `import`, submodule isolation, file resolution
-- [references/advanced-patterns.md](references/advanced-patterns.md) — Shebang/script recipes, cross-platform, constants, idioms
-- [references/invocation-primer.md](references/invocation-primer.md) — CLI invocation, argument passing, flags affecting authoring
+| File | Start here for... |
+|------|--------------------|
+| [references/basics.md](references/basics.md) | Writing a basic justfile — recipes, dependencies, parameters, aliases, comments, line sigils |
+| [references/variables-and-expressions.md](references/variables-and-expressions.md) | Variables, strings, interpolation — assignment, string types, operators, backticks |
+| [references/functions.md](references/functions.md) | Using built-in functions — all ~70 built-in functions by category |
+| [references/conditionals-and-flow.md](references/conditionals-and-flow.md) | Conditional logic, error handling — if/else, assert, error(), guards |
+| [references/settings.md](references/settings.md) | Configuring shell, dotenv, quiet mode — all `set` directives, shell config, dotenv, export |
+| [references/attributes.md](references/attributes.md) | Recipe attributes (platform, groups, scripts) — platform targeting, groups, script execution, arg options |
+| [references/modules-and-imports.md](references/modules-and-imports.md) | Splitting into multiple files — `mod`, `import`, submodule isolation, file resolution |
+| [references/advanced-patterns.md](references/advanced-patterns.md) | Shebang recipes, cross-platform, idioms — shebang/script recipes, cross-platform, constants |
+| [references/invocation-primer.md](references/invocation-primer.md) | Understanding how users invoke recipes — CLI invocation, argument passing, flags affecting authoring |
