@@ -43,18 +43,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Checkout your project
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           path: project
 
       # Checkout the generator
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           repository: jakobwesthoff/project-page-starter
           path: generator
 
       # Setup Bun
-      - uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v2
 
       # Install generator dependencies
       - name: Install dependencies
@@ -75,11 +75,11 @@ jobs:
 
       # Setup GitHub Pages
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v6
 
       # Upload artifact
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
@@ -92,17 +92,23 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 ```
+
+Replace `main` in `branches: [main]` with the target repository's default branch if it differs.
 
 ## Post-Setup
 
-After adding the workflow file, enable GitHub Pages in the repository:
+Enable GitHub Pages in the repository **before** pushing the scaffold:
 
 1. Go to **Settings > Pages**
 2. Under "Build and deployment", select **GitHub Actions** as the source
 
-The workflow triggers on pushes to `main` that modify `README.md` or anything in `docs/pages/`. It can also be triggered manually via `workflow_dispatch`.
+The workflow triggers on pushes to `main` that modify `README.md` or anything in `docs/pages/`, so the very push that adds `docs/pages/` triggers the first run. It can also be triggered manually via `workflow_dispatch`.
+
+If Pages is not yet enabled when the first run reaches the `Setup Pages` step, `actions/configure-pages` fails with "Get Pages site failed. Please verify that the repository has Pages enabled and configured to build using GitHub Actions...". Recover by enabling Pages as above, then re-run the failed workflow from the Actions tab or trigger it again via `workflow_dispatch`. `configure-pages`'s `enablement` input can auto-enable Pages, but it requires a PAT or App token with `repo`/Pages write permission instead of the default `GITHUB_TOKEN`, so this workflow does not use it.
+
+A custom domain is configured entirely in **Settings > Pages > Custom domain** plus DNS records; no file in the generated artifact needs to change. A `CNAME` file in the artifact is ignored for Actions-based deploys, so don't add one.
 
 ## How It Works
 

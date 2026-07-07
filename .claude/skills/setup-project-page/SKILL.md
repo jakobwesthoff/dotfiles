@@ -18,6 +18,7 @@ Inspect the project to extract:
 - **Project name** — from README h1, package manifest `name` field, or directory name
 - **Tagline** — first paragraph of README or `description` in manifest
 - **GitHub path** — `user/repo` from git remote (`git remote get-url origin`) or manifest `repository` field
+- **Default branch** — via `git symbolic-ref refs/remotes/origin/HEAD` or equivalent
 - **Author** — from package manifest (`author`, `authors`), git config, or README
 - **Install methods** — detect from existing docs: npm/yarn/pnpm, cargo, brew, binary releases, pip, go install, etc.
 - **3 key features** — strongest value props from README for the highlights section
