@@ -2,27 +2,45 @@
 name: ios-debug
 description: >
   Debug websites and web apps running in Safari on a connected iOS device
-  using pymobiledevice3. Use when the user wants to inspect, debug, or
-  interact with Safari tabs on an iPhone or iPad.
-allowed-tools: Bash(pymobiledevice3 *), Bash(sudo pymobiledevice3 *), Bash(uv run *), Bash(timeout *), Read
+  using pymobiledevice3 and Safari's Web Inspector. Use when the user wants
+  to inspect, debug, or interact with Safari tabs, a Web Inspector session,
+  or web content in Safari on an iPhone or iPad.
+allowed-tools: Bash(uvx 'pymobiledevice3==9.33.1' *), Bash(uvx --from 'pymobiledevice3==9.33.1' *), Read
 ---
 
 # iOS Safari Debugging via pymobiledevice3
+
+## Requested task
+
+$ARGUMENTS
 
 Debug websites running in Safari on a connected iOS device.
 
 ## Prerequisites
 
-pymobiledevice3 must be installed (`uv tool install pymobiledevice3`).
+All commands in this skill run `pymobiledevice3` through `uvx`, pinned to
+version `9.33.1`, rather than a global install:
+
+- CLI calls: `uvx 'pymobiledevice3==9.33.1' <subcommand> ...`
+- Python snippets: `uvx --from 'pymobiledevice3==9.33.1' python3 ...`
+
+The pin exists because pymobiledevice3's Python API (the classes and
+methods used in the automation snippet below) breaks between releases,
+so an unpinned `uvx pymobiledevice3 ...` can silently pick up a newer,
+incompatible release, or silently reuse an older copy left behind by a
+prior `uv tool install pymobiledevice3` on the same machine. To bump the
+pin, change the version string everywhere in this file after confirming
+the workflow still works against the new release.
 
 The user must have:
 1. Connected the iPhone via USB and trusted the Mac.
 2. Enabled Web Inspector: Settings → Apps → Safari → Advanced → Web Inspector → ON.
 3. Enabled Remote Automation: Settings → Apps → Safari → Advanced → Remote Automation → ON.
-4. Started a tunnel in a separate terminal (required for iOS 17+):
-   - **iOS 18.2+**: `sudo pymobiledevice3 remote start-tunnel -p tcp`
-   - **iOS 17.4–18.1**: `sudo pymobiledevice3 lockdown start-tunnel`
-   - **iOS 17.0–17.3**: `sudo pymobiledevice3 remote start-tunnel`
+4. Started a tunnel in a separate terminal (required for iOS 17+), run by
+   the user directly since it requires `sudo`:
+   - **iOS 18.2+**: `sudo uvx 'pymobiledevice3==9.33.1' remote start-tunnel -p tcp`
+   - **iOS 17.4–18.1**: `sudo uvx 'pymobiledevice3==9.33.1' lockdown start-tunnel`
+   - **iOS 17.0–17.3**: `sudo uvx 'pymobiledevice3==9.33.1' remote start-tunnel`
    - **iOS 16 and earlier**: no tunnel needed.
 
 If commands fail with `InvalidServiceError`, the tunnel is not running.
@@ -33,7 +51,7 @@ Remind the user to start it.
 ### 1. Discover open tabs
 
 ```bash
-pymobiledevice3 webinspector opened-tabs --timeout 5
+uvx 'pymobiledevice3==9.33.1' webinspector opened-tabs --timeout 5
 ```
 
 This lists all open Safari tabs with their URLs. Identify the tab the
@@ -55,7 +73,7 @@ target URL — it does NOT attach to an existing tab. The new tab will
 not share session cookies with existing tabs.
 
 ```bash
-uv run --with pymobiledevice3 python3 << 'PYEOF'
+uvx --from 'pymobiledevice3==9.33.1' python3 << 'PYEOF'
 import asyncio, json
 from pymobiledevice3.lockdown import create_using_usbmux
 from pymobiledevice3.services.webinspector import WebinspectorService, SAFARI
@@ -133,7 +151,7 @@ Useful diagnostic expressions:
 ### 3. Take device screenshots
 
 ```bash
-pymobiledevice3 developer screenshot /tmp/ios-screenshot.png
+uvx 'pymobiledevice3==9.33.1' developer screenshot /tmp/ios-screenshot.png
 ```
 
 Then read `/tmp/ios-screenshot.png` to view it. This captures the full
@@ -141,7 +159,7 @@ device screen, not just the browser viewport.
 
 Note: screenshots require DeveloperDiskImage. If it fails, try:
 ```bash
-pymobiledevice3 mounter auto-mount
+uvx 'pymobiledevice3==9.33.1' mounter auto-mount
 ```
 
 ### 4. RSD connection (if tunnel output gives address)
@@ -149,7 +167,7 @@ pymobiledevice3 mounter auto-mount
 When the tunnel provides an RSD address, pass it explicitly:
 
 ```bash
-pymobiledevice3 webinspector opened-tabs --rsd <address> <port>
+uvx 'pymobiledevice3==9.33.1' webinspector opened-tabs --rsd <address> <port>
 ```
 
 ## Known issues
@@ -176,6 +194,5 @@ individual pages time out. This is likely caused by the same underlying
   to 5–10 if the device is slow to respond.
 - Web Inspector toggle moved to Settings → **Apps** → Safari → Advanced
   in iOS 18. Older guides show the wrong path.
-- Always wrap `uv run` scripts with `timeout N` to prevent hangs.
-- If $ARGUMENTS contains a URL, look for a matching tab in `opened-tabs`
-  output and focus debugging there.
+- If the requested task above contains a URL, look for a matching tab in
+  `opened-tabs` output and focus debugging there.
