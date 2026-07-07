@@ -60,14 +60,22 @@ $ just backend build        # subcommand style
 $ just backend::build       # path style
 ```
 
+A module can be given a short alias (1.55.0+): `alias b := backend` makes
+`just b build` equivalent to `just backend build`.
+
 ### File resolution order
 
-When declaring `mod foo`, `just` searches for:
+When declaring `mod foo`, `just` looks for a source file among these
+candidates:
 
-1. `foo.just`
-2. `foo/mod.just`
-3. `foo/justfile` (any capitalization)
-4. `foo/.justfile` (any capitalization)
+- `foo.just`
+- `foo/mod.just`
+- `foo/justfile` (any capitalization)
+- `foo/.justfile` (any capitalization)
+
+These are a candidate set, not a priority order: exactly one of them
+must exist. If more than one candidate exists, `just` fails with
+`` error: found multiple source files for module `foo`: ... ``.
 
 ### Explicit path
 

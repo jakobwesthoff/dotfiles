@@ -64,6 +64,8 @@ before running it.
   user and get explicit approval before adding `set unstable`. This makes the
   installed `just` version the source of truth — unstable markers in this
   skill may be outdated.
+- Give every public recipe a one-line doc comment (house convention; it
+  becomes the `--list` description).
 
 ## Reference Files
 

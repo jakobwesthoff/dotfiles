@@ -20,6 +20,8 @@ build:
 - Body lines use spaces **or** tabs, but NEVER mix within a single recipe.
 - Each body line runs in a **separate shell invocation** — shell state (`cd`,
   variables) does NOT persist between lines.
+- A recipe stops at the first failing line; `just` exits with that
+  command's exit code.
 
 ### The Default Recipe
 
@@ -61,6 +63,10 @@ recipe (no blank line) becomes its **doc comment**, shown in `just --list`:
 build:
   cargo build
 ```
+
+A `#` line inside a recipe **body** is a real recipe line: it is echoed
+(like other commands) and passed to the shell, unless `set
+ignore-comments` is active (see references/settings.md).
 
 Only a **single** comment line becomes the doc shown in `just --list`:
 the one immediately above the recipe header. When multiple `#` lines
@@ -112,6 +118,11 @@ build:
 internal-helper:
   echo 'no doc shown'
 ```
+
+House convention (not a `just` requirement): give every public recipe
+(no `[private]` attribute, no underscore prefix) a one-line doc comment
+immediately above the recipe header; it becomes the `--list` description.
+Private helper recipes may omit it.
 
 ## Dependencies
 
@@ -171,6 +182,10 @@ build target:
 test target tests='all':
   ./test --suite {{tests}} {{target}}
 
+# Default referencing an earlier parameter
+copy src dst=src:
+  cp {{src}} {{dst}}
+
 # Variadic: one or more
 backup +FILES:
   scp {{FILES}} server:~/backups/
@@ -183,6 +198,18 @@ commit MESSAGE *FLAGS:
 foo $BAR:
   echo $BAR
 ```
+
+A default expression may reference an earlier parameter: `copy src
+dst=src` invoked as `just copy onlyone` gives `src=onlyone` and
+`dst=onlyone`.
+
+A variadic parameter's value is all matched arguments joined with
+single spaces, so `{{FILES}}` cannot preserve the boundaries of
+arguments that contain spaces: unquoted, such an argument splits into
+separate words; quoted, all arguments merge into one word. For
+space-safe forwarding use `set positional-arguments` (or the
+`[positional-arguments]` attribute) with `"$@"` — see the forwarding
+example in references/settings.md.
 
 **Quoting caveat** — `{{param}}` is interpolated raw into the shell command.
 A value with spaces causes word splitting:
@@ -227,6 +254,9 @@ build:
 
 Aliases can target submodule recipes: `alias baz := foo::bar`.
 
+Aliases can also target a whole module (1.55.0+): `alias s := sub` makes
+`just s <recipe>` work like `just sub <recipe>`.
+
 ## Private Recipes
 
 Hidden from `just --list` / `just --summary`:
@@ -249,6 +279,9 @@ Prefix recipe lines with combinations of (`-` and `?` are mutually exclusive):
 | `@` | Toggle echo (suppress if normally echoed, echo if recipe is quiet) |
 | `-` | Continue on non-zero exit code |
 | `?` | Stop current recipe if exit code is `1` (requires `set guards`) |
+
+Without `set guards`, `?` is not an error: it is passed to the shell as
+part of the command, typically failing with `command not found`.
 
 ```just
 set guards
@@ -282,7 +315,7 @@ right:
 ```
 
 NEVER use indented continuation in linewise recipes without `\` — just
-reports `error: Recipe line has extra leading whitespace`:
+reports `error: recipe line has extra leading whitespace`:
 
 ```just
 # BROKEN — parse error from extra indentation
@@ -304,4 +337,4 @@ a recipe from another recipe's body, declare it as a dependency or
 shell out: `just --justfile {{justfile()}} recipe-name`.
 
 For complex multi-line logic, prefer
-[shebang/script recipes](references/advanced-patterns.md).
+[shebang/script recipes](advanced-patterns.md).

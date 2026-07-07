@@ -23,6 +23,7 @@ foo := if "2" == "2" { "Good!" } else { "1984" }
 | `==` | String equality |
 | `!=` | String inequality |
 | `=~` | Regex match (use single-quoted strings for regex patterns) |
+| `!~` | Regex non-match (1.39.0+) |
 
 ```just
 foo := if env('CI', '') =~ 'true|1' { "--release" } else { "" }
@@ -90,9 +91,19 @@ with a default message derived from the condition expression if false.
 
 ## Guards (`?` sigil)
 
-Requires `set guards`. The `?` prefix on a recipe line causes the
-**current recipe** to stop if the command exits with status `1`. Other recipes
-(including dependents) continue running.
+Requires `set guards` (guard sigil and `guards` setting added in 1.47.0).
+The `?` prefix on a recipe line causes the **current recipe** to stop if
+the command exits with status `1`. Other recipes (including dependents)
+continue running.
+
+Without `set guards`, just does not raise an error: the `?` is passed to
+the shell as part of the command, typically failing with
+`command not found` (exit 127), which can be misdiagnosed as an unrelated
+shell error.
+
+A guard command that exits with a code other than `0` or `1` fails the
+recipe: `` error: guard line in recipe `<name>` on line <line> returned
+reserved exit code <code> ``.
 
 ```just
 set guards
@@ -133,8 +144,8 @@ example:
 ## Anti-Patterns
 
 NEVER use `>`, `<`, `>=`, or `<=` for comparisons — just only supports
-`==`, `!=`, and `=~`. For numeric-like comparisons, use regex matching
-or shell logic inside a recipe body.
+`==`, `!=`, `=~`, and `!~`. For numeric-like comparisons, use regex
+matching or shell logic inside a recipe body.
 
 NEVER use `if`/`else` as a shell construct in a linewise recipe body —
 it must be a just expression inside `{{…}}`, or a single-line shell
