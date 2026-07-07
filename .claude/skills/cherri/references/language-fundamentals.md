@@ -5,6 +5,30 @@ metadata:
   tags: cherri, variables, constants, types, control-flow, functions, strings
 ---
 
+## Comments
+
+```ruby
+// single-line comment
+
+/* block
+   comment */
+
+comment('always included, regardless of --comments')
+```
+
+`//` and `/* */` comments are excluded from the compiled Shortcut by
+default (to minimize file size). Pass `--comments` / `-c` to the
+compiler to include them as Shortcut comment actions instead.
+
+`comment('...')` adds a comment action to the shortcut unconditionally
+(independent of the `--comments` flag). Its argument is `rawtext`
+(single-quoted) — a double-quoted argument fails:
+
+```ruby
+comment("double quoted")
+// Error: Invalid value "double quoted" (text) for argument 'text' (rawtext).
+```
+
 ## Variables (`@` prefix)
 
 Variables create a **Set Variable** action in Shortcuts. They are mutable.
@@ -25,36 +49,39 @@ Variables create a **Set Variable** action in Shortcuts. They are mutable.
 
 ### Referencing variables
 
-Both the bare name and `@`-prefixed form work when referencing variables.
-However, the compiler emits deprecation warnings for bare names
-("Prefix variable reference with @ for compilation speed"), so prefer
-the `@` form to avoid noisy output:
+Variable references must be prefixed with `@` everywhere except inside
+double-quoted string interpolation, where a bare name also compiles,
+with no warning. A bare name used anywhere else (a direct action
+argument, an `if` condition, a `for` loop header, a variable-to-variable
+assignment) is a hard compile error:
+
+```
+Error: Unknown reference 'textVar'. Variable references must be prepended with @.
+```
 
 ```ruby
 @textVar = "test"
 @intVar = 42
 
-// Both forms work:
-alert(textVar, "Title")       // bare name
-alert(@textVar, "Title")      // @prefix
+alert(@textVar, "Title")      // @prefix required as a direct argument
 
-show("{textVar}")             // interpolation without @
-show("{@textVar}")            // interpolation with @
+show("{textVar}")             // interpolation: bare name also works
+show("{@textVar}")            // interpolation: @prefix also works
 
-if intVar > 5 {}              // condition without @
-if @intVar > 5 {}             // condition with @
+if @intVar > 5 {}             // @prefix required in conditions
 
 @listVar = list("item 1", "item 2", "item 3")
-for item in listVar {}        // loop without @
-for item in @listVar {}       // loop with @
+for item in @listVar {}       // @prefix required in loop headers
 ```
+
+Constants are the exception to the exception: they are always
+referenced by bare name, in any context (see Constants below).
 
 ### Variable assignment from other variables
 
 ```ruby
 @original = "test"
-@copy = original              // bare name
-@copy = @original             // @prefix — also valid
+@copy = @original             // @prefix required
 ```
 
 ### Expression operands
@@ -145,6 +172,40 @@ Single-quoted strings skip interpolation and compile faster:
 @raw = 'i\'m not allowed inline variables, new lines, etc. but i compile faster!'
 ```
 
+A variable assigned a single-quoted string has type `rawtext`, not
+`text`. A `rawtext` variable:
+
+- Compiles fine when declared, and can be interpolated into a
+  double-quoted string (`"{raw}"` or `"{@raw}"`).
+- CANNOT be passed via `@` to a parameter typed `text` (most action
+  parameters):
+  ```ruby
+  @plain = 'abc'
+  alert(@plain, "Title")
+  // Error: Invalid variable value abc (rawtext) for argument 'alert' (text).
+  ```
+- CANNOT be used directly in a conditional (`==`, `contains`, etc.);
+  `rawtext` is not one of the types conditionals accept.
+
+`.text` coercion fixes the conditional case, but NOT the
+argument-passing case — `alert(@raw.text, "Title")` still fails with
+the same `rawtext`/`text` mismatch, and so does wrapping with
+`text(@raw)`. There is no verified coercion that turns a `rawtext`
+variable into a `text` argument; declare it with a double-quoted string
+instead if it needs to reach a `text` parameter:
+
+```ruby
+@raw = 'abc'
+if @raw.text == "abc" {}      // coerced, compiles
+
+@plain = "abc"                // double-quoted: type is text
+alert(@plain, "Title")        // compiles
+```
+
+A single-quoted string literal passed directly as an argument (not
+through a variable) is not affected by this restriction — the compiler
+coerces the literal itself.
+
 Raw text CANNOT be used inside dictionaries or arrays (must be valid JSON).
 
 ### Escape characters (double-quoted strings only)
@@ -187,7 +248,17 @@ var"
 @flag: bool
 @ref: variable
 @real: float
+@raw: rawtext
+@c: color
+@d: date
 ```
+
+The full set of declarable types, per the compiler's "Available types"
+error (shown when an unknown type is used): `text`, `rawtext`,
+`number`, `float`, `bool`, `array`, `dictionary`, `variable`, `color`,
+`date`. A `color` variable holds a hex string (e.g. `@c = "#FF0000"`).
+`rawtext` is the type of a single-quoted string (see Raw text above).
+`date` is the type returned by `date()` (see below).
 
 ### Type coercion
 
@@ -201,6 +272,10 @@ var"
 ### URLs, dates, and other action-result types
 
 ```ruby
+#include 'actions/calendar'
+#include 'actions/location'
+#include 'actions/contacts'
+
 @urlVar = url('https://apple.com', 'https://google.com')
 @dateVar = date("October 5, 2022")
 @locationVar = location(Ask)
@@ -246,6 +321,7 @@ The first operand MUST be a variable:
 
 ```ruby
 @intVar = 56
+@intVar2 = 5
 @textVar = "string1"
 @textVar2 = "string2"
 
@@ -311,8 +387,8 @@ repeat i for 6 {
 
 // For each
 @listVar = list("item 1", "item 2", "item 3")
-for item in listVar {
-    alert("{RepeatIndex}", item)
+for item in @listVar {
+    alert("{RepeatIndex}", @item)
 }
 ```
 
@@ -323,6 +399,8 @@ The `RepeatIndex` and `RepeatItem` globals are available inside loops.
 Assign control flow results to constants:
 
 ```ruby
+#include 'actions/network'
+
 @deviceModel = "{Device['Model']}"
 const connectionName = if @deviceModel == "iPhone" {
     getCellularDetail("Carrier Name")
@@ -336,6 +414,9 @@ show("{connectionName}")
 Menu as output:
 
 ```ruby
+#include 'actions/device'
+#include 'actions/sharing'
+
 const deviceDetail = menu "Get Device Detail" {
     item "Battery":
         getBatteryLevel()
@@ -386,20 +467,22 @@ Defining and calling functions needs no `#include` — the dictionary-
 based dispatch machinery the compiler generates for Run Shortcut is
 included automatically.
 
-Note: function parameters become variables inside the function body.
-Both bare name and `@` prefix work (e.g., `n` or `@n` for parameter `n`).
-The test suite tends to use `@` form inside function bodies.
+Note: function parameters become variables inside the function body and
+follow the same `@`-prefix rule as other variables (see Referencing
+variables above): use `@n`, except inside string interpolation where
+the bare name also works.
 
 ### Arguments
 
+The parameter list must stay on one line: a `function` signature whose
+parentheses span multiple lines fails to parse (see the compiler-quirks
+entry on multi-line function signatures). Comment each parameter's
+modifier separately instead of relying on line breaks:
+
 ```ruby
-function myFunc(
-    text required,           // required
-    text ?optional,          // optional (?)
-    text! literal,           // must be literal value (!)
-    text withDefault = "hi"  // default value
-) {
-    // ...
+// required, optional (?), literal-only (!), and default-value parameters
+function myFunc(text required, text ?optional, text! literal, text withDefault = "hi") {
+    show(@required)
 }
 ```
 
@@ -429,6 +512,8 @@ Inline usage with key access:
 Prompts the user at runtime:
 
 ```ruby
+#include 'actions/location'
+
 wait(Ask)
 wait(Ask: 'How many seconds?')
 @name = "My name is {Ask}"

@@ -79,6 +79,15 @@ someAction(required, "default", "third")
 @msg = "Hello, world!"
 ```
 
+Caveat: a single-quoted string gives the variable type `rawtext`, not
+`text`. It interpolates fine into a double-quoted string, but cannot be
+passed to a `text`-typed action parameter (most action parameters), and
+there is no verified coercion around this (see "Raw text" in
+language-fundamentals.md). Only use raw text for values that stay
+inside interpolation or get compared with `.text` coercion — declare
+with double quotes instead if the value needs to reach a `text`
+parameter directly.
+
 ## Compilation
 
 ### CLI hygiene

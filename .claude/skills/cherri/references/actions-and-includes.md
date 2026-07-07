@@ -252,7 +252,7 @@ action [attributes] ['identifier'] actionName(
 Attributes (optional, after `action`):
 - `default` — preferred definition when multiple share same identifier
 - `mac` / `!mac` — platform restriction
-- `v17` — minimum iOS version
+- `v17` / `v17>` — minimum iOS version (default); `v17<` — maximum iOS version
 
 The `!` after type means literal value required (not variable).
 The `?` before param name means optional.

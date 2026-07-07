@@ -30,7 +30,26 @@ expressions. Store the result first:
 ```
 
 The same applies to passing action calls as arguments to other actions
-(nested calls crash the compiler). Always assign to a variable first.
+(nested calls crash the compiler with a Go panic, exit code 2). Always
+assign to a variable first.
+
+Action calls are also not allowed inline inside string interpolation.
+`{...}` in a string accepts only a variable/constant/global reference,
+never a call:
+
+```ruby
+// WRONG — "Undefined inline reference 'getBatteryLevel()'"
+@msg = "Battery: {getBatteryLevel()}"
+
+// CORRECT — store the result first
+@battery = getBatteryLevel()
+@msg = "Battery: {@battery}"
+```
+
+This applies regardless of repetition: calling the same action (e.g.
+`getWeatherDetail()`) multiple times on the same source variable is
+fine as long as each call result is stored in a variable first; nothing
+about repeated calls specifically triggers a failure.
 
 ## Action return values need explicit coercion for comparisons
 
@@ -44,76 +63,88 @@ with `number()` and store in a typed variable:
 const level = getBatteryLevel()
 if level < 20 {}
 
-// CORRECT — coerce and store in typed variable
+// CORRECT — coerce, but do NOT nest the call: store the action's own
+// output first, then wrap that variable with number()
+const raw = getBatteryLevel()
 @level: number
-@level = number(getBatteryLevel())
+@level = number(raw)
 if @level < 20 {}
 ```
+
+Note the two-step coercion: `@level = number(getBatteryLevel())` is a
+nested action call (`number()` wrapping `getBatteryLevel()`) and
+crashes the compiler with the same Go panic as any other nested call
+(see "Expressions cannot contain action calls" above). Store the inner
+action's result in its own variable first.
 
 Same applies to using action outputs in arithmetic expressions — store
 in a typed `@var` first.
 
-## Boolean-returning actions must use `@var`, not `const`
+## `runShellScript()`'s `input` parameter is optional
 
-Some actions that return booleans (e.g., `isCharging()`,
-`connectedToCharger()`) crash the compiler when assigned to `const`.
-Always use `@var`:
-
-```ruby
-// WRONG — compiler panic
-const charging = isCharging()
-
-// CORRECT
-@charging = isCharging()
-```
-
-## Avoid calling the same detail-getter multiple times in one expression
-
-Calling actions like `getWeatherDetail()` multiple times on the same
-source variable can crash the compiler. Workaround: interleave each
-call with a variable append:
-
-```ruby
-// WRONG — may crash
-@msg = "Temp: {getWeatherDetail(@weather, "Temperature")} Wind: {getWeatherDetail(@weather, "Wind Speed")}"
-
-// CORRECT — serialize calls via variable building
-@msg: text
-@temp = getWeatherDetail(@weather, "Temperature")
-@msg += "Temp: {@temp}\n"
-@wind = getWeatherDetail(@weather, "Wind Speed")
-@msg += "Wind: {@wind}"
-```
-
-## `runShellScript()` requires `input` even when unused
-
-The `input` parameter is not optional. Pass `nil` when no stdin is
-needed:
+`runShellScript(text script, variable ?input, ...)` — `input` can be
+omitted:
 
 ```ruby
 #include 'actions/mac'
 
-@output = runShellScript("ls -la", nil)
+@output = runShellScript("ls -la")
 ```
 
-## `detectLanguage()` returns human-readable names
+## `translate()`'s locale codes are a strict 19-value enum
 
-Returns `"English"`, `"German"`, etc. — NOT locale codes like `en_US`.
-But `translate()` uses locale codes for `to`/`from`. Plan accordingly.
+`translate(text, to, ?from)` requires `actions/translation`. The
+`to`/`from` parameters are typed with an enum of exactly 19 locale
+codes; any other string literal is a compile error:
 
-## Strict `number` vs `float` type separation
+```
+Error: Invalid value 'English' for argument 'to'.
+```
 
-`number` means integer, `float` means decimal. The compiler enforces
-this strictly in both directions:
+```
+ar_AE, zh_CN, zh_TW, nl_NL, en_GB, en_US, fr_FR, de_DE, id_ID, it_IT,
+jp_JP, ko_KR, pl_PL, pt_BR, ru_RU, es_ES, th_TH, tr_TR, vn_VN
+```
+
+Two codes are nonstandard: `jp_JP` (not ISO `ja_JP`) and `vn_VN` (not
+ISO `vi_VN`).
+
+The enum check only applies to string literals. A variable argument
+skips it and compiles regardless of content:
 
 ```ruby
-// WRONG
-wait(0.2)           // number param rejects float literal
-setBrightness(1)    // float param rejects integer literal
+#include 'actions/translation'
 
-// CORRECT
-wait(1)             // integer for number param
-setBrightness(1.0)  // decimal for float param
+@t = "Hello"
+const lang = detectLanguage(@t)
+translate(@t, lang)  // compiles even though `lang`'s value is unchecked
+```
+
+This means a locale-code mistake routed through a variable (e.g. the
+output of `detectLanguage()`) surfaces only at runtime, not at compile
+time. What `detectLanguage()` actually returns at runtime (a locale
+code, a human-readable language name, or something else) is not
+verified here — verifying it requires running the compiled shortcut
+on-device.
+
+## `number` vs `float` type strictness is one-directional
+
+`number` means integer, `float` means decimal, but the compiler only
+enforces the mismatch one way: a `float`-typed parameter rejects an
+integer literal, while a `number`-typed parameter now accepts a
+decimal literal.
+
+```ruby
+// WRONG — float param rejects integer literal
+setBrightness(1)
+// Error: Invalid value 1 (number) for argument 'brightness' (float).
+
+// Both compile — number param accepts a decimal literal too
+wait(0.2)
+wait(1)
+
+// CORRECT — decimal literal for a float param
+setBrightness(1.0)
 ```
 
 Check the action signature with `cherri --action=name --no-ansi` to
@@ -132,25 +163,30 @@ const input = ShortcutInput
 @input = ShortcutInput
 ```
 
-## `#include 'actions/music'` may be broken
+## Curly braces in double-quoted strings are always parsed as references
 
-Some compiler versions have a broken `seek` action definition that
-references `timerDuration` as an unknown type, causing the entire
-include to fail. Workaround: define only the needed music actions
-manually:
+This means regex quantifiers like `{50}` are unusable in a
+double-quoted string literal:
 
 ```ruby
-action 'is.workflow.actions.getmusicdetail' getMusicDetail(
-    variable music: 'WFInput',
-    text! detail: 'WFMusicDetailType'
-)
+// WRONG — "Undefined inline reference '50'"
+@a = "a{50}"
 ```
 
-## Curly braces in strings are always parsed as references
+Single-quoted (`rawtext`) strings behave differently by context:
 
-Both double-quoted and single-quoted strings treat `{N}` as a variable
-reference attempt. This means regex quantifiers like `{50}` are
-unusable in string literals — use character classes or loops instead.
+- A single-quoted literal passed directly as an action argument does
+  NOT get its braces parsed — `show('a{50}')` compiles.
+- A single-quoted literal assigned to a variable and never passed
+  anywhere compiles fine — braces are not parsed at declaration.
+- A single-quoted variable then passed to an action still fails, but
+  for an unrelated reason: the `rawtext`/`text` parameter mismatch
+  (see "Raw text" in language-fundamentals.md), not brace parsing. The
+  same failure happens with brace-free raw text.
+
+Use character classes or repeat loops instead of `{n}` quantifiers
+wherever the string reaches a double-quoted literal or a passed
+variable.
 
 ## Menu item bodies must be statements
 
@@ -179,17 +215,6 @@ guard to skip iterations after a condition is met.
 
 ## `speak()` is in `actions/text`, not `actions/media`
 
-## `--docs=photos` may be empty (compiler bug)
-
-Some compiler versions have a broken docs generator for the photos
-category — `--docs=photos` shows no actions even though they exist.
-If `--docs=photos` returns actions, use that. If it's empty, these
-are the known photo actions (look up signatures with `--action=`):
-`savePhoto`, `selectPhotos`, `deletePhotos`, `createAlbum`,
-`renameAlbum`, `searchPhotos`, `getLastImport`, `getLatestPhotos`,
-`getLatestVideos`, `getLatestScreenshots`, `getLatestBursts`,
-`getLatestLivePhotos`, `removeFromAlbum`.
-
 ## `variable` typed params reject string literals
 
 Some action parameters are typed `variable` (not `text`), meaning they
@@ -197,8 +222,11 @@ require a variable/constant reference, not a string literal. Store the
 value in a `@var` first:
 
 ```ruby
+#include 'actions/crypto'
+
 // WRONG — hash() takes variable input, not a string literal
 const h = hash("my text", "SHA256")
+// Error: Invalid value "my text" (text) for argument 'input' (variable).
 
 // CORRECT
 @text = "my text"
@@ -247,19 +275,35 @@ does not override this.
 This is easy to confuse since `setClipboard()`, `share()`, and other
 similar "output" actions require `#include 'actions/sharing'`.
 
-## Some actions are missing from `--docs` output
+## Confirming an action exists
 
-Not all actions appear when browsing categories with `--docs=`. For
-example, `randomNumber` does not show up in any category. Use
-`cherri --action=name --no-ansi` to confirm an action exists and get
-its signature. The `--action=` flag supports substring matching.
+`cherri --docs=<category>` lists every action in a category, and
+`cherri --action=name --no-ansi` confirms whether a specific action
+exists and shows its signature (the flag supports substring matching).
+When an action fails to compile with "requires include", the suggested
+`#include` line is the category to add.
 
-## Include error messages may be misleading
+## Multi-line `function` parameter lists fail to parse
 
-When the compiler reports "requires include: `#include 'actions/X'`",
-the suggested include may be wrong. The compiler sometimes cycles
-through incorrect suggestions on successive compiles. If the first
-suggestion doesn't work, `grep -l <actionName>` over the compiler
-source checkout's `actions/*.cherri` files gives the definitive
-category, and `cherri --action=name --no-ansi` confirms whether the
-action exists at all.
+A `function` signature whose parentheses span multiple lines fails
+with an unrelated-looking parser error, regardless of parameter count
+or modifiers:
+
+```ruby
+// WRONG — "Illegal character 'f'"
+function myFunc(
+    text a,
+    text b
+) {
+    show(@a)
+}
+```
+
+Keep the full parameter list on one line:
+
+```ruby
+// CORRECT
+function myFunc(text a, text b) {
+    show(@a)
+}
+```
