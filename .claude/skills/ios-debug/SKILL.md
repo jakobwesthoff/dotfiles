@@ -36,15 +36,59 @@ The user must have:
 1. Connected the iPhone via USB and trusted the Mac.
 2. Enabled Web Inspector: Settings → Apps → Safari → Advanced → Web Inspector → ON.
 3. Enabled Remote Automation: Settings → Apps → Safari → Advanced → Remote Automation → ON.
-4. Started a tunnel in a separate terminal (required for iOS 17+), run by
-   the user directly since it requires `sudo`:
-   - **iOS 18.2+**: `sudo uvx 'pymobiledevice3==9.33.1' remote start-tunnel -p tcp`
-   - **iOS 17.4–18.1**: `sudo uvx 'pymobiledevice3==9.33.1' lockdown start-tunnel`
-   - **iOS 17.0–17.3**: `sudo uvx 'pymobiledevice3==9.33.1' remote start-tunnel`
-   - **iOS 16 and earlier**: no tunnel needed.
 
-If commands fail with `InvalidServiceError`, the tunnel is not running.
-Remind the user to start it.
+### Connecting to the device
+
+Every `pymobiledevice3` command reaches the device through one of four
+mechanisms, selected by the flags/env var passed:
+
+- No flag: usbmux (plain USB), the default when none of the below are given.
+- `--rsd HOST PORT`: connect via an already-running tunnel's
+  RemoteServiceDiscovery address.
+- `--tunnel [UDID]` / `PYMOBILEDEVICE3_TUNNEL`: use a tunnel managed by
+  a background `tunneld` daemon (see below).
+- `--userspace` / `PYMOBILEDEVICE3_USERSPACE`: establish the iOS 17+
+  tunnel in-process for this one invocation, no root required.
+
+Upstream ties the iOS 17+ tunnel requirement to developer services
+(DDI/DVT, e.g. `developer screenshot`); whether `webinspector`
+subcommands also need one is not confirmed — upstream's tunnel guide
+and the `webinspector` command group help name no such requirement,
+and the service connects over plain usbmux as well as RSD. Try
+`webinspector` commands without a tunnel first. This has not yet been
+verified on-device. If a command fails with `InvalidServiceError`,
+start a tunnel below and retry with `--rsd`, `--tunnel`, or
+`--userspace`.
+
+#### Starting a tunnel
+
+Needed for developer-service commands (e.g. `developer screenshot`) on
+iOS 17+, and for `webinspector` commands only if the untested case
+above turns out to require it. Run by the user directly in a separate
+terminal since it requires `sudo`:
+
+- Current method (iOS 17.4+, including current iOS releases):
+  `sudo uvx 'pymobiledevice3==9.33.1' lockdown start-tunnel --script-mode`
+- iOS 17.0–17.3.1 only:
+  `sudo uvx 'pymobiledevice3==9.33.1' remote start-tunnel --script-mode`
+  (add `-p tcp` when running under Python < 3.13; QUIC is otherwise the
+  default there)
+- iOS 16 and earlier: no tunnel needed.
+
+With `--script-mode`, the command stays in the foreground and prints
+one line, `ADDRESS PORT`. Pass those two values as `--rsd ADDRESS PORT`
+to subsequent commands.
+
+No-root alternatives to a separate `sudo` terminal:
+- `--userspace` (or `PYMOBILEDEVICE3_USERSPACE=1`) on any device
+  command establishes the tunnel in-process for that one invocation,
+  no root/admin required. Host->device transfers are slower than with
+  the kernel tunnel, and the established address is private to that
+  process, so it cannot be reused by a separate command or Python
+  snippet.
+- `--tunnel [UDID]` (or `PYMOBILEDEVICE3_TUNNEL`) consumes a tunnel
+  managed by a long-running daemon, started once with root:
+  `sudo uvx 'pymobiledevice3==9.33.1' remote tunneld`
 
 ## Debugging workflow
 
@@ -56,6 +100,10 @@ uvx 'pymobiledevice3==9.33.1' webinspector opened-tabs --timeout 5
 
 This lists all open Safari tabs with their URLs. Identify the tab the
 user wants to debug (match by URL or ask).
+
+If this fails with `InvalidServiceError`, a tunnel is required; add
+`--rsd "$ADDRESS" "$PORT"`, `--tunnel`, or `--userspace` (see
+Prerequisites above).
 
 ### 2. Execute JavaScript on the page
 
@@ -150,8 +198,12 @@ Useful diagnostic expressions:
 
 ### 3. Take device screenshots
 
+This is a developer-service command, so on iOS 17+ it needs a tunnel
+(see Prerequisites above); add `--rsd "$ADDRESS" "$PORT"`, `--tunnel`,
+or `--userspace`:
+
 ```bash
-uvx 'pymobiledevice3==9.33.1' developer screenshot /tmp/ios-screenshot.png
+uvx 'pymobiledevice3==9.33.1' developer screenshot --rsd "$ADDRESS" "$PORT" /tmp/ios-screenshot.png
 ```
 
 Then read `/tmp/ios-screenshot.png` to view it. This captures the full
@@ -162,12 +214,17 @@ Note: screenshots require DeveloperDiskImage. If it fails, try:
 uvx 'pymobiledevice3==9.33.1' mounter auto-mount
 ```
 
-### 4. RSD connection (if tunnel output gives address)
+### 4. Connection flags recap
 
-When the tunnel provides an RSD address, pass it explicitly:
+`--rsd ADDRESS PORT` (coordinates from a tunnel's `--script-mode`
+output), `--tunnel [UDID]` (a running `tunneld` daemon), and
+`--userspace` (in-process, no root) are the three ways a command
+reaches the device through an iOS 17+ tunnel; omitting all three falls
+back to plain usbmux. Any `pymobiledevice3` subcommand that takes a
+device accepts these flags, for example:
 
 ```bash
-uvx 'pymobiledevice3==9.33.1' webinspector opened-tabs --rsd <address> <port>
+uvx 'pymobiledevice3==9.33.1' webinspector opened-tabs --rsd "$ADDRESS" "$PORT"
 ```
 
 ## Known issues
