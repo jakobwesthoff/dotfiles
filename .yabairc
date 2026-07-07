@@ -1,28 +1,10 @@
 #!/usr/bin/env sh
 
-# the scripting-addition must be loaded manually if
-# you are running yabai on macOS Big Sur. Uncomment
-# the following line to have the injection performed
-# when the config is executed during startup.
-#
-# for this to work you must configure sudo such that
-# it will be able to run the command without password
-#
-# see this wiki page for information:
-#  - https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)
-#
-# sudo yabai --load-sa
-# yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
-
-sudo yabai --load-sa
-yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
-
 yabai -m config                                 \
     mouse_follows_focus          off            \
     focus_follows_mouse          off            \
     window_origin_display        default        \
     window_placement             second_child   \
-    window_shadow                off            \
     window_animation_duration    0.0            \
     window_opacity_duration      0.0            \
     active_window_opacity        1.0            \
