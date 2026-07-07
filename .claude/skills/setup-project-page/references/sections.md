@@ -11,9 +11,10 @@ HTML section templates and CSS classes for the [project-page-starter](https://gi
 ## General Rules
 
 - Section files are **HTML fragments only** — no `<html>`, `<head>`, `<body>`, or `<!DOCTYPE>`
-- The outermost element needs an `id` matching the section's `id` in config.yaml (except hero which uses its class)
+- The outermost element needs an `id` only when the section is linked to: every section with `nav: true` in config.yaml, plus any section targeted by an in-page link (e.g. the hero's `#quickstart` CTA). Sections with `nav: false` and no inbound link (hero, highlights, footer in the standard layout) do not need an id. `source: readme` sections get their id from the generator automatically.
 - Each section type has its own CSS class that provides spacing — do NOT add `class="section"` alongside these
 - Wrap content in `.container` for centered, max-width layout
+- Inside `<code>` elements, escape `<` as `&lt;` and `&` as `&amp;`: section HTML is parsed with a real HTML parser before syntax highlighting, and unescaped angle-bracket content (CLI placeholders like `<file>`, generics like `Vec<String>`) is read as markup and silently dropped from the highlighted output
 
 ## hero.html
 
@@ -47,7 +48,7 @@ The first thing visitors see. Project name, tagline, and call-to-action buttons.
 - `.hero-subtitle` + `.hero-subtitle-highlight` — optional subtitle above tagline (for acronym-style names)
 - `.hero-logo` + `.hero-logo-img` — optional logo image above h1
 
-**Icons:** Use `<i data-icon="download"></i>` or `<i data-icon="github"></i>` — these are replaced at build time with inline SVGs.
+**Icons:** The available set is exhaustive: only `<i data-icon="download"></i>` and `<i data-icon="github"></i>` are replaced at build time with inline SVGs. An unknown name produces no build error, only a build-log warning, and leaves an empty spot on the page.
 
 **Button sizes:** Use `.btn-lg` for hero buttons to make them prominent.
 
@@ -119,7 +120,22 @@ A demo video wrapped in a macOS-style terminal frame. Skip this section entirely
 - `.macos-window-title` — centered title text in titlebar
 - `.macos-window-content` — content area (video fills width)
 
-**Video sources:** Always provide both `.webm` (primary) and `.mp4` (Safari fallback). Videos go in `docs/pages/assets/`.
+**Without the frame:** For GUI apps or screencasts where a fake terminal frame is wrong, drop the `.macos-window` wrapper and put the `.demo-video` class directly on the `<video>` element:
+
+```html
+<section id="demo" class="demo">
+  <div class="container">
+    <video autoplay loop muted playsinline class="demo-video">
+      <source src="assets/demo.webm" type="video/webm">
+      <source src="assets/demo.mp4" type="video/mp4">
+    </video>
+  </div>
+</section>
+```
+
+**Video sources:** Always provide both `.webm` (primary) and `.mp4` (fallback for older Safari: iOS before 17.4, macOS Safari before 14.1/Big Sur). Videos go in `docs/pages/assets/`.
+
+**Producing the video:** For CLI projects, the starter repo's `vhs/` directory ships a pre-configured `vhs/demo.tape` with a theme matching the landing page colors. Recording is `cd vhs && vhs demo.tape`, then copying the resulting `demo.webm`/`demo.mp4` into `docs/pages/assets/`. The tape records at 2x resolution (e.g. 1800x800 for a 900x400 display size) so the video stays crisp on HiDPI screens. Requirements: `vhs`, `ttyd`, and `ffmpeg` (all brew-installable).
 
 ## quick-start.html
 
@@ -151,6 +167,7 @@ Installation instructions with tabbed variants. Adapt the tabs to match the proj
           <div class="code-block">
             <pre><code class="language-bash">git clone https://github.com/user/repo
 cd repo
+npm install
 npm run build</code></pre>
           </div>
         </div>
@@ -232,7 +249,8 @@ Page footer with tagline, credit line, and optional imprint link.
 | Class | Purpose |
 |-------|---------|
 | `.container` | Centered max-width wrapper |
-| `.bg-alt` | Alternate background color |
+
+Alternate backgrounds come from the section classes themselves (`.demo`, `.docs`, `.table th`, `.docs-table`), which set `background-color: var(--color-bg-alt)` directly — there is no standalone `.bg-alt` class.
 
 ### Section Types (use instead of `.section`)
 | Class | Purpose |
@@ -255,9 +273,14 @@ Page footer with tagline, credit line, and optional imprint link.
 | Class | Purpose |
 |-------|---------|
 | `.text-center` | Center-aligned text |
+| `.text-left` | Left-aligned text |
+| `.text-right` | Right-aligned text |
 | `.text-muted` | Muted/secondary color |
+| `.text-bright` | Brighter text color |
+| `.text-primary` | Primary accent color |
 | `.text-sm` | Smaller text |
 | `.text-lg` | Larger text |
+| `.text-xl` | Largest text |
 
 ### Buttons
 | Class | Purpose |
@@ -286,14 +309,31 @@ Page footer with tagline, credit line, and optional imprint link.
 | `.feature-box` | Card with hover border effect |
 | `.callout-box` | Notice/tip box (primary accent) |
 | `.callout-warning` | Warning variant of callout |
+| `.demo-video` | Standalone demo video, no window frame |
+| `.card` | Bordered card with background and shadow |
+| `.docs-table` | Bordered wrapper around `.table` (used by README-rendered tables) |
+| `.table` | Table styling (borders, header background, cell padding) |
+| `.hero-logo-full` | Full logo image above the hero h1 |
+
+### Flex & Visibility Utilities
+| Class | Purpose |
+|-------|---------|
+| `.flex` | `display: flex` |
+| `.flex-center` | Flex, centered on both axes |
+| `.flex-between` | Flex, space-between with centered cross axis |
+| `.gap-sm` / `.gap-md` / `.gap-lg` | Gap between flex/grid children |
+| `.hidden` | `display: none` |
+| `.visually-hidden` | Visually hidden but accessible to screen readers |
+| `.block` | `display: block` |
+| `.inline-block` | `display: inline-block` |
 
 ### Spacing Utilities
 | Pattern | Sizes |
 |---------|-------|
-| `.mt-{size}` | Margin top: xs, sm, md, lg, xl, 2xl |
-| `.mb-{size}` | Margin bottom |
-| `.py-{size}` | Padding vertical |
-| `.px-{size}` | Padding horizontal |
+| `.mt-{size}` | Margin top: 0, sm, md, lg, xl |
+| `.mb-{size}` | Margin bottom: 0, sm, md, lg, xl |
+| `.py-{size}` | Padding vertical: sm, md, lg, xl, 2xl |
+| `.px-{size}` | Padding horizontal: sm, md, lg |
 
 ## Supported Syntax Highlighting Languages
 
@@ -307,6 +347,7 @@ Page footer with tagline, credit line, and optional imprint link.
 | `language-javascript` | |
 | `language-rust` | |
 | `language-go` | |
+| `language-lua` | |
 
 Unrecognized languages render as plain text.
 
@@ -320,4 +361,4 @@ Unrecognized languages render as plain text.
 - NEVER use `.macos-buttons` — the correct class is `.macos-window-buttons`
 - MUST NOT use `class="section"` on hero, highlights, quickstart, demo, or footer elements
 - MUST NOT add `<html>`, `<head>`, or `<body>` tags — section files are HTML fragments
-- NEVER put the section `id` on the hero element — the hero uses its class for styling; other sections (demo, quickstart) do need `id` attributes for anchor links
+- NEVER put raw `<placeholder>` text inside code blocks in section files — escape `<` and `&` or the content is parsed as markup and silently dropped
