@@ -139,7 +139,6 @@ ai_request() {
         --system-prompt "$system_prompt" \
         2>"$tmp_err")
   exit_code=$?
-  exit_code=$?
 
   if [ $exit_code -ne 0 ]; then
     printf "claude failed (exit %d):\n" "$exit_code" >&2
