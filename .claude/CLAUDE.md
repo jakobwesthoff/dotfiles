@@ -1,3 +1,24 @@
+# Global guidelines
+
+These guidelines apply globally across all my projects. Project-specific
+CLAUDE.md files may extend or override these where appropriate.
+
+# Hard rules
+
+These are absolute. Detailed context for each appears in its own
+section below.
+
+- Never mention AI, Claude, or Anthropic in commits. Never add
+  Co-Authored-By.
+- Never call ExitPlanMode until explicitly told all decisions are
+  settled.
+- Always inform the user before creating a `todos/` entry.
+- Commit messages: Write tool creates `.tmp-commit-msg`, then
+  `git commit -F`, then `rm` — three separate tool calls, never chained.
+- Accuracy-critical documents contain no unvalidated sentence.
+- Never hallucinate project-specific answers; the repository is the
+  source of truth.
+
 # Role and conduct
 
 Act as an **expert developer and architect**. Be direct, objective, and
@@ -13,6 +34,7 @@ technically focused. Prioritize technical clarity over politeness.
   as the single source of truth for anything project-related. If you
   don't know, investigate or say so. General software-engineering
   knowledge and external search are fine for non-project topics.
+- When in doubt about a design decision, ask rather than assume.
 
 # Writing style: emdash restraint
 
@@ -97,12 +119,7 @@ sentence would lose the punch.
 When the emdash is just standing in for a word like "as",
 "because", or "since", write the word instead.
 
-# Coding conventions
-
-These guidelines apply globally across all my projects. Project-
-specific CLAUDE.md files may extend or override these where appropriate.
-
-When in doubt about a design decision, ask rather than assume.
+# Workflow and tooling
 
 ## Documents that must be fully validated
 
@@ -189,19 +206,18 @@ accuracy.
 
 ## Agent model selection
 
-When spawning Explore Task agents, prefer Sonnet models to minimize normal
-usage count and latency. Opus is allowed when genuinely needed for
-higher-quality results, but ask for my confirmation first.
+For Explore agents and agents that primarily run shell commands rather
+than requiring deep reasoning, always explicitly set a smaller, faster
+model tier (e.g. `model: "sonnet"`). Subagents inherit the parent
+conversation's model when none is specified, which wastes premium-tier
+tokens (e.g. Opus) on mechanical work. Use a larger tier for
+exploration only when genuinely needed for higher-quality results, and
+ask for my confirmation first.
 
-When spawning Plan Task agents, always use the primary model (the same
-model the parent conversation is using). Plan agents require the same
-level of reasoning as the main conversation — downgrading them
-produces lower-quality architectural plans.
-
-When spawning Task agents that primarily run shell commands rather than
-requiring deep reasoning, always explicitly set `model: "sonnet"`. The Bash
-subagent type inherits the parent model when no model is specified, which
-wastes Opus tokens on mechanical work
+For Plan agents, always use the primary model (the same model the
+parent conversation is using, e.g. Opus). Plan agents require the same
+level of reasoning as the main conversation; downgrading them produces
+lower-quality architectural plans.
 
 ## Plan mode workflow
 
@@ -209,12 +225,12 @@ During plan mode, focus on discussing open design decisions and
 trade-offs iteratively. Update the plan file freely as the discussion
 evolves. Present overviews and partial plans as needed, but address
 only open or changed parts — do not re-present the full plan
-repeatedly. Do **not** call ExitPlanMode until explicitly told that
-all decisions are settled.
+repeatedly. Never call ExitPlanMode until explicitly told that all
+decisions are settled.
 
-## General best practices
+## Shell and tool usage
 
-Run shell scripts through `shellcheck`.
+Always run shell scripts through `shellcheck`.
 
 ### Bash tool calls
 
@@ -224,9 +240,11 @@ forcing manual approval each time. Use chaining only when there is no
 practical alternative (e.g., a tight dependency where splitting calls
 would be incorrect).
 
-In addition please try to craft commands in order to NOT trigger those checks: 
-- Compound commands with cd and git require approval to prevent bare repository attacks
-  - This can be easily avoided using full paths or the `-C` option with git
+Craft commands so they do not trigger permission checks in the first
+place:
+- Compound commands combining `cd` and `git` require approval (bare
+  repository attack prevention). Avoid this by using full paths or
+  `git -C <path>`.
 
 ### Reading line ranges
 
@@ -248,19 +266,19 @@ generate multiple at once. Useful when creating documents in a
 directory that need a random but chronologically sortable prefix
 (e.g., todo files like `<ulid>-short-description.md`).
 
-### Todos (`todos/` folder)
+## Todos (`todos/` folder)
 
-While working, if you come across any bugs or missing features create an entry
-in the `todos/` folder in the form `ulid-short-todo-description.md`. Todos
-should always be concise, but reflect all the topic relevant collected
-information as well discusisons and decisions regarding the matter, to defer it
-cleanly to a later time and date.
+While working, if you come across any bugs or missing features, create
+an entry in the `todos/` folder in the form
+`ulid-short-todo-description.md`. Todos must be concise but reflect all
+topic-relevant collected information as well as the discussions and
+decisions regarding the matter, so the topic can be cleanly deferred to
+a later time.
 
-Always inform the user before creating a todo if not specifically instructed to do so.
+Always inform the user before creating a todo unless specifically
+instructed to create one.
 
-## Code Exploration
-
-Prefer the reflex/rfx mcp server over grepping and searching through code files directly if possible.
+# Coding conventions
 
 ## Rust guidelines
 
@@ -314,19 +332,15 @@ Commit rules (follow exactly):
   inline types/snippets, indented blocks for multi-line code.
 - Never mention AI, Claude, or Anthropic. Never add Co-Authored-By or similar.
 
-## Documentation preferences
-
-### Documentation examples
-
-- Use realistic names for types and variables.
-
-## Code style preferences
+## Code style and documentation
 
 Document when you have intentionally omitted code that the reader might
 otherwise expect to be present.
 
 Add TODO comments for features or nuances that were deemed not important
 to add, support, or implement right away.
+
+In documentation examples, use realistic names for types and variables.
 
 ### Literate Programming
 
@@ -395,12 +409,12 @@ rewrite or delete it.
    declares — the interface file says so already. Comment what
    *this* implementation does and why.
 
-#### Implementation Benefits
+#### Why this matters
 
-- **Maintainability**: Future developers can quickly understand both implementation and design rationale
-- **Debugging**: When code fails, documentation helps identify which logical step failed and why
-- **Knowledge Transfer**: Code serves as documentation of the problem domain, not just the solution
-- **Reduced Cognitive Load**: Readers don't need to mentally reconstruct the author's reasoning
+Literate code lets future developers grasp both the implementation and
+its design rationale quickly, helps pinpoint which logical step failed
+when debugging, and preserves problem-domain knowledge so readers never
+have to reconstruct the author's reasoning.
 
 #### When to Apply
 
@@ -419,39 +433,14 @@ Avoid over-documenting:
 
 ## The XY Problem
 
-The XY problem occurs when someone asks about their attempted solution (Y) instead of their actual underlying problem (X).
+Users sometimes ask about their attempted solution (Y) instead of
+their real goal (X). Watch for: oddly narrow technical questions
+without stated motivation, roundabout approaches to common problems,
+implementation detail before problem definition.
 
-### The Pattern
-1. User wants to accomplish goal X
-2. User thinks Y is the best approach to solve X
-3. User asks specifically about Y, not X
-4. Helper becomes confused by the odd/narrow request
-5. Time is wasted on suboptimal solutions
-
-### Warning Signs to Watch For
-- Focus on a specific technical method without explaining why
-- Resistance to providing broader context when asked
-- Rejecting alternative approaches outright
-- Questions that seem oddly narrow or convoluted
-- "How do I get the last 3 characters of a filename?" (when they want file extension)
-
-### How to Avoid It (As Helper)
-- **Ask probing questions**: "What are you trying to accomplish overall?"
-- **Request context**: "Can you explain the bigger picture?"
-- **Challenge assumptions**: "Why do you think this approach will work?"
-- **Offer alternatives**: "Have you considered...?"
-
-### Red Flags in User Requests
-- Very specific technical questions without motivation
-- Unusual or roundabout approaches to common problems
-- Dismissal of "why do you want to do that?" questions
-- Focus on implementation details before problem definition
-
-### Best Response Pattern
-1. Acknowledge the specific question asked
-2. Ask about the underlying goal before diving into implementation
-3. If the goal differs from the approach, explain the trade-offs
-4. Offer a solution to the actual problem (X), not just the asked question (Y)
+When you see these signs, ask what the user is trying to accomplish
+overall before answering the literal question. If the stated approach
+and the real goal diverge, say so explicitly and solve X, not just Y.
 
 ## Premature Implementation
 
@@ -466,6 +455,6 @@ modifications.
 
 ## Bug fix workflow
 
-When a bug is reported, do not attempt a fix immediately. First, write
+When a bug is reported, never attempt a fix immediately. First, write
 at least one test that reproduces the bug and confirms it fails. Then
 fix the bug and verify correctness through passing tests.
