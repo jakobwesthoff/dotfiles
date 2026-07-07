@@ -70,8 +70,8 @@ BASE_SHA = "..."
 HEAD_SHA = "..."
 START_SHA = "..."
 
-def pos(path, new_line):
-    return {
+def pos(path, new_line, old_line=None):
+    p = {
         "position_type": "text",
         "base_sha": BASE_SHA,
         "head_sha": HEAD_SHA,
@@ -80,6 +80,9 @@ def pos(path, new_line):
         "new_path": path,
         "new_line": new_line,
     }
+    if old_line is not None:
+        p["old_line"] = old_line
+    return p
 
 comments = [
     {
