@@ -26,6 +26,7 @@
 -- its own client (see lua/mrjakob/plugins/lsp.lua).
 -- =============================================================================
 return {
+  astro = "astro-language-server",
   lua_ls = "lua-language-server",
   marksman = "marksman",
   ts_ls = "typescript-language-server",
@@ -37,6 +38,7 @@ return {
   helm_ls = "helm-ls",
   yamlls = "yaml-language-server",
   jsonls = "json-lsp",
+  lemminx = "lemminx",
   clangd = "clangd",
   -- ntropy: installed via `cargo install ntropy`; no Mason package exists.
   -- The after/lsp/ntropy.lua config restricts activation to markdown files
