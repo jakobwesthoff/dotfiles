@@ -133,6 +133,29 @@ Or in the justfile: `set unstable`. `which()` and the `&&`/`||` operators are
 gated behind `set lists` (1.53.0, unstable), which itself requires
 `set unstable`/`--unstable`.
 
+### Other Authoring-Relevant Flags
+
+- `--no-deps` (`JUST_NO_DEPS`): skips recipe dependencies. Recipes should
+  not assume their dependencies always ran.
+- `-s`, `--show <PATH>`: shows a single recipe's source, complementing
+  `--list` for inspecting one recipe at a time.
+- `--explain` (`JUST_EXPLAIN`): prints a recipe's doc comment before
+  running it, another consumer of doc comments beyond `--list`.
+- `--allow-missing` (1.38.0+): ignores missing recipe and module errors.
+- `--init`: scaffolds a new justfile in the project root.
+- `--json` (1.48.0+): prints the justfile as JSON, a synonym for
+  `--dump --dump-format json`.
+- `--group <GROUP>` (1.47.0+): lists only recipes in `<GROUP>`; `--choose`
+  can also be filtered by group (1.50.0+). Strengthens the case for
+  tagging recipes with `[group]`.
+- `--time` (1.49.0+): prints recipe execution time. `--timestamp` prints
+  recipe command timestamps.
+- `--evaluate` / `--variables`: evaluates and prints all variables, or
+  lists variable names only. Useful for debugging variable-heavy
+  justfiles.
+- `-E` (`--dotenv-path`) and `-F` (`--dotenv-filename`, short form
+  1.55.0+): point `just` at a specific env file.
+
 ## `[arg]` and Invocation UX
 
 The `[arg]` attribute transforms positional parameters into named CLI options:
