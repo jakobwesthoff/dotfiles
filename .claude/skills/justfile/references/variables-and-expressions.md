@@ -32,6 +32,10 @@ unexport SENSITIVE_VAR         # removes inherited env var from recipe scope
 
 `set export` exports ALL just variables globally.
 
+Variables can be hidden from `--evaluate`/`--variables` with `[private]`
+above the assignment, or with an `_`-prefixed name — the same mechanisms
+used to hide private recipes.
+
 **Caveat:** exported variables are NOT visible to backticks in other
 top-level variable assignments (module scope) — those backticks
 evaluate before recipes run. They ARE visible to backticks inside

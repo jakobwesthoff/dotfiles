@@ -223,7 +223,7 @@ search QUERY:
 Always quote interpolations that may contain spaces, or use positional
 arguments (`set positional-arguments` + `"$1"`).
 
-### `[arg]` attribute — named options (1.45.0+)
+### `[arg]` attribute — named options (1.46.0+)
 
 ```just
 [arg('output', long='output', short='o', help='Output directory')]
@@ -241,7 +241,10 @@ test verbose='false':
   echo "verbose={{verbose}}"
 ```
 
-Variadic `+`/`*` parameters CANNOT be made into options.
+Variadic `+`/`*` parameters may be options since 1.55.0: the resulting
+`--long`/`-s` option is repeatable, with each occurrence appending one
+value. On older `just` versions, making a variadic parameter into an
+option is an error.
 
 ## Aliases
 

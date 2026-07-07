@@ -149,8 +149,8 @@ $ just build --output ./build --verbose
 $ just build -o ./build
 ```
 
-This makes recipes feel like proper CLI tools. Use `--usage` to see
-generated usage info:
+This makes recipes feel like proper CLI tools. Use `--usage` (1.46.0+) to
+see generated usage info:
 
 ```console
 $ just --usage build

@@ -10,7 +10,7 @@ metadata:
 Attributes are placed on lines immediately before a recipe, `mod`, or alias.
 Doc comments (`#`) must come **before** attributes — the sequence must be
 `# comment` → `[attr]` → `recipe:`. Placing a `#` comment after an attribute
-causes an `Extraneous attribute` error.
+causes an `extraneous attribute` error.
 
 ## Syntax Forms
 
@@ -25,6 +25,11 @@ causes an `Extraneous attribute` error.
 Multiple attributes can be stacked on separate lines. `[arg]`, `[env]`,
 `[group]`, and `[metadata]` are **repeatable**.
 
+Attribute arguments may be expressions, not just literals, for `[confirm]`
+(1.49.0+), `[env]` and `[working-directory]` (1.51.0+) — e.g.
+`[working-directory(justfile_directory() / 'build')]`. Shell-expanded
+`x'...'` strings are also allowed as attribute arguments (1.45.0+).
+
 ## Complete Reference
 
 ### Execution Control
@@ -38,11 +43,15 @@ Multiple attributes can be stacked on separate lines. `[arg]`, `[env]`,
 | `[working-directory("path")]` | Override working directory |
 | `[confirm]` / `[confirm("prompt")]` | Require interactive confirmation (bypass with `--yes`) |
 | `[no-exit-message]` | Suppress failure error message |
+| `[exit-message]` (1.39.0+) | Print error message if recipe fails, regardless of `set no-exit-message` |
 | `[no-quiet]` | Echo lines even when `set quiet` is active |
 | `[positional-arguments]` | Enable `$1`, `$2`, `$@` for this recipe |
 | `[parallel]` | Run dependencies concurrently |
 | `[env("VAR", "VALUE")]` | Set env var for this recipe (repeatable) |
 | `[default]` | Use as module's default recipe |
+| `[shell]` (1.52.0+) | Execute recipe as a shell recipe, overriding `set default-script`. Bare flag taking no arguments; it does not select which shell |
+| `[continue]` / `[continue("SIGHUP", ...)]` (1.54.0+) | Signal tolerance, not continue-on-error: proceed normally if a command is interrupted by one of the given signals yet exits successfully; defaults to `SIGINT`. A command exiting non-zero still fails the recipe |
+| `[cache]` (1.54.0+, unstable, script recipes only) | Cache recipe output; parameters `inputs`, `outputs`, `extra`; cache stored in `.justcache` next to the justfile |
 
 ### Visibility & Documentation
 
@@ -62,6 +71,7 @@ Multiple attributes can be stacked on separate lines. `[arg]`, `[env]`,
 | `[macos]` | macOS only |
 | `[unix]` | All Unix (includes macOS) |
 | `[windows]` | Windows only |
+| `[android]` (1.50.0+) | Android only |
 | `[freebsd]` | FreeBSD |
 | `[netbsd]` | NetBSD |
 | `[openbsd]` | OpenBSD |
@@ -85,7 +95,7 @@ build:
   cl main.c
 ```
 
-### `[arg]` — Parameter Options (1.45.0+)
+### `[arg]` — Parameter Options (1.46.0+)
 
 Controls how recipe parameters are passed from the CLI.
 
@@ -101,14 +111,24 @@ build output="./dist" verbose="false":
 | `long="name"` | Named `--name` option |
 | `long` | Named option using parameter name |
 | `short="c"` | Short `-c` option |
-| `pattern="regex"` | Constrain value (auto-anchored with `^…$`) |
+| `pattern="regex"` (1.45.0+) | Constrain value (auto-anchored with `^…$`) |
 | `value="V"` | Flag mode — no CLI value, parameter receives `V` when present |
 | `help="text"` | Description shown in `--usage` output |
 
 A parameter can have both `long` and `short`. `value` makes it a flag
 (no value taken from CLI).
 
-Variadic `+`/`*` parameters CANNOT be made into options.
+Variadic `+`/`*` parameters may be options since 1.55.0: the resulting
+`--long`/`-s` option is repeatable, with each occurrence appending one
+value. On older `just` versions, making a variadic parameter into an
+option is an error.
+
+Other `[arg]` additions in 1.55.0:
+- `[arg(multiple)]` allows a non-variadic parameter to accept multiple values.
+- Bare `short` defaults to the first character of the parameter name.
+- Combined short options are accepted on the CLI.
+- `help`, `pattern`, and `value` may be const expressions, and `pattern`
+  may be a list.
 
 `--list` does not reveal `[arg]`-defined option names — use
 `just --usage <recipe>` to see the generated CLI interface.
@@ -119,8 +139,11 @@ Variadic `+`/`*` parameters CANNOT be made into options.
 |-----------|:------:|:------:|:-----:|
 | `[doc]` | yes | yes | no |
 | `[group]` | yes | yes | no |
-| `[private]` | yes | no | yes |
+| `[private]` | yes | yes (1.47.0+) | yes |
 | All others | yes | no | no |
+
+`[private]` above a variable assignment also hides it from
+`--evaluate`/`--variables`, same as an underscore-prefixed variable name.
 
 ## Anti-Patterns
 
