@@ -32,8 +32,11 @@ unexport SENSITIVE_VAR         # removes inherited env var from recipe scope
 
 `set export` exports ALL just variables globally.
 
-**Caveat:** exported variables are NOT available to backtick expressions in
-the same scope — backticks evaluate before recipes run.
+**Caveat:** exported variables are NOT visible to backticks in other
+top-level variable assignments (module scope) — those backticks
+evaluate before recipes run. They ARE visible to backticks inside
+recipe bodies and in parameter default values; exported parameters
+(`$P`) are too.
 
 ### CLI Overrides
 
@@ -165,6 +168,10 @@ publish:
 ```
 
 Whitespace inside `{{…}}` is allowed: `{{ config }}` equals `{{config}}`.
+
+Each line's `{{…}}` interpolations are evaluated when that line runs,
+so they can observe effects (e.g. files created) of earlier lines in
+the same recipe.
 
 To produce a literal `{{`, use `{{{{`. Only `{{` is special — `}}` outside
 an interpolation block is always literal and needs no escaping:

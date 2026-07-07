@@ -25,7 +25,9 @@ ruby:
 - Body is saved to a temp file, marked executable, and run.
 - Shebang recipes are **quiet by default** (no line echoing).
 - Shell state persists across all lines (unlike linewise recipes).
-- Use `set -euxo pipefail` in bash shebangs for safety.
+- Without `-e`, a failed command does not stop the script; `just` only
+  reports the script's overall exit status. Use `set -euxo pipefail`
+  in bash shebangs for safety.
 
 ### Windows behavior
 
@@ -48,7 +50,10 @@ deploy:
   echo "deploying…"
 ```
 
-`[script]` (bare) uses `set script-interpreter` (default `sh -eu`):
+`[script]` (bare) uses `set script-interpreter` (default `sh -eu`). The
+default `sh -eu` stops the recipe at the first failing command;
+replacing `script-interpreter` or using `[script("bash")]` without
+error flags loses that behavior.
 
 ```just
 set script-interpreter := ['uv', 'run', '--script']
@@ -71,20 +76,16 @@ windows-task:
 
 ### Body tokenization caveat
 
-Script and shebang recipe bodies are still **tokenized by just** for
-`{{…}}` interpolation — including `#` comment lines within the body.
-A `{{` inside a comment in a script body triggers a parse error.
-Character sequences that conflict with just's lexer will cause parse
-errors even though they are valid in the target language.
+Recipe bodies are passed through as ordinary text, apart from `{{…}}`
+interpolation — including `#` comment lines within the body. A `{{`
+anywhere in the body, unmatched, triggers `error: unterminated
+interpolation`. A less-indented line ends the recipe body.
 
-NEVER use shell heredocs (`<<EOF … EOF`) inside shebang or script
-recipes. The heredoc body is parsed as justfile content, and barewords
-or assignment-like lines trigger parse errors. Use `printf`, `echo`,
-or the interpreter's native string handling instead.
-
-NEVER use Python `->` return type annotations inside `[script("python3")]`
-recipes — the `->` token is not valid in just's lexer. Remove annotations
-or move annotated functions to an external `.py` file.
+Heredocs (`<<EOF … EOF`) work in shebang and `[script]` recipes: the
+body is dedented and written to a temp file, so all heredoc lines,
+including the closing terminator, must keep at least the recipe's
+indentation. Heredocs cannot be used in linewise recipes, where each
+line is a separate shell invocation.
 
 ## Cross-Platform Recipes
 

@@ -69,12 +69,16 @@ Use `source_directory()` inside modules for paths relative to that module.
 | Function | Example |
 |----------|---------|
 | `absolute_path("./foo")` | `/project/foo` (lexical, no symlink resolution) |
-| `canonicalize("./foo")` | Resolves symlinks; path must exist **at parse time** |
+| `canonicalize("./foo")` | Resolves symlinks; path must exist when evaluated [^1] |
 | `extension("/a/b.txt")` | `"txt"` |
 | `file_name("/a/b.txt")` | `"b.txt"` |
 | `file_stem("/a/b.txt")` | `"b"` |
 | `parent_directory("/a/b")` | `"/a"` |
 | `without_extension("/a/b.txt")` | `"/a/b"` |
+
+[^1]: For variable assignments, evaluation happens at justfile load;
+for recipe interpolations, it happens when the containing line
+executes.
 
 ### Infallible
 
