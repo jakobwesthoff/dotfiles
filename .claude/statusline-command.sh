@@ -4,7 +4,9 @@
 #
 # VERSION DETECTION:
 #   Real-time mode  (Claude Code >= 2.1.72): context_window.used_percentage is present in JSON
-#   Fallback mode   (Claude Code 2.0.27-2.1.71): parses transcript JSONL for last assistant message
+#   Fallback mode   (older Claude Code versions, and early in any session before the
+#                    first context_window.used_percentage is reported): parses transcript
+#                    JSONL for last assistant message
 
 # =========================================================
 # ANSI color helpers
@@ -47,14 +49,15 @@ elif [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
     # Fallback mode: parse transcript JSONL for last assistant message with usage data.
     last_usage=$(grep -E '"type"\s*:\s*"assistant"' "$transcript_path" 2>/dev/null \
         | jq -s 'map(select(.message.usage.input_tokens != null))
-                 | map(select((.message.usage.input_tokens + (.message.usage.cache_read_input_tokens // 0)) > 1000))
+                 | map(select((.message.usage.input_tokens + (.message.usage.cache_creation_input_tokens // 0) + (.message.usage.cache_read_input_tokens // 0)) > 1000))
                  | last
                  | .message.usage' 2>/dev/null)
 
     if [ -n "$last_usage" ] && [ "$last_usage" != "null" ]; then
         input_toks=$(echo "$last_usage" | jq -r '.input_tokens // 0')
+        cache_creation_toks=$(echo "$last_usage" | jq -r '.cache_creation_input_tokens // 0')
         cache_toks=$(echo "$last_usage" | jq -r '.cache_read_input_tokens // 0')
-        total_toks=$((input_toks + cache_toks))
+        total_toks=$((input_toks + cache_creation_toks + cache_toks))
         raw_used=$(awk -v t="$total_toks" -v s="$context_window_size" 'BEGIN { printf "%.2f", (t / s) * 100 }')
         mode="FALLBACK"
     else
