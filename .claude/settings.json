@@ -1,19 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)",
       "WebSearch",
       "Bash(cargo check:*)",
       "Bash(cargo clippy:*)",
       "Bash(tree:*)",
-      "Bash(ls:*)",
-      "Bash(grep:*)",
-      "Bash(wc:*)",
       "Bash(bats:*)",
       "Bash(xargs cat:*)",
       "Bash(git:*)",
-      "Bash(mkulid -l -n 8)",
-      "Bash(mkulid -l)",
       "Bash(mkulid:*)"
     ],
     "deny": [],
