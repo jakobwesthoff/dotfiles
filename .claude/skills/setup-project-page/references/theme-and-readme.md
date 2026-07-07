@@ -1,9 +1,3 @@
----
-name: theme-and-readme-reference
-description: Theme CSS variable overrides and README.md docs marker placement
-tags: [theme, css, readme, markers]
----
-
 # Theme and README Reference
 
 Theme customization and README marker format for the [project-page-starter](https://github.com/jakobwesthoff/project-page-starter) generator. Default theme variables are defined in `templates/styles/theme.css` in that repository.
@@ -39,7 +33,7 @@ For projects that want more control (e.g. an amber brand color with custom h1 gr
 }
 ```
 
-**Important:** `--color-primary` and `--color-primary-hover` MUST be hex values. `--color-primary-subtle` and other non-favicon variables can use CSS functions.
+**Important:** `--color-primary` and `--color-primary-hover` must be plain hex values; see Favicon Hex Constraint below. `--color-primary-subtle` and other non-favicon variables can use CSS functions.
 
 ## Favicon Hex Constraint
 
@@ -205,7 +199,7 @@ MIT (NOT inside markers)
 
 ## Anti-Patterns
 
-- NEVER use CSS functions (`rgba()`, `var()`, `rgb()`) for `--color-primary` or `--color-primary-hover` — MUST be hex values for favicon generation
+- NEVER use CSS functions for `--color-primary` or `--color-primary-hover` — see Favicon Hex Constraint above
 - NEVER wrap the entire README in markers — only the documentation section belongs inside
 - MUST NOT nest markers or include multiple marker pairs — use exactly one `<!-- docs:start -->` and one `<!-- docs:end -->`
 - MUST NOT forget to add markers when using `source: readme` in config.yaml — the generator will error

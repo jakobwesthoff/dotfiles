@@ -1,9 +1,3 @@
----
-name: sections-reference
-description: HTML templates for each section file with CSS classes and component patterns
-tags: [html, sections, css, components]
----
-
 # Sections Reference
 
 HTML section templates and CSS classes for the [project-page-starter](https://github.com/jakobwesthoff/project-page-starter) generator. The canonical CSS definitions live in `templates/styles/layout.css` and `templates/styles/components.css` in that repository.
@@ -359,6 +353,6 @@ Unrecognized languages render as plain text.
 - NEVER use `.macos-titlebar` — the correct class is `.macos-window-titlebar`
 - NEVER use `.macos-content` — the correct class is `.macos-window-content`
 - NEVER use `.macos-buttons` — the correct class is `.macos-window-buttons`
-- MUST NOT use `class="section"` on hero, highlights, quickstart, demo, or footer elements
-- MUST NOT add `<html>`, `<head>`, or `<body>` tags — section files are HTML fragments
+- MUST NOT use `class="section"` — see General Rules above
+- MUST NOT add `<html>`, `<head>`, or `<body>` tags — see General Rules above
 - NEVER put raw `<placeholder>` text inside code blocks in section files — escape `<` and `&` or the content is parsed as markup and silently dropped

@@ -1,9 +1,3 @@
----
-name: config-reference
-description: Schema and examples for docs/pages/config.yaml
-tags: [config, yaml, sections, navbar]
----
-
 # Config Reference
 
 Configuration schema for the [project-page-starter](https://github.com/jakobwesthoff/project-page-starter) generator. Types are defined in `generator/lib/config.ts` in that repository.

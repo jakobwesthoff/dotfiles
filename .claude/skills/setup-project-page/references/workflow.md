@@ -1,9 +1,3 @@
----
-name: workflow-reference
-description: GitHub Actions workflow for automatic GitHub Pages deployment
-tags: [github-actions, deployment, pages]
----
-
 # Workflow Reference
 
 GitHub Actions workflow that builds and deploys a landing page using the [project-page-starter](https://github.com/jakobwesthoff/project-page-starter) generator. The canonical workflow source is `workflow/generate-pages.yml` in that repository.

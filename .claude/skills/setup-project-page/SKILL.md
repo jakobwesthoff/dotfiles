@@ -3,6 +3,9 @@ name: setup-project-page
 description: >-
   Set up docs/pages/ directory and files to generate a project landing page with
   project-page-starter. Use when adding a landing page to a project.
+when_to_use: >-
+  Trigger phrases: "project page", "landing page", "GitHub Pages site for this
+  repo", "docs/pages".
 ---
 
 # Setup Project Page
@@ -96,8 +99,8 @@ When analyzing a project, look for these signals:
 
 ## Anti-Patterns
 
-- NEVER use CSS functions (like `rgba()`, `var()`) for `--color-primary` or `--color-primary-hover` — they MUST be plain hex values (e.g. `#7c3aed`). The generator injects these values verbatim as SVG fill colors for the auto-generated favicon; a `var()` reference breaks it because the standalone SVG cannot resolve custom properties. Always override both together — each falls back to the base theme independently, so overriding only one produces a two-tone favicon.
-- NEVER add `<html>`, `<head>`, `<body>`, or `<!DOCTYPE>` to section files — they are HTML fragments injected into the generator's page template.
+- NEVER use CSS functions for `--color-primary` or `--color-primary-hover` — see references/theme-and-readme.md's Favicon Hex Constraint.
+- NEVER add `<html>`, `<head>`, `<body>`, or `<!DOCTYPE>` to section files — see references/sections.md's General Rules.
 - MUST NOT duplicate README content into section files — use `source: readme` in config.yaml to pull documentation from the README.
 - NEVER create a section HTML file without a matching entry in the `config.yaml` sections array, and vice versa.
-- NEVER use `class="section"` on hero, highlights, quickstart, demo, or footer elements — each has its own layout class that provides the correct spacing.
+- NEVER use `class="section"` on hero, highlights, quickstart, demo, or footer elements — see references/sections.md's General Rules.
