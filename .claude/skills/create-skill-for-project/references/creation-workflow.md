@@ -35,6 +35,12 @@ If the request is ambiguous, ask clarifying questions NOW. Examples:
 - "Do you want this to generate boilerplate, or guide writing from scratch?"
 - "Are there existing patterns in the codebase I should follow?"
 
+Draft 2-3 example prompts you'll use to evaluate the finished skill (see
+Phase 5's Evaluation section): a mix that should trigger it and near-miss
+prompts that shouldn't. Settling these before writing extensive
+documentation keeps the skill's instructions no larger than what's needed
+to pass them.
+
 DO NOT proceed to Phase 2 until purpose, triggers, and output are clear.
 
 ---
@@ -137,6 +143,22 @@ my-skill/
 └── assets/                     # Only if Tier 3
     └── <example>.ext
 ```
+
+### Choose the Degree of Freedom per Topic
+
+For each topic the skill covers, decide whether it is:
+- a **fragile sequence** (low freedom: exact commands or a script with few
+  or no parameters — the operation is error-prone and a specific order
+  must be followed),
+- a **preferred pattern** (medium freedom: a template or script with
+  parameters, with acceptable variation), or
+- **judgment-guided** (high freedom: heuristics and goals, for
+  context-dependent choices like reviews, design, or naming).
+
+See "Degrees of Freedom" in `references/writing-principles.md` for the
+fragility criterion and examples. This decision shapes how prescriptive
+each section of the skill should be — not every topic in the same skill
+needs the same treatment.
 
 ### Plan the Description
 
@@ -260,13 +282,39 @@ Write it last so you can accurately reference all existing files.
 
 ### Step 4: Write scripts/assets (if needed)
 
-- Scripts must be self-contained executables with `--help` support
+- Scripts must be self-contained or clearly document their dependencies,
+  include helpful error messages, and handle edge cases gracefully.
+  `--help` support is a house preference, not a requirement — favor it
+  when the script takes parameters, but don't treat it as a hard rule.
 - Assets must be complete and runnable — not fragments
 - Use the project's actual language, framework, and patterns
 - Reference scripts from `SKILL.md` via `${CLAUDE_SKILL_DIR}` (e.g.
   `python3 ${CLAUDE_SKILL_DIR}/scripts/validate.py`), never a relative path —
   the skill's working directory at invocation is not guaranteed to be the
   skill directory
+- **Solve, don't punt.** Have the script handle error conditions itself
+  (create a missing output directory, fall back to a sane default) rather
+  than surfacing the problem back to the agent to work around.
+- **No unexplained constants.** Every timeout, retry count, or threshold
+  gets a comment justifying the value — if the value isn't justified in
+  the script, the agent has no way to tell whether it's safe to change.
+- **State execution intent explicitly.** Distinguish "Run
+  `analyze_form.py` to extract fields" (execute it; only the output costs
+  tokens) from "See `analyze_form.py` for the algorithm" (read it as
+  reference material). Prefer execution for deterministic operations.
+- **Bundle scripts for repeated work.** If test runs in Phase 5 show the
+  agent independently writing the same helper across cases, move that
+  helper into `scripts/` — a bundled script is more reliable than
+  regenerated code, saves tokens, and keeps output consistent across
+  invocations.
+- **Plan-validate-execute for risky operations.** For batch or
+  destructive operations, have the skill emit an intermediate plan file
+  first and validate it with a script before executing. Make the
+  validator's messages verbose and specific, since they're the agent's
+  only signal that the plan is safe to run.
+- **Fully qualify MCP tool names.** A skill invoking an MCP tool must use
+  `ServerName:tool_name` — without the server prefix, Claude may fail to
+  locate the tool.
 
 ---
 
@@ -304,13 +352,55 @@ Write it last so you can accurately reference all existing files.
 - [ ] A code asset claimed as complete and runnable has been verified
       standalone (e.g. `tsc --noEmit` for a `.tsx` asset), not asserted as
       integrated into the project's build pipeline
+- [ ] Terminology is consistent throughout — one term per concept, not
+      synonyms swapped in for variety
+- [ ] No time-sensitive statements appear outside a collapsed "Old
+      patterns" section (deadlines, version cutoffs, "as of today")
+- [ ] Each task gets one default approach plus an escape hatch for the
+      real exception, rather than a menu of options to weigh
 
-### Functional Checks
+### Evaluation
 
-Suggest the user test with:
-1. Prompts that SHOULD trigger the skill — does the agent activate it?
-2. Prompts that should NOT trigger it — does the agent leave it alone?
-3. A real task in the skill's domain — does the output follow the skill's rules?
+Verification does not stop at static checklists — treat it as a short
+evaluation loop:
+
+1. **Validate the spec, if available.** `skills-ref validate
+   ./<skill-name>` checks frontmatter validity and naming conventions.
+   It's a third-party tool that may not be installed; treat it as a
+   mechanical complement to the Structural Checks above, not a
+   replacement.
+2. **Compare against a baseline in a fresh session.** Take the eval
+   prompts drafted in Phase 1 (or draft them now) and run each one twice:
+   once in a fresh session with the skill available, once with it
+   disabled. A fresh session matters because context left over from
+   authoring the skill masks gaps in the written instructions. Seeing the
+   skill trigger only tells you Claude found it — check triggering and
+   output quality as two separate questions.
+3. **Use substantive, realistic test prompts.** Claude only consults a
+   skill for tasks it can't handle trivially on its own; a one-step query
+   like "read this PDF" may not trigger a skill even with a matching
+   description. Write prompts with concrete detail — real file names,
+   casual phrasing — rather than a bare restatement of the skill's
+   purpose:
+   - Prompts that SHOULD trigger the skill — multi-step, domain-realistic
+     requests, not a paraphrase of the description
+   - Prompts that should NOT trigger it — near misses that sound adjacent
+     to the skill's domain, not obviously unrelated queries, so the
+     description's boundary actually gets tested
+   - A real task in the skill's domain — does the output follow the
+     skill's rules?
+4. **For skills worth the investment, run the skill-creator plugin's eval
+   loop** (`/plugin install skill-creator@claude-plugins-official`):
+   store test cases in `evals/evals.json` inside the skill directory, run
+   them in isolated subagents, grade the results, and compare with-skill
+   vs without-skill and version-to-version (blind A/B). It also measures
+   description quality directly via should-trigger / should-not-trigger
+   hit rate.
+5. **No restart needed for edits.** Changes under `~/.claude/skills/` or a
+   project's `.claude/skills/` take effect within the current session;
+   only a top-level skills directory created mid-session requires a
+   restart. Iterate directly against the running session, and only
+   re-verify triggering in a fresh session per step 2.
 
 ---
 

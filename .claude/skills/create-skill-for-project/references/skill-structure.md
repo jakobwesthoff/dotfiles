@@ -44,6 +44,30 @@ When activated, Claude loads the `SKILL.md` into its context window. Everything
 that file links to via relative markdown links is available for lazy loading —
 Claude follows links on demand to pull in additional files.
 
+### After Activation
+
+The rendered `SKILL.md` content enters the conversation as a single message
+and stays there for the rest of the session. Claude Code does not re-read
+the skill file on later turns. Two authoring consequences:
+
+- **Phrase durable rules as standing instructions.** Guidance that should
+  apply throughout a task must read as an ongoing rule ("always run the
+  validator after generating output"), not as a one-time step ("first do
+  X") that reads as already completed on later turns.
+- **Front-load critical rules.** Auto-compaction re-attaches the most
+  recent invocation of each skill, keeping the first 5,000 tokens of each,
+  within a combined budget of 25,000 tokens filled from the most recently
+  invoked skill; older skills can drop entirely after compaction. Put the
+  most important rules in the first ~5,000 tokens of `SKILL.md` so they
+  survive compaction.
+
+Because the content stays in context across turns, every line is a
+recurring token cost — the concrete reason to keep the body lean. If a
+skill seems to stop influencing behavior, the content is usually still
+present and the model is choosing other approaches; the fixes are a
+stronger description or instructions, or hooks for deterministic
+enforcement.
+
 ## SKILL.md Frontmatter
 
 All fields are optional in Claude Code; only `description` is recommended. The
@@ -335,6 +359,10 @@ Layer 3: Resources (as needed)
           Files in references/, scripts/, assets/ loaded only
           when the agent follows a link from SKILL.md
 ```
+
+"Keep it lean" has a concrete cost model behind it: loaded skill content
+persists in context for the rest of the session and is truncated to its
+first 5,000 tokens after compaction — see "After Activation" above.
 
 ### Size Budgets
 

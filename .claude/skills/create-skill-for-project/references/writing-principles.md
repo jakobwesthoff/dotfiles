@@ -15,6 +15,10 @@ place by directly improving the AI's output.
 
 ## Be Prescriptive, Not Descriptive
 
+This is the low-freedom end of the spectrum in "Degrees of Freedom" below —
+reach for it when the task is genuinely fragile, not as a default for every
+topic the skill covers.
+
 Bad — describes the API:
 > The `interpolate` function takes an input value, an input range, and an output
 > range. It also accepts an optional options object.
@@ -39,6 +43,25 @@ const opacity = interpolate(frame, [0, 100], [0, 1], {
 
 The AI doesn't need a function signature walkthrough. It needs to see the correct
 usage pattern and the most common configuration.
+
+## Degrees of Freedom
+
+Not every topic in a skill deserves the same level of prescriptiveness.
+Match the instruction's specificity to the task's fragility — how costly a
+wrong or merely different approach would be:
+
+| Freedom | Form | When to use |
+|---------|------|-------------|
+| High | Text instructions, heuristics, numbered steps | Multiple approaches are valid, the right one depends on context, and judgment should guide the approach — e.g. a code-review checklist. |
+| Medium | Pseudocode or scripts with parameters | A preferred pattern exists, but some variation is acceptable. |
+| Low | A specific script with few or no parameters | Operations are fragile and error-prone, consistency is critical, and a specific sequence must be followed — e.g. "Run exactly this script... Do not modify the command or add additional flags." |
+
+The fragility criterion decides the level: a narrow bridge over a cliff
+needs exact guardrails (low freedom); an open field only needs general
+direction (high freedom). For judgment-heavy domains — reviews, design,
+naming — high-freedom heuristics keep the agent's judgment engaged instead
+of over-constraining it. "Be Prescriptive, Not Descriptive" above is the
+low-freedom end of this spectrum, not the universal rule for every topic.
 
 ## Code First, Prose Second
 
@@ -156,6 +179,48 @@ After generating the document:
 ```
 
 The best skills assume problems exist and instruct the agent to find them.
+
+## Use Consistent Terminology
+
+Choose one term per concept and use it throughout the skill. Don't vary
+the wording for stylistic reasons — an agent reading "API endpoint" in one
+paragraph and "API route" or "path" in the next has to work out whether
+those are the same thing. The same applies to UI vocabulary: pick "field"
+or "box" or "control" and stick with it rather than mixing all three.
+
+## Avoid Time-Sensitive Information
+
+Don't write content that expires, such as "If you're doing this before
+August 2025, use the old API." Where a codebase genuinely has both a
+legacy and current pattern, keep the main content current-only and push
+the deprecated form into a collapsed section so it doesn't compete with
+the pattern the agent should actually use:
+
+```markdown
+<details>
+<summary>Old patterns (deprecated)</summary>
+
+The `legacyFetch()` helper predates the project's move to `apiClient`.
+Do not use it in new code; it is documented here only to help the agent
+recognize and migrate it when encountered.
+
+</details>
+```
+
+## Provide a Default, Not a Menu
+
+Don't present multiple approaches unless the choice is genuinely
+context-dependent. Give one default plus an escape hatch for the real
+exception case, rather than a list of options the agent has to weigh:
+
+```markdown
+Use `pdfplumber` to extract text from PDFs. For scanned PDFs requiring
+OCR, use `pdf2image` with `pytesseract` instead.
+```
+
+This sharpens the "Decision trees" bullet below: reserve a decision tree
+for choices that are genuinely context-dependent, and name a single
+default when one approach dominates.
 
 ## What Distinguishes a Good Skill
 
