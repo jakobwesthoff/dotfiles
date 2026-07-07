@@ -253,11 +253,11 @@ To extract a specific range of lines from a file, use the Read tool with
 or `head`/`tail`. The Read tool is purpose-built for this, avoids
 unnecessary Bash invocations, and renders output with line numbers.
 
-### sed (macOS)
+### sed (use gsed)
 
-Use the macOS-compatible invocation: `sed -e "s|PAT|REPL|g" -i file`.
-Flags must appear in that order (`-e` expression, then `-i` for
-in-place, then filename — no `''` after `-i`).
+Stock macOS `sed` is BSD sed and not reliable for this workflow. Use
+GNU sed explicitly instead: `gsed -e "s|PAT|REPL|g" -i file`. The
+Brewfile installs `gnu-sed`, so `gsed` is always available.
 
 ### ULID generation
 
