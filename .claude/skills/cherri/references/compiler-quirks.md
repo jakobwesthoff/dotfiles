@@ -5,6 +5,12 @@ metadata:
   tags: cherri, compiler, bugs, workarounds, quirks
 ---
 
+This file's baseline verification version is Cherri v2.3.0
+(2026-07-07). Entries without a version tag are current as of that
+baseline. Entries tagged with an older version were observed on that
+version and have not been individually re-verified since; re-test
+before relying on them after a compiler upgrade.
+
 Read this when a compile fails unexpectedly or behavior differs from
 what the language docs suggest. These are known issues with workarounds.
 

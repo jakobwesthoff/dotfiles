@@ -14,6 +14,8 @@ Cherri is a compiled language that produces signed `.shortcut` files for
 iOS/macOS. Source files use the `.cherri` extension and compile via the
 `cherri` CLI.
 
+This skill's content is verified against Cherri v2.3.0.
+
 ## Quick orientation
 
 Cherri looks like a C-style scripting language with these key differences:
@@ -52,14 +54,15 @@ with `--action`, `--docs`, and `--glyph` lookups, NOT when compiling.
 ## Variable referencing
 
 Variables are declared with `@` prefix. When referencing them later,
-both bare name and `@`-prefixed form work, but the compiler prefers `@`
-(bare names produce deprecation warnings):
+the `@` prefix is required — a bare variable name is a compile error
+("Unknown reference '...'. Variable references must be prepended with
+@."). Constants declared with `const` use the bare name instead:
 
 ```ruby
 @myVar = "hello"
 const myConst = "hello"
 
-// Prefer @prefix for variables (avoids deprecation warnings):
+// Variables require @prefix:
 alert(@myVar, "Title")
 show("{@myVar}")
 
@@ -94,7 +97,13 @@ cherri --docs=web --no-ansi
 cherri --glyph=bookmark --no-ansi
 ```
 
-Categories: `basic`, `web`, `scripting`, `text`, `documents`, `calendar`,
+Categories: `basic`, `web`, `text`, `documents`, `calendar`,
 `contacts`, `crypto`, `sharing`, `shortcuts`, `intelligence`, `translation`,
 `pdf`, `math`, `mac`, `images`, `photos`, `music`, `media`, `network`,
 `device`, `settings`, `location`, `a11y`, `dropbox`.
+
+The `scripting` category was removed in v2.3.0. `#include
+'actions/scripting'` now fails to compile ("Undefined actions include
+'scripting'"). Most of its actions (e.g. `getValue`, `getFirstItem`)
+moved to `basic` and need no include; others moved elsewhere (e.g.
+`runShellScript` now requires `#include 'actions/mac'`).
