@@ -111,8 +111,8 @@ Use `{{{{` for a literal `{{` inside format strings.
 |----------|--------|---------|
 | `+` | String concatenation | `"foo" + "bar"` → `"foobar"` |
 | `/` | Path join (always uses `/`) | `"src" / "main.rs"` → `"src/main.rs"` |
-| `&&` | Logical AND on strings (unstable) | `'' && 'b'` → `''` |
-| `||` | Logical OR on strings (unstable) | `'' \|\| 'b'` → `'b'` |
+| `&&` | Logical AND on strings (requires `set lists`, 1.53.0+, unstable) | `'' && 'b'` → `''` |
+| `||` | Logical OR on strings (requires `set lists`, 1.53.0+, unstable) | `'' \|\| 'b'` → `'b'` |
 
 Parentheses for grouping and multi-line expressions:
 

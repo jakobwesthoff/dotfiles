@@ -44,7 +44,7 @@ any other compound shell constructs.
 just --justfile /path/to/justfile --dump
 just --justfile /path/to/justfile --list
 just --justfile /path/to/justfile --dry-run recipe-name
-just --justfile /path/to/justfile --fmt --check --unstable
+just --justfile /path/to/justfile --fmt --check
 ```
 
 Silent `--dump` output to stdout = valid parse. Errors print to stderr.

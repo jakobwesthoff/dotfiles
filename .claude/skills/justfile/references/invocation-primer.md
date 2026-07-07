@@ -103,8 +103,8 @@ to work well with this.
 ```console
 $ just --dump                          # print formatted justfile
 $ just --dump --dump-format json       # JSON representation
-$ just --fmt --unstable                # reformat in place
-$ just --fmt --check --unstable        # CI format check
+$ just --fmt                           # reformat in place
+$ just --fmt --check                   # CI format check
 ```
 
 ### `--justfile` / `-f` and `--working-directory` / `-d`
@@ -129,8 +129,9 @@ $ just --unstable recipe
 $ JUST_UNSTABLE=1 just recipe
 ```
 
-Or in the justfile: `set unstable`. Features like `lazy`, `which()`,
-`&&`/`||` operators require this.
+Or in the justfile: `set unstable`. `which()` and the `&&`/`||` operators are
+gated behind `set lists` (1.53.0, unstable), which itself requires
+`set unstable`/`--unstable`.
 
 ## `[arg]` and Invocation UX
 

@@ -166,14 +166,16 @@ Clear: `CLEAR` — clears the terminal screen.
 ## Formatting
 
 ```console
-$ just --fmt --unstable           # reformat in place
-$ just --fmt --check --unstable   # CI check (exit 1 if unformatted)
+$ just --fmt                      # reformat in place
+$ just --fmt --check              # CI check (exit 1 if unformatted)
 $ just --dump                     # print formatted to stdout
 ```
 
-`--fmt` is currently unstable. Canonical style: 4-space recipe indentation,
-spaces inside interpolations (`{{ var }}` not `{{var}}`). Use `--dump` output
-as the formatting reference.
+Canonical style: 4-space recipe indentation, spaces inside interpolations
+(`{{ var }}` not `{{var}}`). Use `--dump` output as the formatting reference.
+
+`--fmt --check` exits 1 and prints a unified diff when the file is not
+formatted.
 
 ## Multi-Line Constructs
 

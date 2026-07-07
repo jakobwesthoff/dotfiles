@@ -35,10 +35,11 @@ port := env('PORT', '8080')            # fallback if missing
 
 ```just
 bash := require('bash')   # abort if not in PATH
-node := which('node')     # empty string if not found (unstable)
+node := which('node')     # empty string if not found (requires set lists)
 ```
 
-`which()` requires `set unstable`. On Windows, both respect `PATHEXT`.
+`which()` requires `set lists` (which is unstable, so `set unstable` is also
+needed). On Windows, both respect `PATHEXT`.
 
 ## Invocation & File Info
 

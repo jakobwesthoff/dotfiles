@@ -32,7 +32,8 @@ MUST NOT contain backticks or function calls.
 | `fallback` | bool | `false` | Search parent dirs for missing recipes |
 | `guards` | bool | `false` | Enable `?` line sigil |
 | `ignore-comments` | bool | `false` | Don't pass `#` lines to shell |
-| `lazy` | bool | `false` | Skip unused variable evaluation (unstable) |
+| `lazy` | bool | `false` | Skip unused variable evaluation |
+| `lists` | bool | `false` | Values may be lists of strings instead of strings (1.53.0, unstable) |
 | `no-exit-message` | bool | `false` | Suppress recipe failure messages |
 | `positional-arguments` | bool | `false` | Pass args as `$1`, `$2`, `$@` |
 | `quiet` | bool | `false` | Don't echo recipe lines |
@@ -147,10 +148,9 @@ Search stops at a justfile without `set fallback`. Fallback only works
 with directory-based search — `--justfile` pins to an exact file and
 disables fallback.
 
-## Lazy Evaluation (unstable)
+## Lazy Evaluation (1.47.0+)
 
 ```just
-set unstable
 set lazy
 
 token := `expensive-credential-fetch`
