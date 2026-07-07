@@ -56,14 +56,21 @@ mechanisms, selected by the flags/env var passed:
   tunnel in-process for this one invocation, no root required.
 
 Upstream ties the iOS 17+ tunnel requirement to developer services
-(DDI/DVT, e.g. `developer screenshot`); whether `webinspector`
+(DDI/DVT, e.g. `developer dvt screenshot`); whether `webinspector`
 subcommands also need one is not confirmed — upstream's tunnel guide
 and the `webinspector` command group help name no such requirement,
 and the service connects over plain usbmux as well as RSD. Try
 `webinspector` commands without a tunnel first. This has not yet been
-verified on-device. If a command fails with `InvalidServiceError`,
-start a tunnel below and retry with `--rsd`, `--tunnel`, or
-`--userspace`.
+verified on-device.
+
+#### Diagnosing errors
+
+| Error | Meaning | Fix |
+| --- | --- | --- |
+| `WebInspectorNotEnabledError` | Web Inspector toggle off | Settings → Apps → Safari → Advanced → Web Inspector |
+| `RemoteAutomationNotEnabledError` | Remote Automation toggle off | same path, Remote Automation |
+| `LaunchingApplicationError` | Safari did not connect within the timeout (often a locked device) | unlock the device |
+| `InvalidServiceError` | service unreachable over the current transport | iOS 17+: start a tunnel and retry with `--rsd`, `--tunnel`, or `--userspace`; for developer-service commands also check Developer Mode (`amfi enable-developer-mode`) and `mounter auto-mount` |
 
 #### Starting a tunnel
 
@@ -276,10 +283,13 @@ automation flow beyond the URL string.
 uvx 'pymobiledevice3==9.33.1' webinspector opened-tabs --timeout 5
 ```
 
-This lists all open Safari tabs with their URLs. Take the matching
-URL and pass it to the automation flow above; the automation session
-still loads it as a fresh, logged-out page rather than attaching to
-this tab.
+This lists every inspectable application's pages, not only Safari's:
+other apps' WKWebViews, service workers, and JavaScriptCore contexts
+show up too, each line formatted as `<AppName(pid) TYPE:<WIRType...>
+URL:<url>>`. Safari's own tabs are the entries with app name Safari and
+`TYPE:WIRTypeWebPage`. Take the matching URL and pass it to the
+automation flow above; the automation session still loads it as a
+fresh, logged-out page rather than attaching to this tab.
 
 If this fails with `InvalidServiceError`, a tunnel is required; add
 `--rsd "$ADDRESS" "$PORT"`, `--tunnel`, or `--userspace` (see
@@ -307,16 +317,29 @@ This is a developer-service command, so on iOS 17+ it needs a tunnel
 or `--userspace`:
 
 ```bash
-uvx 'pymobiledevice3==9.33.1' developer screenshot --rsd "$ADDRESS" "$PORT" /tmp/ios-screenshot.png
+uvx 'pymobiledevice3==9.33.1' developer dvt screenshot --rsd "$ADDRESS" "$PORT" /tmp/ios-screenshot.png
 ```
+
+(`developer screenshot`, the older `ScreenshotService`-based command,
+is marked deprecated upstream; `developer dvt screenshot` is the
+current one.)
 
 Then read `/tmp/ios-screenshot.png` to view it. This captures the full
 device screen, not just the browser viewport.
 
-Note: screenshots require DeveloperDiskImage. If it fails, try:
-```bash
-uvx 'pymobiledevice3==9.33.1' mounter auto-mount
-```
+If it fails, check in order:
+- Developer Mode enabled on the device: `uvx 'pymobiledevice3==9.33.1'
+  amfi enable-developer-mode` (iOS >= 15).
+- Developer disk image mounted: `uvx 'pymobiledevice3==9.33.1' mounter
+  auto-mount`.
+- On iOS 17+, a tunnel reachable via `--rsd`/`--tunnel`/`--userspace`
+  (see Prerequisites above).
+
+For a screenshot of just the automated page rather than the whole
+device screen, use the automation session's own `get_screenshot_as_base64()`
+/ `screenshot(filename)` instead (see Key API details above); it stays
+inside the automation session and avoids the developer-services stack
+entirely.
 
 ### 4. Connection flags recap
 
@@ -335,24 +358,63 @@ uvx 'pymobiledevice3==9.33.1' webinspector opened-tabs --rsd "$ADDRESS" "$PORT"
 
 ### `inspector_session` hangs for WIRTypeWebPage pages
 
-The `inspector.inspector_session(app, page)` call and the CLI
-`js-shell` command both hang indefinitely waiting for a
+Observed with pymobiledevice3 9.4.x on iOS 18.x, 2026-03: the
+`inspector.inspector_session(app, page)` call and the CLI `js-shell`
+command's default inspector mode both hang indefinitely waiting for a
 `Target.targetCreated` WebKit inspector event that never arrives for
 `WIRTypeWebPage` type pages. This affects both usbmux and RSD (tunnel)
-connections. **Do not use this API for headless scripting.** Use the
-automation session approach instead.
+connections. `js-shell --automation` sidesteps the hang because it
+drives the automation-session path instead, but both `js-shell` modes
+are interactive `prompt_toolkit` shells and so are unsuited to headless
+scripting regardless. **Do not use `inspector_session` or `js-shell`
+for headless scripting.** Use the automation session approach instead.
 
 ### CDP bridge WebSocket connections hang
 
-The `pymobiledevice3 webinspector cdp` bridge starts a server and
-lists targets correctly via HTTP, but WebSocket connections to
-individual pages time out. This is likely caused by the same underlying
-`inspector_session` hang. **Do not rely on the CDP bridge.**
+Observed with pymobiledevice3 9.4.x on iOS 18.x, 2026-03: the
+`pymobiledevice3 webinspector cdp` bridge starts a server and lists
+targets correctly via HTTP, but WebSocket connections to individual
+pages time out. `InspectorSession.create` and `CdpTarget.create` run
+the identical wait-for-target loop (`services/web_protocol/inspector_session.py`,
+`services/web_protocol/cdp_target.py` in the 9.33.1 sdist), so this is
+the same underlying hang as above, not just a similar one. **Do not
+rely on the CDP bridge.**
+
+For evaluate-only use where a window context is not needed,
+`InspectorSession.create(protocol, wait_target=False)` skips the wait
+entirely (`CdpTarget.create` has no equivalent parameter); its
+docstring warns "all operations won't have a window context to operate
+in".
+
+To re-test when a device is available: run `webinspector js-shell -v`
+with Safari foregrounded and the target tab visible, and again
+backgrounded, and record whether `_rpc_applicationSentData:` events
+arrive in each case; if they do, record the `targetInfo` (`targetId`,
+`type`) of each; and record the pymobiledevice3 and iOS version
+alongside the outcome.
+
+### iOS 26.2+ may emit frame-type targets
+
+Not verified on-device. WebKit (commit `06f8ad1a5a66f9ffaa33696a5b9fba4f4c65070b`)
+introduced a `frame` target type that coexists with `page` targets and
+announces itself through the same `Target.targetCreated` event; frame
+targets have no protocol domains. Through the 9.33.1 sdist,
+`InspectorSession.create` and `CdpTarget.create` bind to the first
+event carrying `targetInfo` regardless of its `type`, so on iOS 26.2+
+a session can bind to a frame target instead of the page target,
+producing "'Runtime' domain was not found"-style errors rather than a
+hang. This is a pymobiledevice3 gap: Appium's remote-debugger
+(appium-remote-debugger 15.2.1) fixed the equivalent bug in its own
+client by filtering to `type == 'page'`; pymobiledevice3 has no such
+filter.
 
 ## Tips
 
-- The `--timeout` flag on `opened-tabs` defaults to 3 seconds. Increase
-  to 5–10 if the device is slow to respond.
+- The `--timeout` flag on `opened-tabs` defaults to 3 seconds and is
+  an unconditional sleep before collecting results, not a response
+  deadline: `opened-tabs --timeout 10` always takes about 10 seconds,
+  even on a fast device. Leave it at the default unless entries are
+  missing from the output.
 - Web Inspector toggle moved to Settings → **Apps** → Safari → Advanced
   in iOS 18. Older guides show the wrong path.
 - If the requested task above contains a URL, skip the tab-lookup step
