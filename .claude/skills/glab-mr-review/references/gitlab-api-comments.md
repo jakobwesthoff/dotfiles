@@ -180,11 +180,21 @@ Replace 1 line above, the commented line, and 2 below (4 lines total):
 ```
 ````
 
-## Project ID Encoding
+## Project path encoding
 
-For `glab api` paths, URL-encode the project path — slashes become `%2F`:
+The numeric project ID needs no encoding and is the preferred way to address
+the project in `glab api` paths. SKILL.md step 2 already fetches it: the
+`glab mr view --output json` call's `--jq` filter includes `project_id:
+.target_project_id`. Build API paths as
+`projects/<PROJECT_ID>/merge_requests/<IID>/...` with that value.
 
-- `ekkogmbh/service-php-eslmanager` -> `ekkogmbh%2Fservice-php-eslmanager`
+When only the project path is known, URL-encode it — slashes become `%2F`:
 
-Alternatively, use `--repo` where supported, but the Discussions and Notes
-endpoints require the encoded project path in the URL.
+- `acme/service-api` -> `acme%2Fservice-api`
+
+`glab api` has no `--repo` flag. When the shell's working directory is
+inside the target repository, use `projects/:fullpath/merge_requests/<IID>/...`
+instead; `glab api` substitutes `:fullpath` with the URL-encoded project path
+of the current directory's repository automatically. To target a project on a
+different GitLab host than the current directory's authenticated one, pass
+`--hostname <host>`.
