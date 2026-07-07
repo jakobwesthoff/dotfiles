@@ -40,7 +40,7 @@ return {
       --
       opts.actions = {
         ["default"] = function(selected)
-          vim.cmd("Oil --float " .. cwd .. "/" .. selected[1])
+          require("oil").open_float(cwd .. "/" .. selected[1])
         end,
       }
 
