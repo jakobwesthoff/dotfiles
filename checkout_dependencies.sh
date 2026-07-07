@@ -1,5 +1,5 @@
 #!/bin/bash
-set -uio pipefail
+set -ueo pipefail
 
 function checkout_or_update() {
     local repository="${1}"
