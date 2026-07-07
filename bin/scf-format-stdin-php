@@ -1,11 +1,10 @@
 #!/bin/bash
 
-export PATH="/Users/jakob/.nvm/versions/node/v16.5.0/bin/:$PATH"
-
-FORMAT_TMP_PATH="$(mktemp -t --suffix=.php scf-XXXXXXXXXX)"
-trap "rm ${FORMAT_TMP_PATH}" EXIT
+tmpdir="$(mktemp -d)"
+FORMAT_TMP_PATH="$tmpdir/input.php"
+trap 'rm -rf "$tmpdir"' EXIT
 
 cat > "$FORMAT_TMP_PATH"
 
-cd "$(dirname "${FORMAT_TMP_PATH}")"
+cd "$(dirname "${FORMAT_TMP_PATH}")" || exit 1
 /Users/jakob/Development/gitlab/ekkogmbh/scf/scripts/docker-wrapper.sh format "$FORMAT_TMP_PATH"
