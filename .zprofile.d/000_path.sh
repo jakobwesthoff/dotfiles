@@ -6,17 +6,6 @@
 # Include $HOME/{bin,sbin} in the execpath
 export PATH="$PATH:$HOME/bin:$HOME/sbin:$HOME/.local/bin"
 
-# Include bin path of ruby gems to PATH
-export PATH="$PATH:/var/lib/gems/1.8/bin"
-
-# If mactex is installed include its bin path
-if [ -d "/usr/texbin" ] && [ "${PATH%%/usr/texbin}" == "${PATH}" ]; then
-    export PATH="${PATH}:/usr/texbin"
-fi
-
-# Include npm executables in the searchpath
-export PATH="/usr/local/share/npm/bin:${PATH}"
-
 # Prefer homebrew curl over system curl
 export PATH="/opt/homebrew/opt/curl/bin:${PATH}"
 
