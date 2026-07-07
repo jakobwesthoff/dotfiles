@@ -284,7 +284,9 @@ my-skill/
 │   └── topic-b.md
 └── scripts/          # Optional executable scripts
 ```
-**Use when:** the domain has 3+ distinct topics that would exceed ~200 lines combined.
+**Use when:** the domain has 3+ distinct topics, or the content is approaching
+the single-file 500-line cap. (~200 combined lines is a house rule of thumb
+for when splitting starts to pay off, subordinate to the topic-count trigger.)
 
 ### Tier 3: Hub-and-Spokes with Code Assets
 ```
@@ -297,14 +299,19 @@ my-skill/
     ├── example-a.tsx
     └── example-b.tsx
 ```
-**Use when:** the domain requires complete reference implementations that would
-overwhelm a reference file (>40 lines of uninterrupted code).
+**Use when:** the domain requires complete, runnable reference implementations
+(files that compile, execute, or fill in as a template) rather than
+illustrative snippets, or scripts for a deterministic operation the agent
+would otherwise regenerate. (As a house rule of thumb, snippets running past
+a few dozen lines usually want to become files.)
 
 ### Tier Decision Tree
 
 1. Does the skill cover a single concept with few examples? → **Tier 1**
-2. Does the domain have 3+ distinct topics? → **Tier 2**
-3. Do code examples exceed ~40 lines each? → **Tier 3**
+2. Does the domain have 3+ distinct topics, or is content approaching the
+   500-line cap? → **Tier 2**
+3. Must code examples be complete, runnable files rather than illustrative
+   snippets? → **Tier 3**
 
 ## Progressive Disclosure
 
@@ -329,9 +336,9 @@ Layer 3: Resources (as needed)
 | Layer | Target | Max |
 |-------|--------|-----|
 | `description` field | 1-2 sentences, key use case first | 1024 chars (spec); combined with `when_to_use`, truncated at 1,536 chars in the Claude Code listing (200 chars applies only to claude.ai uploads) |
-| `SKILL.md` body | 30-80 lines | 500 lines |
-| Single reference file | 50-200 lines | ~400 lines |
-| Total across all files | 1,500-3,000 lines | ~5,000 lines |
+| `SKILL.md` body | 30-80 lines | 500 lines (official cap) |
+| Single reference file | 50-200 lines (house preference) | No official cap — resources load on demand |
+| Total across all files | No official target | No official cap — bundled resources carry no context cost until accessed |
 
 ### File Reference Depth
 
@@ -343,11 +350,18 @@ information in at most two hops: `SKILL.md` -> reference file -> asset (if neede
 Every reference file follows this internal structure:
 
 1. **YAML frontmatter** — `name`, `description`, `tags`
-2. **Opening orientation** — 1-2 sentences: what and when
-3. **Prerequisites** (optional) — install commands, dependencies
-4. **Core pattern** — the primary "right way" example
-5. **Variations** (optional) — additional use cases, each with own heading
-6. **Anti-patterns** (optional) — FORBIDDEN / NEVER / MUST NOT
+2. **Table of contents** (files over ~100 lines) — a short section list so
+   the agent sees the file's full scope even on a partial read (e.g. a
+   `head -100` preview). 100 lines is the house recommendation; Anthropic's
+   platform best-practices doc uses the same figure, while its skill-creator
+   skill uses >300 lines as its threshold.
+3. **Opening orientation** — 1-2 sentences: what and when
+4. **Prerequisites** (optional) — install commands, dependencies
+5. **Core pattern** — the primary "right way" example
+6. **Variations** (optional) — additional use cases, each with own heading
+7. **Anti-patterns** (optional) — stated explicitly with the reason each one
+   fails; ALL-CAPS (FORBIDDEN, NEVER, MUST NOT) reserved for rules testing
+   shows get ignored, or destructive/irreversible mistakes
 
 The core pattern appears early — the agent encounters the correct approach before
 any alternatives.

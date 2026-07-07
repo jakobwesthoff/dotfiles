@@ -52,8 +52,8 @@ context, but the code IS the rule.
 
 ## State Anti-Patterns Explicitly
 
-When there are common mistakes the AI is likely to make, call them out with
-strong language:
+When there are common mistakes the AI is likely to make, call them out
+explicitly and say why the wrong way fails:
 
 ```markdown
 CSS transitions or animations are FORBIDDEN — they will not render correctly.
@@ -63,11 +63,16 @@ CSS transitions or animations are FORBIDDEN — they will not render correctly.
 NEVER use `setTimeout` or `setInterval`. All timing must come from `useCurrentFrame()`.
 ```
 
-Don't just show the right way — **explicitly forbid the wrong way**. LLMs are
-trained on vast amounts of general-purpose code and will default to common
-patterns from other domains unless told otherwise.
+Don't just show the right way — **explicitly forbid the wrong way, with the
+reason attached**. LLMs are trained on vast amounts of general-purpose code
+and will default to common patterns from other domains unless told otherwise.
 
-Use: `FORBIDDEN`, `NEVER`, `MUST NOT`, `DO NOT`.
+Treat ALL-CAPS absolutes (`FORBIDDEN`, `NEVER`, `MUST NOT`) as a calibrated
+tool, not the default register: reserve them for rules that testing shows
+the agent otherwise ignores, or whose violation is destructive or
+irreversible. Overusing them dilutes their force — if every line shouts,
+none of them stand out. For everything else, state the prohibition plainly
+and let the reason do the work.
 
 ## Cross-Reference Related Files
 
@@ -172,12 +177,14 @@ connective guidance).
 | Element | Target Size | Rationale |
 |---------|-------------|-----------|
 | `description` | 1-2 sentences | Loaded for ALL skills every interaction |
-| `SKILL.md` body | 30-80 lines (max 500) | Loaded on activation — keep lean |
-| Reference file | 50-200 lines (max ~400) | Focused and useful without wasting context |
+| `SKILL.md` body | 30-80 lines (max 500) | Loaded on activation — keep lean (official cap) |
+| Reference file | 50-200 lines (house preference) | Focused and useful; no official cap — resources load on demand, so a longer file costs nothing until the agent follows the link |
 | Code asset | Any length | Loaded on demand; should be complete |
-| Total skill | 1,500-3,000 lines (max ~5,000) | Split into multiple skills if exceeded |
+| Total skill | No official cap | Bundled resources carry no context cost until accessed; split by domain, not by total size |
 
-If a reference file exceeds 200 lines, consider splitting it.
+Split a reference file when it starts covering 3+ distinct topics, or
+earlier if it grows unwieldy — the topic count matters more than the line
+count.
 
 ## Pre-Ship Checklist
 
@@ -192,10 +199,9 @@ Before shipping a skill, verify:
 - [ ] Each reference file covers exactly one concept
 - [ ] The "right way" code example appears before any variations
 - [ ] Code examples include imports and are copy-paste ready
-- [ ] Common mistakes are called out with strong language (FORBIDDEN, NEVER, etc.)
+- [ ] Common mistakes are called out explicitly with the reason they fail
 - [ ] Related files cross-reference each other (max one level deep)
-- [ ] No reference file exceeds ~400 lines
+- [ ] Reference files over ~100 lines start with a table of contents
 - [ ] Complex examples are in runnable code assets
 - [ ] No hardcoded secrets or credentials
-- [ ] Total skill stays under ~3,000-5,000 lines
 - [ ] All relative links in SKILL.md resolve to existing files

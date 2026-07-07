@@ -65,7 +65,9 @@ to the user.
 - The directory name determines the `/command`, not the `name` frontmatter field. Still set `name` equal to the directory name — the Agent Skills spec requires the match for portability, even though Claude Code itself only uses `name` as a display label
 - Start with the simplest tier (Tier 1) unless the domain clearly needs more
 - Use the project's real code patterns, not generic examples
-- Include anti-patterns with strong language (FORBIDDEN, NEVER, MUST NOT)
+- State anti-patterns explicitly, with the reason they fail. Reserve ALL-CAPS
+  (FORBIDDEN, NEVER, MUST NOT) for rules that testing shows get ignored
+  otherwise, or whose violation is destructive or irreversible
 - Front-load the key use case in `description`. Stay within the spec's 1024-char limit; Claude Code truncates the combined `description` + `when_to_use` at 1,536 characters. (200 characters is a claude.ai upload limit, not a Claude Code constraint.)
 
 ## Reference Files

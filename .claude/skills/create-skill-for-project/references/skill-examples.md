@@ -70,8 +70,10 @@ import { jest } from '@jest/globals';
 import { vi } from 'vitest';
 \`\`\`
 
-NEVER place tests in a top-level `__tests__/` directory.
-NEVER use `test()` — always use `it()` inside a `describe()` block.
+NEVER place tests in a top-level `__tests__/` directory — this project's test
+runner only discovers colocated `*.test.ts` files.
+NEVER use `test()` — always use `it()` inside a `describe()` block; the
+project's lint config only recognizes the `it()` form.
 ```
 
 **Total: ~50 lines.** Single concept, fits comfortably in one file.
@@ -152,8 +154,10 @@ router.post('/users', validate(CreateUserSchema), async (req, res) => {
 export default router;
 \`\`\`
 
-NEVER return raw database objects. Always map to a response DTO.
-NEVER use `any` for request bodies — always define a Zod schema.
+NEVER return raw database objects. Always map to a response DTO — the raw
+row shape leaks internal column names and unhashed fields to clients.
+NEVER use `any` for request bodies — always define a Zod schema, so
+malformed input is rejected before it reaches business logic.
 
 For error responses, see [references/error-handling.md](references/error-handling.md).
 ```
@@ -187,8 +191,10 @@ For a complete Select component implementation, see
 The asset file (`assets/form-select.tsx`) is a complete, runnable component —
 not a fragment. It compiles as part of the project's build pipeline.
 
-**Use Tier 3 when:** code examples exceed ~40 lines and must be complete,
-runnable files rather than inline snippets.
+**Use Tier 3 when:** code examples must be complete, runnable files (they
+compile, execute, or fill in as a template) rather than illustrative inline
+snippets. (As a house rule of thumb, snippets running past a few dozen lines
+usually want to become files.)
 
 ---
 

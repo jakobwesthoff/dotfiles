@@ -111,8 +111,10 @@ confirm that shadowing an existing skill is intentional.
 ```
 Single concept, few examples?
   └─ YES → Tier 1 (single SKILL.md, <=500 lines)
-  └─ NO → 3+ distinct topics?
-       └─ YES → Are code examples >40 lines each?
+  └─ NO → 3+ distinct topics, or approaching the 500-line cap?
+       └─ YES → Must code examples be complete, runnable files
+       │        (not illustrative snippets), or scripts for a
+       │        deterministic operation?
        │    └─ YES → Tier 3 (hub + references + assets)
        │    └─ NO  → Tier 2 (hub + references)
        └─ NO → Tier 1 (probably fits in one file)
@@ -206,7 +208,9 @@ For each reference file:
    - Prerequisites (if any)
    - Core pattern — the "right way" with a code example **from this project**
    - Variations (if needed)
-   - Anti-patterns (FORBIDDEN, NEVER, MUST NOT)
+   - Anti-patterns, explicit with the reason each one fails (ALL-CAPS such
+     as FORBIDDEN, NEVER, MUST NOT reserved for rules testing shows get
+     ignored, or destructive/irreversible mistakes)
 
 3. Use **project-specific code examples** wherever possible. Pull real import
    paths, real function names, real patterns from the codebase. Generic examples
@@ -267,14 +271,15 @@ Write it last so you can accurately reference all existing files.
 - [ ] `SKILL.md` body is under 500 lines
 - [ ] Each reference file has YAML frontmatter (`name`, `description`, `tags`)
 - [ ] All relative links in SKILL.md resolve to existing files
-- [ ] No reference file exceeds ~400 lines
-- [ ] Total line count is under ~5,000 lines
+- [ ] Reference files over ~100 lines start with a table of contents
 
 ### Content Checks
 
 - [ ] Code examples use the project's actual patterns, imports, and conventions
 - [ ] The "right way" appears before variations in every file
-- [ ] Anti-patterns use strong language (FORBIDDEN, NEVER, MUST NOT)
+- [ ] Anti-patterns are stated explicitly with the reason they fail; ALL-CAPS
+      (FORBIDDEN, NEVER, MUST NOT) is reserved for rules testing shows get
+      ignored, or destructive/irreversible mistakes
 - [ ] No hardcoded secrets or credentials
 - [ ] `allowed-tools` grants are minimal for what the skill actually runs —
       scoped to narrow command prefixes, not broad tool names
@@ -293,7 +298,9 @@ Suggest the user test with:
 ## Common Pitfalls
 
 **The Monolith:** Putting everything in SKILL.md instead of using reference files.
-If it exceeds ~200 lines of content, split into Tier 2.
+Split into Tier 2 once the content covers 3+ distinct topics, or once it's
+approaching the 500-line cap. (~200 lines is a house rule of thumb for when
+splitting starts to pay off, subordinate to the topic-count trigger.)
 
 **The Empty Router:** A SKILL.md that is just a list of links with no context.
 Add a "When to use" section and brief orientation.
@@ -302,7 +309,8 @@ Add a "When to use" section and brief orientation.
 Always prefer real patterns from the codebase.
 
 **Missing Anti-Patterns:** Showing only the right way without forbidding the wrong
-way. The AI will fall back to general training if not explicitly told what to avoid.
+way and saying why it fails. The AI will fall back to general training if not
+explicitly told what to avoid and why.
 
 **Over-Engineering:** Starting at Tier 3 when Tier 1 would suffice. Start simple,
 iterate up when the skill outgrows its tier.
