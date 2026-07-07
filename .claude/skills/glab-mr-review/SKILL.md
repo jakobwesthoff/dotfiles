@@ -1,8 +1,11 @@
 ---
 name: glab-mr-review
 description: >-
-  Review GitLab MRs with inline diff comments and suggestions via glab API.
-  Use when asked to "review MR", "code review", or "add review comments".
+  Review GitLab merge requests with inline diff comments and suggestions via
+  the glab CLI and GitLab API.
+when_to_use: >-
+  Review an MR or merge request; post or add review comments on a GitLab MR;
+  code review on a GitLab-hosted repository.
 ---
 
 ## When to use
