@@ -296,13 +296,6 @@ alias kdelcj='kubectl delete cronjob'
 
 # Only run if the user actually has kubectl installed
 if (( ${+_comps[kubectl]} )); then
-  function kj() { kubectl "$@" -o json | jq; }
-  function kjx() { kubectl "$@" -o json | fx; }
-  function ky() { kubectl "$@" -o yaml | yh; }
-
-  compdef kj=kubectl
-  compdef kjx=kubectl
-  compdef ky=kubectl
   compdef kubecolor=kubectl
 fi
 

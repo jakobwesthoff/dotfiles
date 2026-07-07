@@ -149,6 +149,7 @@ brew "tokei"
 
 brew "p7zip"
 brew "pbzip2"
+brew "lzop"
 
 # =========================================================
 # Security & Encryption

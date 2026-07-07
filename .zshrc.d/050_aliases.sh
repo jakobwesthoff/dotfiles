@@ -4,14 +4,10 @@ if which gsed &>/dev/null; then
   alias sed="gsed"
 fi
 alias tree="tree -AC"
-alias mtail=multitail
-
-# Add a more silent ant command
-alias sant="ant -logger org.apache.tools.ant.NoBannerLogger"
 
 # Open a webserver serving the current directory and execute a browser to point
 # at it
-alias server='open http://localhost:8000 && python -m SimpleHTTPServer'
+alias server='open http://localhost:8000 && python3 -m http.server'
 
 # XDebug traces with php
 alias ptrace="php -d 'xdebug.auto_trace=1' -d 'xdebug.collect_params=1' -d 'xdebug.trace_output_dir=./'"
