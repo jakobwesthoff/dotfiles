@@ -1,7 +1,8 @@
 # Font and size
 font-size = 14
 
-# Enable ligatures for all fonts configured below
+# These ligature features are Ghostty defaults; they are listed explicitly
+# to pin them against upstream default changes, not to enable them.
 font-feature = "calt"
 font-feature = "clig"
 font-feature = "liga"
