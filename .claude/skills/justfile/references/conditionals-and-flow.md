@@ -85,6 +85,9 @@ bar:
 If the condition is false, execution aborts with the message. On success,
 `assert()` returns an empty string.
 
+The `message` argument is optional since 1.53.0: `assert(condition)` aborts
+with a default message derived from the condition expression if false.
+
 ## Guards (`?` sigil)
 
 Requires `set guards`. The `?` prefix on a recipe line causes the

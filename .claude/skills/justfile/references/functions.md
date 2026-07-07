@@ -55,7 +55,10 @@ needed). On Windows, both respect `PATHEXT`.
 | `invocation_directory_native()` | CWD, native path on all platforms |
 | `just_executable()` | Path to the `just` binary |
 | `just_pid()` | Process ID of running `just` |
+| `just_version()` | Version of the running `just` (1.55.0), e.g. `"1.55.0"` |
 | `is_dependency()` | `"true"` if recipe is running as a dependency |
+| `recipe_name()` | Name of the current recipe (1.53.0) |
+| `module_path()` | `::`-separated path to the current module (1.50.0) |
 
 Use `source_directory()` inside modules for paths relative to that module.
 
@@ -171,6 +174,10 @@ os := if os() == "linux" { "ok" } else { error("unsupported: " + os()) }
 
 `error(message)` aborts execution unconditionally.
 
+`assert(condition, message)` aborts with `message` if `condition` is not
+`"true"`; returns the empty string on success. `message` is optional since
+1.53.0.
+
 ## User Directories
 
 | Function | Returns |
@@ -178,10 +185,16 @@ os := if os() == "linux" { "ok" } else { error("unsupported: " + os()) }
 | `home_directory()` | User home |
 | `cache_directory()` | User cache dir |
 | `config_directory()` | User config dir |
+| `config_local_directory()` | Local user config dir |
 | `data_directory()` | User data dir |
+| `data_local_directory()` | Local user data dir |
 | `executable_directory()` | User executable dir |
+| `runtime_directory()` | User runtime dir (1.49.0); only defined on Linux |
 
 Platform-native paths (XDG on Linux, `~/Library/…` on macOS).
+
+`runtime_directory()` aborts with an error on platforms that define no
+runtime directory, including macOS.
 
 ## Style
 
@@ -190,5 +203,37 @@ Platform-native paths (XDG on Linux, `~/Library/…` on macOS).
   echo '{{style("error")}}DANGER{{NORMAL}}'
 ```
 
-Valid names: `"command"`, `"error"`, `"warning"`. Returns ANSI escapes
-matching `just`'s own color scheme.
+Baseline names (1.37.0): `"command"`, `"error"`, `"warning"`. Returns ANSI
+escapes matching `just`'s own color scheme.
+
+Since 1.55.0, `style()` also accepts: named colors (`black`, `blue`, `cyan`,
+`green`, `magenta`, `red`, `white`, `yellow`); 256 indexed colors (integers
+`0`-`255`); 24-bit hex colors (`#RRGGBB`/`#RGB`); and display properties
+(`blink`, `bold`, `dim`, `hidden`, `italic`, `reverse`, `strikethrough`,
+`underline`). Color styles color the foreground by default; use the `fg:`
+prefix for an explicit foreground variant or `bg:` for background (e.g.
+`bg:blue`, `fg:133`). Stream gates `stdout`/`stderr` emit the style only
+when `just` would color that stream (per `--color`/`JUST_COLOR`/TTY
+detection). Combine multiple styles by concatenating calls with `+`:
+`style("bold") + style("red")`.
+
+The two-argument form `style(styles, text)` (1.55.0) styles `text` and
+resets automatically, removing the need for a trailing `{{NORMAL}}`:
+
+```just
+@warning:
+  echo '{{style("error", "DANGER")}}'
+```
+
+## User-defined functions
+
+`name(params) := expression` (1.49.0+, currently unstable, requires `set
+unstable`) defines a function callable like a built-in. Functions may
+reference assignments in the same module:
+
+```just
+set unstable
+
+greeting := "Hello"
+hello(name) := f"{{ greeting }}, {{ name }}!"
+```
