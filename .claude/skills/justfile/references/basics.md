@@ -26,7 +26,7 @@ build:
 ### The Default Recipe
 
 `just` with no arguments runs:
-1. The recipe marked `[default]`, or
+1. The recipe marked `[default]` (1.43.0+), or
 2. The first recipe in the file.
 
 ```just
@@ -157,7 +157,7 @@ arguments, runs **before** body) with `&&` dependencies (for post-body
 ordering). `deploy: (clean)` is a pre-body dep that passes no arguments —
 use `deploy: && clean` to run `clean` **after** the body.
 
-### Cross-module dependencies
+### Cross-module dependencies (1.42.0+)
 
 ```just
 mod foo
@@ -255,7 +255,7 @@ build:
   echo 'Building!'
 ```
 
-Aliases can target submodule recipes: `alias baz := foo::bar`.
+Aliases can target submodule recipes (1.40.0+): `alias baz := foo::bar`.
 
 Aliases can also target a whole module (1.55.0+): `alias s := sub` makes
 `just s <recipe>` work like `just sub <recipe>`.
@@ -281,7 +281,7 @@ Prefix recipe lines with combinations of (`-` and `?` are mutually exclusive):
 |-------|--------|
 | `@` | Toggle echo (suppress if normally echoed, echo if recipe is quiet) |
 | `-` | Continue on non-zero exit code |
-| `?` | Stop current recipe if exit code is `1` (requires `set guards`) |
+| `?` | Stop current recipe if exit code is `1` (requires `set guards`) (1.47.0+) |
 
 Without `set guards`, `?` is not an error: it is passed to the shell as
 part of the command, typically failing with `command not found`.

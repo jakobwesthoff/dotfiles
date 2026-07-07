@@ -31,7 +31,7 @@ port := env('PORT', '8080')            # fallback if missing
 
 `env_var()` and `env_var_or_default()` are **deprecated** — use `env()`.
 
-## Executables
+## Executables (`which()`/`require()` 1.39.0+)
 
 ```just
 bash := require('bash')   # abort if not in PATH
@@ -56,7 +56,7 @@ needed). On Windows, both respect `PATHEXT`.
 | `just_executable()` | Path to the `just` binary |
 | `just_pid()` | Process ID of running `just` |
 | `just_version()` | Version of the running `just` (1.55.0), e.g. `"1.55.0"` |
-| `is_dependency()` | `"true"` if recipe is running as a dependency |
+| `is_dependency()` (1.29.0) | `"true"` if recipe is running as a dependency |
 | `recipe_name()` | Name of the current recipe (1.53.0) |
 | `module_path()` | `::`-separated path to the current module (1.50.0) |
 
@@ -128,7 +128,7 @@ Prefer the `/` operator over `join()` for consistent cross-platform paths.
 
 ```just
 exists := path_exists("/tmp/lock")   # "true" or "false" (string!)
-content := read("config.toml")       # file contents as string
+content := read("config.toml")       # file contents as string (1.39.0+)
 ```
 
 `path_exists()` returns strings — compare with `== "true"`, not bare.
@@ -146,7 +146,7 @@ content := read("config.toml")       # file contents as string
 token := choose('64', HEX)   # 64-char random hex string
 ```
 
-## Datetime
+## Datetime (1.30.0+)
 
 ```just
 today := datetime('%Y-%m-%d')           # local time

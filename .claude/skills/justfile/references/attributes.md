@@ -36,8 +36,8 @@ Attribute arguments may be expressions, not just literals, for `[confirm]`
 
 | Attribute | Description |
 |-----------|-------------|
-| `[script("cmd", "args…")]` | Run body as script file via `cmd` |
-| `[script]` | Run via `script-interpreter` setting (default `sh -eu`) |
+| `[script("cmd", "args…")]` | Run body as script file via `cmd` (1.32.0, stabilized 1.44.0) |
+| `[script]` | Run via `script-interpreter` setting (default `sh -eu`) (1.33.0+) |
 | `[extension(".ext")]` | Set temp file extension for script/shebang recipes |
 | `[no-cd]` | Run in invocation directory, not justfile directory |
 | `[working-directory("path")]` | Override working directory |
@@ -46,9 +46,9 @@ Attribute arguments may be expressions, not just literals, for `[confirm]`
 | `[exit-message]` (1.39.0+) | Print error message if recipe fails, regardless of `set no-exit-message` |
 | `[no-quiet]` | Echo lines even when `set quiet` is active |
 | `[positional-arguments]` | Enable `$1`, `$2`, `$@` for this recipe |
-| `[parallel]` | Run dependencies concurrently |
-| `[env("VAR", "VALUE")]` | Set env var for this recipe (repeatable) |
-| `[default]` | Use as module's default recipe |
+| `[parallel]` (1.42.0+) | Run dependencies concurrently |
+| `[env("VAR", "VALUE")]` (1.47.0+) | Set env var for this recipe (repeatable) |
+| `[default]` (1.43.0+) | Use as module's default recipe |
 | `[shell]` (1.52.0+) | Execute recipe as a shell recipe, overriding `set default-script`. Bare flag taking no arguments; it does not select which shell |
 | `[continue]` / `[continue("SIGHUP", ...)]` (1.54.0+) | Signal tolerance, not continue-on-error: proceed normally if a command is interrupted by one of the given signals yet exits successfully; defaults to `SIGINT`. A command exiting non-zero still fails the recipe |
 | `[cache]` (1.54.0+, unstable, script recipes only) | Cache recipe output; parameters `inputs`, `outputs`, `extra`; cache stored in `.justcache` next to the justfile |
@@ -61,7 +61,7 @@ Attribute arguments may be expressions, not just literals, for `[confirm]`
 | `[doc("text")]` | Override doc comment shown in `--list` |
 | `[doc]` | Suppress doc comment entirely |
 | `[group("name")]` | Assign to a named group in `--list` (repeatable) |
-| `[metadata("v1", "v2")]` | Arbitrary metadata (readable via `--dump --dump-format json`) |
+| `[metadata("v1", "v2")]` (1.42.0+) | Arbitrary metadata (readable via `--dump --dump-format json`) |
 
 ### Platform Targeting
 
@@ -131,7 +131,7 @@ Other `[arg]` additions in 1.55.0:
   may be a list.
 
 `--list` does not reveal `[arg]`-defined option names — use
-`just --usage <recipe>` to see the generated CLI interface.
+`just --usage <recipe>` (1.46.0+) to see the generated CLI interface.
 
 ## Applicability
 

@@ -50,7 +50,9 @@ deploy:
   echo "deploying…"
 ```
 
-`[script]` (bare) uses `set script-interpreter` (default `sh -eu`). The
+`[script(COMMAND)]` was introduced in 1.32.0 and stabilized in 1.44.0.
+
+`[script]` (bare, 1.33.0+) uses `set script-interpreter` (default `sh -eu`). The
 default `sh -eu` stops the recipe at the first failing command;
 replacing `script-interpreter` or using `[script("bash")]` without
 error flags loses that behavior.
@@ -115,7 +117,7 @@ run:
 
 ## Parallel Execution
 
-`[parallel]` runs all dependencies concurrently:
+`[parallel]` (1.42.0+) runs all dependencies concurrently:
 
 ```just
 [parallel]

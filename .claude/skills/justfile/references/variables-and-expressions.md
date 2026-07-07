@@ -27,7 +27,7 @@ publish:
 
 ```just
 export RUST_BACKTRACE := "1"   # exported as env var to child processes
-unexport SENSITIVE_VAR         # removes inherited env var from recipe scope
+unexport SENSITIVE_VAR         # removes inherited env var from recipe scope (1.29.0+)
 ```
 
 `set export` exports ALL just variables globally.

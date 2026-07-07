@@ -40,7 +40,7 @@ justfiles that rely on recent features.
 | `dotenv-command` | string | — | Command whose stdout is loaded as an environment file (1.54.0) |
 | `export` | bool | `false` | Export all just variables as env vars |
 | `fallback` | bool | `false` | Search parent dirs for missing recipes |
-| `guards` | bool | `false` | Enable `?` line sigil |
+| `guards` | bool | `false` | Enable `?` line sigil (1.47.0) |
 | `ignore-comments` | bool | `false` | Don't pass `#` lines to shell |
 | `lazy` | bool | `false` | Skip unused variable evaluation |
 | `lists` | bool | `false` | Values may be lists of strings instead of strings (1.53.0, unstable) |
@@ -49,13 +49,13 @@ justfiles that rely on recent features.
 | `no-exit-message` | bool | `false` | Suppress recipe failure messages |
 | `positional-arguments` | bool | `false` | Pass args as `$1`, `$2`, `$@` |
 | `quiet` | bool | `false` | Don't echo recipe lines |
-| `script-interpreter` | list | `['sh', '-eu']` | Interpreter for `[script]` recipes |
+| `script-interpreter` | list | `['sh', '-eu']` | Interpreter for `[script]` recipes (1.33.0) |
 | `shell` | list | `['sh', '-cu']` | Shell for linewise recipes + backticks |
 | `tempdir` | string | — | Temp dir for script/shebang recipes |
 | `unstable` | bool | `false` | Enable unstable features |
 | `windows-powershell` | bool | `false` | **Deprecated** — use `windows-shell` |
 | `windows-shell` | list | — | Shell override for Windows only |
-| `working-directory` | string | — | Working dir for recipes (relative to justfile dir) |
+| `working-directory` | string | — | Working dir for recipes (relative to justfile dir) (1.33.0) |
 
 ## Shell Configuration
 
@@ -184,7 +184,7 @@ test:
   cargo test    # token is NOT evaluated
 ```
 
-## Working Directory
+## Working Directory (1.33.0+)
 
 ```just
 set working-directory := 'subdir'
