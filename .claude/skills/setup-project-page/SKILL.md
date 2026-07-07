@@ -80,7 +80,7 @@ When analyzing a project, look for these signals:
 
 ## Anti-Patterns
 
-- NEVER use CSS functions (like `rgba()`, `var()`) for `--color-primary` or `--color-primary-hover` — they MUST be plain hex values (e.g. `#7c3aed`). The auto-generated favicon parses these as hex and will break otherwise.
+- NEVER use CSS functions (like `rgba()`, `var()`) for `--color-primary` or `--color-primary-hover` — they MUST be plain hex values (e.g. `#7c3aed`). The generator injects these values verbatim as SVG fill colors for the auto-generated favicon; a `var()` reference breaks it because the standalone SVG cannot resolve custom properties. Always override both together — each falls back to the base theme independently, so overriding only one produces a two-tone favicon.
 - NEVER add `<html>`, `<head>`, `<body>`, or `<!DOCTYPE>` to section files — they are HTML fragments injected into the generator's page template.
 - MUST NOT duplicate README content into section files — use `source: readme` in config.yaml to pull documentation from the README.
 - NEVER create a section HTML file without a matching entry in the `config.yaml` sections array, and vice versa.

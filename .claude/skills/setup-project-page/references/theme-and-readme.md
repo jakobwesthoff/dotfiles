@@ -43,7 +43,7 @@ For projects that want more control (e.g. an amber brand color with custom h1 gr
 
 ## Favicon Hex Constraint
 
-The generator auto-generates an SVG favicon from `--color-primary` and `--color-primary-hover`. These values are parsed as hex strings — not evaluated as CSS. If they contain `rgba()`, `var()`, or any CSS function, the favicon will break.
+The generator auto-generates an SVG favicon from `--color-primary` and `--color-primary-hover`. It regex-extracts the raw text after each declaration in theme.css and injects it verbatim as the `fill` value in the favicon SVG template, with no CSS evaluation. A `var(--some-name)` reference breaks the favicon because the standalone SVG has no such custom property to resolve. The house rule stays plain hex values only, so the failure mode is predictable and other CSS color functions are never attempted.
 
 **Valid:**
 ```css
@@ -53,9 +53,11 @@ The generator auto-generates an SVG favicon from `--color-primary` and `--color-
 
 **FORBIDDEN:**
 ```css
---color-primary: rgb(245, 158, 11);       /* breaks favicon */
---color-primary-hover: var(--some-color);  /* breaks favicon */
+--color-primary: rgb(245, 158, 11);       /* not a plain hex value */
+--color-primary-hover: var(--some-color);  /* breaks favicon: no such property in the SVG */
 ```
+
+**Override both together.** `--color-primary` and `--color-primary-hover` each fall back to the base theme's value independently. A theme.css that overrides only one produces a favicon mixing the brand color with the default purple from the other (`#7c3aed` / `#6d28d9`), with no error. Always set both in the same override.
 
 ## Full Variable Reference
 
@@ -68,6 +70,13 @@ All variables with their defaults from `templates/styles/theme.css`:
 | `--color-primary-hover` | `#6d28d9` | Hover state for primary, favicon |
 | `--color-primary-subtle` | `#2d2640` | Subtle accent for borders/backgrounds |
 
+### Warning Colors
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `--color-warning-rgb` | `245, 158, 11` | RGB components for the warning palette |
+| `--color-warning` | `rgb(var(--color-warning-rgb))` | `.callout-warning` accent (WARNING/CAUTION alerts) |
+| `--color-warning-subtle` | `rgba(var(--color-warning-rgb), 0.1)` | `.callout-warning` background tint |
+
 ### Backgrounds
 | Variable | Default | Purpose |
 |----------|---------|---------|
@@ -77,6 +86,8 @@ All variables with their defaults from `templates/styles/theme.css`:
 | `--color-bg-card` | `#1f1f2e` | Card backgrounds |
 | `--color-bg-code` | `#1e1e2e` | Code block backgrounds |
 | `--color-bg-titlebar` | `#1a1a20` | macOS window titlebar |
+
+Code token *foreground* colors are generated at build time by Shiki using the hardcoded `github-dark` theme and land as inline `style` colors on each span; they do not read theme variables. `--color-bg-code` changes only the background behind the tokens, so a light-background override leaves code blocks styled with a dark-background token palette.
 
 ### Text
 | Variable | Default | Purpose |
@@ -97,7 +108,7 @@ All variables with their defaults from `templates/styles/theme.css`:
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `--font-sans` | `system-ui, -apple-system, ...sans-serif` | Body font |
-| `--font-mono` | `"JetBrains Mono", ui-monospace, ...monospace` | Code font |
+| `--font-mono` | `Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace` | Code font |
 
 ### Spacing
 | Variable | Default | Purpose |
@@ -134,11 +145,17 @@ headings, tables, code blocks with syntax highlighting, lists, etc.
 
 ### Rules
 
-- Markers MUST be on their own lines
+- Markers MUST be on their own lines. Extraction is character-offset based (the generator finds the marker strings with `indexOf` and slices the text between them), so a violation does not error — same-line text next to a marker silently leaks into or out of the extracted region instead.
 - Only content **between** the markers is extracted
 - The rest of the README is ignored by the generator
 - Markdown is rendered to HTML with syntax-highlighted code blocks at build time
 - The corresponding section in config.yaml uses `source: readme` (not `file`)
+
+### What the Renderer Supports
+
+- **GitHub-style alerts become styled callouts.** A blockquote starting with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, or `[!CAUTION]` renders as a `.callout-box` div; `[!WARNING]` and `[!CAUTION]` additionally get the `.callout-warning` class.
+- **Headings get GitHub-compatible anchor ids**, so in-README anchor links (e.g. `[see config](#configuration)`) keep working on the generated page. Because section ids in config.yaml render as `<section id="{{ section.id }}">` on the same page, a README heading whose slug matches a config section id (e.g. a `## Demo` heading producing `id="demo"` next to a `demo` section) creates a duplicate id; anchor navigation then resolves to whichever element comes first in the document.
+- **Tables are wrapped** in `<div class="docs-table"><table class="table">...</table></div>`, which is why README tables pick up the page's table styling.
 
 ### Placement Strategy
 
