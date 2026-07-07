@@ -59,7 +59,10 @@ looping until the user picks "Post this comment" or "Skip this comment".
 
 Use a single Python script to generate payloads for approved comments only.
 This avoids shell escaping issues and ensures consistent SHA references across
-all comments.
+all comments. Inline comments are posted as draft notes (see
+[gitlab-api-comments.md](gitlab-api-comments.md#draft-notes-api)), whose
+payload key is `note`; the summary is posted separately via the Notes API,
+whose payload key is `body`.
 
 ```python
 import json
@@ -86,7 +89,7 @@ def pos(path, new_line, old_line=None):
 
 comments = [
     {
-        "body": "Review comment with optional\n\n```suggestion:-0+0\n    replacement\n```",
+        "note": "Review comment with optional\n\n```suggestion:-0+0\n    replacement\n```",
         "position": pos("src/File.php", 42),
     },
     # ... only approved comments
@@ -136,10 +139,15 @@ print(f"Wrote {summary_path}")
 
 ## Anti-patterns
 
-- NEVER post comments without first extracting the correct SHA refs — stale or
-  guessed SHAs cause silent failures or misplaced comments
+- NEVER post comments without first extracting the correct SHA refs. Wrong or
+  stale SHAs fail unpredictably: unresolvable line numbers or incomplete
+  positions return HTTP 400, while mismatched `base_sha`/`head_sha`/`start_sha`
+  combinations return HTTP 500 (`Failed to find diff line for ...`) or produce
+  a broken comment rendered as an attachment link instead of an inline thread.
+  Always fetch `diff_refs` fresh from the same MR immediately before posting.
 - NEVER use shell heredocs or `echo` to build JSON payloads — backticks and
   newlines in suggestion blocks will break
 - NEVER hardcode line numbers without computing them from the diff hunk headers
 - NEVER omit the `-H 'Content-Type: application/json'` header on `--input`
-  calls — HTTP 415 error
+  calls — `glab api --input` sends no default Content-Type, and the request
+  fails (observed: HTTP 415)

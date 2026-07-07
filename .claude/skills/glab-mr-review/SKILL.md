@@ -104,7 +104,9 @@ detailed loop mechanics.
 
 ALWAYS use `json.dump()` — NEVER shell heredocs or echo. Only generate
 payloads for comments that were approved in step 5. Include `suggestion:-N+M`
-blocks for concrete fix proposals.
+blocks for concrete fix proposals (see
+[references/gitlab-api-comments.md](references/gitlab-api-comments.md) for
+the range limit and where suggestions are valid).
 
 Create a fresh temp directory first:
 
@@ -113,31 +115,61 @@ TMP_DIR=$(mktemp -d)
 ```
 
 Write one file per comment, named `mr-review-comment-<n>.json`, plus
-`mr-review-summary.json`, into that directory.
+`mr-review-summary.json`, into that directory. Inline comment payloads use the
+`note` key (Draft Notes API), not `body`; the summary payload uses `body`
+(Notes API). See
+[references/gitlab-api-comments.md](references/gitlab-api-comments.md) for
+both payload shapes.
 
-### 7. Post approved comments (parallel) and summary note
+### 7. Stage draft notes, publish, then post the summary
+
+Approved inline comments are staged as draft notes first and published
+atomically, so the review appears all at once instead of trickling in as
+each comment is posted:
 
 ```bash
-glab api "projects/<PROJECT>/merge_requests/<IID>/discussions" \
+glab api "projects/<PROJECT_ID>/merge_requests/<IID>/draft_notes" \
   --method POST --input "$TMP_DIR/mr-review-comment-1.json" -H 'Content-Type: application/json'
 ```
 
-Verify each response returns a `discussion.id`.
+Verify each response is `201` and contains a top-level `id`.
 
-Summary via Notes API:
+If a draft note's `position` is rejected, follow the fallback procedure in
+[references/gitlab-api-comments.md](references/gitlab-api-comments.md): retry
+once after re-verifying the computed lines and re-fetching `diff_refs`; if it
+still fails, demote that one comment to a plain (position-less) discussion via
+the Discussions API and continue staging the rest as drafts.
+
+Once every approved comment is staged (or demoted and posted), publish all
+staged drafts at once:
 
 ```bash
-glab api "projects/<PROJECT>/merge_requests/<IID>/notes" \
+glab api "projects/<PROJECT_ID>/merge_requests/<IID>/draft_notes/bulk_publish" \
+  --method POST -H 'Content-Type: application/json'
+```
+
+To discard a staged draft before publishing (e.g. a comment approved earlier
+in the loop is later dropped), use
+`DELETE projects/<PROJECT_ID>/merge_requests/<IID>/draft_notes/<id>`.
+
+Then post the summary via the Notes API:
+
+```bash
+glab api "projects/<PROJECT_ID>/merge_requests/<IID>/notes" \
   --method POST --input "$TMP_DIR/mr-review-summary.json" -H 'Content-Type: application/json'
 ```
 
-The summary MUST only reference comments that were actually posted. If comments
-were skipped during the approval loop, remove them from the summary.
+The summary MUST only reference comments that were actually posted (inline or
+demoted). If comments were skipped during the approval loop, remove them from
+the summary. Report which comments were posted inline (via drafts) and which
+were demoted to plain discussions.
 
 ## Critical rules
 
 - The `-H 'Content-Type: application/json'` header is REQUIRED on every
-  `--input` call. Without it: HTTP 415.
+  `--input` call: `glab api --input` sends the file as a raw body with no
+  default Content-Type, so omitting the header fails the request (observed:
+  HTTP 415).
 - NEVER guess line numbers. Compute them from diff hunk headers.
 - NEVER build JSON payloads with shell strings. Use Python `json.dump()`.
 - URL-encode project paths: `group/project` -> `group%2Fproject`.
@@ -147,6 +179,9 @@ were skipped during the approval loop, remove them from the summary.
 - NEVER post a comment that was skipped or not yet approved in preview mode.
 - When a user provides revision feedback via "Other", incorporate it and
   re-present — do NOT post the original version.
+- Draft notes use the `note` key for the comment body, NOT `body` — the
+  Discussions API uses `body`. Mixing the two silently produces an empty or
+  rejected note.
 
 ## Reference files
 

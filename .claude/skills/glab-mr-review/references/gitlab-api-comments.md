@@ -2,8 +2,19 @@
 
 ## Overview
 
-`glab mr` does not support inline diff comments natively. Use `glab api` to
-call the GitLab Discussions and Notes REST endpoints directly.
+The primary route for inline comments is the raw API: create draft notes via
+the Draft Notes API, publish them atomically, then post the summary via the
+Notes API (see the sections below). `glab mr note create --file <path> --line
+N` (or `--line N:M` for ranges, `--old-line N` for removed lines) is a native
+alternative for a single ad-hoc diff comment, always anchored to the latest
+merge request diff version; it is marked EXPERIMENTAL in glab 1.107.0's help
+output. The raw API stays primary for this skill's review workflow because
+the native command cannot set both `old_line` and `new_line` together (needed
+for context-line comments), offers no draft-note staging, and cannot pin an
+older diff version. If the native command is used for a one-off comment, pipe
+the body from stdin or a file rather than `-m` to avoid shell-escaping issues
+with suggestion blocks, and pass `--unique` to skip posting if an identical
+comment already exists.
 
 ## Required SHA References
 
@@ -22,7 +33,18 @@ print('start_sha:', d['diff_refs']['start_sha'])
 ```
 
 All three fields come from `diff_refs` on the MR object. They MUST match the
-current head of the MR branch — stale SHAs cause 400 errors.
+current head of the MR branch. Wrong or stale SHAs fail unpredictably:
+
+- Unresolvable line numbers (a line that does not exist in the resolved diff)
+  or an incomplete position (missing required line fields) return HTTP 400.
+- Mismatched `base_sha`/`head_sha`/`start_sha` combinations return HTTP 500
+  (`Failed to find diff line for: <file>, old_line: N, new_line: N`) or create
+  a comment that renders as a broken attachment link instead of an inline
+  thread (gitlab-org/gitlab#296829).
+
+Both failure classes are avoided the same way: always fetch `diff_refs` fresh
+from the same MR immediately before posting, and compute lines from the
+current diff rather than reusing values from an earlier session.
 
 ## Computing Line Numbers
 
@@ -70,7 +92,86 @@ For comments on a context (unchanged) line, GitLab requires BOTH
 `position[new_line]` and `position[old_line]`. Compute both from the
 respective counters above; they are generally not equal.
 
+## Draft Notes API
+
+Default mechanism for posting inline review comments. Draft notes remain
+visible only to their author until published, so a whole review is staged
+first and published atomically instead of trickling in comment by comment.
+
+### Create
+
+Endpoint: `POST /projects/:id/merge_requests/:merge_request_iid/draft_notes`
+
+The payload uses the `note` key for the comment body, NOT `body` — `body` is
+the Discussions/Notes API key. This is an easy silent mistake since the rest
+of this skill's payloads use `body` for the summary. The `position` object is
+identical to the Discussions API's (same required SHAs, `position_type`,
+`old_path`/`new_path`, and the same optional `line_range` structure described
+below).
+
+```json
+{
+  "note": "Comment text with optional ```suggestion blocks",
+  "position": {
+    "position_type": "text",
+    "base_sha": "<from diff_refs>",
+    "head_sha": "<from diff_refs>",
+    "start_sha": "<from diff_refs>",
+    "old_path": "src/Example.php",
+    "new_path": "src/Example.php",
+    "new_line": 42
+  }
+}
+```
+
+```bash
+glab api "projects/<PROJECT_ID>/merge_requests/<IID>/draft_notes" \
+  --method POST \
+  --input "$TMP_DIR/mr-review-comment-1.json" \
+  -H 'Content-Type: application/json'
+```
+
+GitLab's REST reference documents no response example for this endpoint. The
+list/get endpoints (`GET .../draft_notes`, `GET .../draft_notes/:id`) show the
+draft note object with a top-level `id` field; expect the same shape back
+from a successful create.
+
+### Publish
+
+Publish one: `PUT /projects/:id/merge_requests/:merge_request_iid/draft_notes/:draft_note_id/publish`.
+
+Publish all (used by this skill after the approval loop, so the whole review
+appears at once): `POST /projects/:id/merge_requests/:merge_request_iid/draft_notes/bulk_publish`.
+
+```bash
+glab api "projects/<PROJECT_ID>/merge_requests/<IID>/draft_notes/bulk_publish" \
+  --method POST -H 'Content-Type: application/json'
+```
+
+GitLab's REST docs (https://docs.gitlab.com/api/draft_notes/) document no
+request or response body for this endpoint beyond the path parameters.
+GitLab's source on `master` (`lib/api/draft_notes.rb`) sets `status 204` /
+`body false` at the end of the endpoint, so `bulk_publish` returns
+`204 No Content` on success. The same source additionally accepts three
+optional parameters — `reviewer_state` (`requested_changes`/`reviewed`),
+`note` (a summary body to post on the MR in the same call), and `internal`
+(boolean) — but these are undocumented in the public REST reference and only
+verified against `master`; older self-hosted instances may not support them.
+This skill relies only on the documented baseline: create drafts, then a
+plain `bulk_publish` with no body, then post the summary separately via the
+Notes API.
+
+### List and delete
+
+List: `GET .../draft_notes`. Delete (escape hatch for discarding a staged
+draft before publishing): `DELETE .../draft_notes/:draft_note_id`.
+
 ## Posting Inline Comments (Discussions API)
+
+Fallback for positions the Draft Notes API rejects, and alternative for
+posting a single ad-hoc comment outside the staged-review flow. The payload
+shape is otherwise identical to a draft note's, except the body key is
+`body`, not `note`.
 
 Endpoint: `POST /projects/:id/merge_requests/:iid/discussions`
 
@@ -113,8 +214,32 @@ glab api "projects/<PROJECT>/merge_requests/<IID>/discussions" \
   -H 'Content-Type: application/json'
 ```
 
+A successful positioned discussion POST returns `201` with a top-level `id`
+field (there is no `discussion` wrapper key).
+
 **CRITICAL:** The `-H 'Content-Type: application/json'` header is REQUIRED when
-using `--input`. Without it, the API returns HTTP 415 Unsupported Media Type.
+using `--input`. `glab api --input` sends the file as a raw request body with
+only a `Content-Length` header, no default Content-Type, so the JSON content
+type must be supplied explicitly with `-H`; without it, the request fails
+(observed: HTTP 415 Unsupported Media Type).
+
+### Fallback when a position is rejected
+
+Both the Draft Notes API and the Discussions API can reject a `position` (see
+"Required SHA References" above for the failure modes). When a positioned
+create fails:
+
+1. Re-verify the computed `old_line`/`new_line` against the hunk headers and
+   re-fetch `diff_refs` (the MR may have been updated since analysis), then
+   retry once with the corrected values.
+2. If it still fails, demote the comment to a plain (position-less)
+   discussion: `POST .../discussions` with only `body`, prefixed with
+   `**file:line**` so the location is still visible. Convert any `suggestion`
+   block in the body into a plain fenced code block first — suggestions are
+   only valid inside diff-positioned discussions or draft notes, never in a
+   position-less thread.
+3. Report which comments ended up posted inline (as drafts or discussions)
+   and which were demoted to plain threads.
 
 ### Generating payloads safely
 
@@ -250,6 +375,11 @@ Where:
 - `+M` = number of lines **below** the commented line to include
 - Total replaced range: `(commented_line - N)` through `(commented_line + M)`, inclusive
 - `-0+0` replaces only the commented line itself
+- GitLab limits `N` and `M` to 100 each (100 lines above, 100 lines below),
+  for a maximum of 201 changed lines per suggestion
+- Suggestion blocks are only applicable inside diff-positioned discussion
+  comments or draft notes. Never put a suggestion block in the summary note —
+  it has no diff position to apply against.
 
 ### Examples
 
@@ -278,6 +408,26 @@ Replace 1 line above, the commented line, and 2 below (4 lines total):
         'expectedSizes' => [Config::MAX_PER_REQUEST],
 ```
 ````
+
+## Follow-up operations
+
+Re-review scenarios (respond to an author's answer on a thread, resolve a
+thread whose finding was addressed, reopen one) use different endpoints than
+creating new comments.
+
+- **Reply to an existing discussion**: `POST /projects/:id/merge_requests/:merge_request_iid/discussions/:discussion_id/notes`
+  with required `body`. Returns `201` and the created note.
+- **Resolve or reopen a thread**: `PUT /projects/:id/merge_requests/:merge_request_iid/discussions/:discussion_id`
+  with boolean `resolved` (`true` to resolve, `false` to reopen). Returns
+  `200` and the updated discussion. Post the boolean via
+  `glab api ... --method PUT --field resolved=true`, since `--field` converts
+  literal `true`/`false` to JSON booleans.
+- **Native alternative**: `glab mr note resolve <discussion-id> <IID>` and
+  `glab mr note reopen <discussion-id> <IID>` exist and are marked
+  EXPERIMENTAL in glab 1.107.0's help output.
+- **Inspecting existing threads**: `glab mr view <IID> --comments` shows
+  comments and activity; `--resolved` or `--unresolved` filter to just
+  resolved or unresolved discussions (each implies `--comments`).
 
 ## Project path encoding
 
