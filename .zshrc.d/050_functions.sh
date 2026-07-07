@@ -46,7 +46,7 @@ col() {
 
 # In honor to Star-Trek
 makeitso() {
-    sudo $(history 2 | head -n 1 | sed -e 's@^[0-9]\+\s\+@@')
+    sudo "$SHELL" -c "$(fc -ln -1)"
 }
 
 # Copy stdin to clipboard via pbcopy and OSC 52 escape sequence
