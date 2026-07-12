@@ -1,4 +1,4 @@
-if ! zgenom saved; then
+if (( ZGENOM_SAVED != 0 )); then
     zgenom load zsh-users/zsh-history-substring-search zsh-history-substring-search.zsh
 fi
 

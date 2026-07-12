@@ -80,12 +80,18 @@ fi
 # https://apple.stackexchange.com/questions/405246/zsh-comment-character
 setopt interactive_comments
 
+# Every `zgenom saved` call sources init.zsh, whose trailing compinit
+# resets _comps and drops completions registered at runtime (e.g.
+# zoxide's). Call it exactly once here; the .zshrc.d modules test
+# ZGENOM_SAVED instead of invoking `zgenom saved` themselves.
+zgenom saved; ZGENOM_SAVED=$?
+
 # Source .zshrc.d
 while read -rd $'\0' file; do
     source "${file}"
 done < <(find -L "${HOME}/.zshrc.d" -mindepth 1 -maxdepth 1 -name '*.sh' -type f -print0 | LC_ALL=C sort -z)
 
-if ! zgenom saved; then
+if (( ZGENOM_SAVED != 0 )); then
     zgenom save
 fi
 

@@ -1,4 +1,4 @@
-if ! zgenom saved; then
+if (( ZGENOM_SAVED != 0 )); then
     zgenom load romkatv/powerlevel10k powerlevel10k
 fi
 
