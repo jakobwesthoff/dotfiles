@@ -7,18 +7,32 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "Bash(cargo check:*)",
-      "Bash(cargo clippy:*)",
-      "Bash(tree:*)",
-      "Bash(bats:*)",
-      "Bash(xargs cat:*)",
-      "Bash(git:*)",
-      "Bash(mkulid:*)"
+      "WebFetch(domain:docs.rs)",
+      "WebFetch(domain:crates.io)",
+      "WebFetch(domain:github.com)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git stash *)",
+      "Bash(git mv *)",
+      "Bash(cargo check *)",
+      "Bash(cargo clippy)",
+      "Bash(cargo clippy *)",
+      "Bash(cargo test)",
+      "Bash(cargo test *)",
+      "Bash(cargo build)",
+      "Bash(cargo build *)",
+      "Bash(bats *)",
+      "Bash(mkulid *)",
+      "Bash(shellcheck *)",
+      "Bash(rustc --version)",
+      "Bash(cargo --version)",
+      "Bash(just --version)",
+      "Bash(nvim --version)"
     ],
     "deny": [],
     "defaultMode": "default"
   },
-  "model": "opus",
+  "model": "opus[1m]",
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
