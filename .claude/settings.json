@@ -1,4 +1,9 @@
 {
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
   "permissions": {
     "allow": [
       "WebSearch",
@@ -24,16 +29,11 @@
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
   "showClearContextOnPlanAccept": true,
-  "autoDreamEnabled": true,
-  "remoteControlAtStartup": false,
-  "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true,
   "voice": {
     "enabled": true
   },
-  "attribution": {
-    "commit": "",
-    "pr": "",
-    "sessionUrl": false
-  }
+  "autoDreamEnabled": true,
+  "remoteControlAtStartup": false,
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true
 }
