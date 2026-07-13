@@ -1,0 +1,22 @@
+# The tmux prefix-s picker (.tmux.conf) pipes `sesh list` into fzf, so the
+# popup stays empty until the full list is produced. The zoxide source is the
+# bottleneck: zoxide stats every database entry to filter out directories that
+# no longer exist, and entries under /Volumes (SMB mounts) turn each of those
+# stats into a network round trip. Listing time then depends on NAS latency:
+# hundreds of milliseconds when it is awake, seconds when it is asleep or the
+# mount is stale.
+#
+# The cache serves the previous list instantly and revalidates in the
+# background (stale-while-revalidate, 5s TTL hardcoded upstream), moving the
+# NAS round trips off the picker's critical path. It is kept current through
+# three paths: `sesh connect` refreshes it itself, tmux hooks (.tmux.conf)
+# refresh it when sessions are created or closed outside sesh, and the
+# picker's ctrl-d kill binding refreshes before reloading the list.
+#
+# The hooks and kill binding need a sesh that has the `cache refresh`
+# command. The PATH setup in .zprofile.d/050_go.sh prefers the locally
+# built ~/go/bin/sesh over the Homebrew bottle for this reason.
+#
+# Upstream documents the cache as experimental. To revert, remove
+# `cache = true` and delete ~/.cache/sesh/sessions.gob.
+cache = true
