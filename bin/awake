@@ -1,0 +1,490 @@
+#!/usr/bin/env bash
+set -ueo pipefail
+
+# awake - Report and control the macOS keep-awake session held by
+# Amphetamine.app.
+#
+# All state lives in Amphetamine itself; this script is a stateless
+# front end that drives the app through AppleScript.
+
+# =========================================================
+# Exit codes
+# =========================================================
+#
+# Separating "unavailable" from "failed" lets callers distinguish a
+# machine that simply has no Amphetamine from one where talking to it
+# broke.
+
+readonly EXIT_OK=0
+readonly EXIT_FAILURE=1
+readonly EXIT_USAGE=2
+readonly EXIT_UNAVAILABLE=3
+
+# =========================================================
+# AppleScript
+# =========================================================
+
+# Bound every Apple event this script sends. Without an explicit
+# timeout AppleScript waits two minutes before giving up, which an
+# unanswered Automation consent dialog or a wedged Amphetamine is
+# enough to trigger. The status probe sits on interactive paths such as
+# a prompt or status bar, so it gets a short leash; deliberate actions
+# can afford to wait.
+readonly STATUS_TIMEOUT_SECONDS=5
+readonly ACTION_TIMEOUT_SECONDS=60
+
+# Query the session without launching Amphetamine. The `is running`
+# guard is a plain process check; only inside it do we send Apple
+# events, which would otherwise start the app. The single returned line
+# is either `not-running` or `<active>|<remaining>|<displayAllowed>`.
+readonly STATUS_SCRIPT="if application \"Amphetamine\" is running then
+with timeout of ${STATUS_TIMEOUT_SECONDS} seconds
+tell application \"Amphetamine\"
+set isActive to session is active
+set remaining to session time remaining
+set displayAllowed to display sleep allowed
+end tell
+end timeout
+return isActive as text & \"|\" & remaining as text & \"|\" & displayAllowed as text
+else
+return \"not-running\"
+end if"
+
+# End the current session. Guarded the same way as the status probe so
+# stopping a non-running app is a silent success rather than a launch
+# followed by a no-op.
+readonly STOP_SCRIPT="if application \"Amphetamine\" is running then
+with timeout of ${ACTION_TIMEOUT_SECONDS} seconds
+tell application \"Amphetamine\" to end session
+end timeout
+end if"
+
+# Build the AppleScript that starts a session. Amphetamine takes a
+# duration plus an interval unit; an indefinite session is encoded as
+# `duration:0, interval:0`, which `session time remaining` then reports
+# back as a plain `0`.
+start_script() {
+  local minutes="$1" display_sleep_allowed="$2"
+  local duration interval
+
+  if [[ -n "$minutes" ]]; then
+    duration="$minutes"
+    interval="minutes"
+  else
+    duration="0"
+    interval="0"
+  fi
+
+  printf 'with timeout of %s seconds
+tell application "Amphetamine" to start new session with options {duration:%s, interval:%s, displaySleepAllowed:%s}
+end timeout' \
+    "$ACTION_TIMEOUT_SECONDS" "$duration" "$interval" "$display_sleep_allowed"
+}
+
+# =========================================================
+# Diagnostics
+# =========================================================
+
+die() {
+  local code="$1"
+  shift
+  printf '%s: %s\n' "${0##*/}" "$*" >&2
+  exit "$code"
+}
+
+usage() {
+  cat <<'USAGE'
+Usage: awake [<command>] [<options>]
+
+Report and control the macOS keep-awake session held by Amphetamine.
+
+Commands:
+  status                  Report the current session (the default)
+  on [<duration>]         Start a session, replacing any running one
+  off                     End the current session
+  toggle [<duration>]     End an active session, or start one when idle
+  help                    Show this help
+
+Options:
+  --json                  status: emit a single JSON object
+  --quiet, -q             status: print nothing; exit 0 active, 1 inactive
+  --display               on/toggle: allow the display to sleep while
+                          the system stays awake
+  -h, --help              Show this help
+
+Durations are compact: 30m, 2h, 1h30m. Omitting the duration starts an
+indefinite session that runs until stopped.
+
+Exit codes:
+  0  success
+  1  talking to Amphetamine failed
+  2  usage error
+  3  Amphetamine is unavailable (not macOS, or not installed)
+
+Examples:
+  awake                   Show the current state
+  awake on 1h30m          Stay awake for ninety minutes
+  awake on --display      Stay awake indefinitely, screen may sleep
+  awake status --quiet    Use the exit code in a prompt or status bar
+USAGE
+}
+
+# =========================================================
+# Availability
+# =========================================================
+
+# Establish that Amphetamine can be driven at all, before any command
+# tries to. The application lookup goes through LaunchServices and
+# resolves the bundle wherever it is installed, so a copy outside
+# /Applications is found too; it is a metadata query and does not
+# launch the app.
+require_amphetamine() {
+  [[ "$(uname -s)" == "Darwin" ]] ||
+    die "$EXIT_UNAVAILABLE" "Amphetamine is macOS-only, and this is not macOS"
+
+  command -v osascript >/dev/null 2>&1 ||
+    die "$EXIT_UNAVAILABLE" "osascript not found, cannot talk to Amphetamine"
+
+  osascript -e 'id of application "Amphetamine"' >/dev/null 2>&1 ||
+    die "$EXIT_UNAVAILABLE" "Amphetamine is not installed"
+}
+
+# Run one AppleScript and return its stdout, turning any failure into a
+# message that names Amphetamine rather than osascript internals.
+run_osascript() {
+  local script="$1" output status
+
+  set +e
+  output="$(osascript -e "$script" 2>&1)"
+  status=$?
+  set -e
+
+  if ((status != 0)); then
+    # Two AppleEvent errors have a cause the user can act on, and both
+    # arrive wrapped in osascript noise that buries it.
+    case "$output" in
+    *-1712*)
+      die "$EXIT_FAILURE" "Amphetamine did not respond in time"
+      ;;
+    *-1743*)
+      die "$EXIT_FAILURE" "not permitted to control Amphetamine; grant this terminal Automation access under System Settings > Privacy & Security > Automation"
+      ;;
+    esac
+    if [[ -n "$output" ]]; then
+      die "$EXIT_FAILURE" "Amphetamine command failed: $output"
+    fi
+    die "$EXIT_FAILURE" "Amphetamine command failed (exit code $status)"
+  fi
+
+  printf '%s' "$output"
+}
+
+# =========================================================
+# Duration parsing
+# =========================================================
+
+# Total minutes for a compact duration token, printed on stdout.
+#
+# The token is an optional hours part terminated by `h` followed by an
+# optional minutes part terminated by `m`, with at least one part
+# present: 30m, 2h, 1h30m. A bare number carries no unit and is
+# rejected, as is a zero total, which Amphetamine would read as the
+# sentinel for an indefinite session.
+parse_duration() {
+  local token="$1" hours=0 minutes=0
+
+  [[ "$token" =~ ^([0-9]+h)?([0-9]+m)?$ ]] ||
+    die "$EXIT_USAGE" "invalid duration: '$token' (expected 30m, 2h or 1h30m)"
+
+  local hours_part="${BASH_REMATCH[1]}" minutes_part="${BASH_REMATCH[2]}"
+
+  # Both groups are optional, so the pattern also matches the empty
+  # string; a token carrying neither part is not a duration.
+  [[ -n "$hours_part" || -n "$minutes_part" ]] ||
+    die "$EXIT_USAGE" "invalid duration: '$token' (expected 30m, 2h or 1h30m)"
+
+  # Bound the digit runs before any arithmetic touches them, and force
+  # base 10 so a leading zero is not read as octal.
+  local digits
+  for digits in "${hours_part%h}" "${minutes_part%m}"; do
+    ((${#digits} <= 9)) ||
+      die "$EXIT_USAGE" "duration out of range: '$token'"
+  done
+  [[ -z "$hours_part" ]] || hours=$((10#${hours_part%h}))
+  [[ -z "$minutes_part" ]] || minutes=$((10#${minutes_part%m}))
+
+  local total=$((hours * 60 + minutes))
+  ((total > 0)) ||
+    die "$EXIT_USAGE" "duration must be greater than zero: '$token'"
+
+  printf '%s' "$total"
+}
+
+# =========================================================
+# Status
+# =========================================================
+#
+# The parsed status is carried in these globals rather than a return
+# value, because a single probe feeds three consumers: the human line,
+# the JSON object, and the toggle decision.
+
+STATUS_STATE=""                 # active | inactive
+STATUS_RUNNING=""               # true | false: is Amphetamine itself up
+STATUS_KIND=""                  # infinite | timed | external, when active
+STATUS_REMAINING=""             # seconds, when kind is timed
+STATUS_DISPLAY_ALLOWED=""       # true | false, when active
+
+# Probe Amphetamine and fill the STATUS_* globals.
+#
+# `session time remaining` overloads its sign to encode the session
+# kind: 0 is an indefinite manual session, a positive value counts a
+# timed session down, and -1/-2 mark a session Amphetamine manages
+# itself (Trigger-, application-, or date-based). The conventional -3
+# for "no session" is only meaningful alongside an inactive flag, so
+# paired with an active one it is as contradictory as any other
+# unrecognized sentinel.
+read_status() {
+  local output
+  output="$(run_osascript "$STATUS_SCRIPT")"
+
+  # Trim the trailing newline osascript appends, plus any stray
+  # surrounding whitespace.
+  local line="${output#"${output%%[![:space:]]*}"}"
+  line="${line%"${line##*[![:space:]]}"}"
+
+  STATUS_KIND=""
+  STATUS_REMAINING=""
+  STATUS_DISPLAY_ALLOWED=""
+
+  if [[ "$line" == "not-running" ]]; then
+    STATUS_STATE="inactive"
+    STATUS_RUNNING="false"
+    return
+  fi
+
+  STATUS_RUNNING="true"
+
+  local active remaining display_allowed extra
+  IFS='|' read -r active remaining display_allowed extra <<<"$line"
+
+  [[ -n "$display_allowed" && -z "$extra" ]] ||
+    die "$EXIT_FAILURE" "unexpected Amphetamine status output: '$line'"
+  [[ "$active" == "true" || "$active" == "false" ]] ||
+    die "$EXIT_FAILURE" "unexpected active flag in status output: '$active'"
+  [[ "$display_allowed" == "true" || "$display_allowed" == "false" ]] ||
+    die "$EXIT_FAILURE" "unexpected display flag in status output: '$display_allowed'"
+  [[ "$remaining" =~ ^-?[0-9]+$ ]] ||
+    die "$EXIT_FAILURE" "unexpected remaining value in status output: '$remaining'"
+
+  # With no session the remaining value and the display flag carry no
+  # meaning, so neither is interpreted.
+  if [[ "$active" == "false" ]]; then
+    STATUS_STATE="inactive"
+    return
+  fi
+
+  STATUS_STATE="active"
+  STATUS_DISPLAY_ALLOWED="$display_allowed"
+
+  if ((remaining == 0)); then
+    STATUS_KIND="infinite"
+  elif ((remaining > 0)); then
+    STATUS_KIND="timed"
+    STATUS_REMAINING="$remaining"
+  elif ((remaining == -1 || remaining == -2)); then
+    STATUS_KIND="external"
+  else
+    die "$EXIT_FAILURE" "contradictory Amphetamine status: active session with remaining $remaining"
+  fi
+}
+
+# Render a second count the way a person reads a countdown.
+format_remaining() {
+  local total="$1"
+  local hours=$((total / 3600))
+  local minutes=$(((total % 3600) / 60))
+  local seconds=$((total % 60))
+
+  if ((hours > 0)); then
+    printf '%dh %02dm' "$hours" "$minutes"
+  elif ((minutes > 0)); then
+    printf '%dm %02ds' "$minutes" "$seconds"
+  else
+    printf '%ds' "$seconds"
+  fi
+}
+
+print_status_human() {
+  local suffix=""
+  [[ "$STATUS_DISPLAY_ALLOWED" != "true" ]] || suffix=" (display sleep allowed)"
+
+  if [[ "$STATUS_STATE" == "inactive" ]]; then
+    if [[ "$STATUS_RUNNING" == "true" ]]; then
+      printf 'inactive\n'
+    else
+      printf 'inactive (Amphetamine not running)\n'
+    fi
+    return
+  fi
+
+  case "$STATUS_KIND" in
+  infinite) printf 'active: indefinite%s\n' "$suffix" ;;
+  timed) printf 'active: %s remaining%s\n' "$(format_remaining "$STATUS_REMAINING")" "$suffix" ;;
+  external) printf 'active: external session%s\n' "$suffix" ;;
+  esac
+}
+
+# Emit the status as one JSON object with a fixed key set, so consumers
+# never have to branch on which keys are present. Every value is one
+# this script produced from the validated status line, so a plain
+# printf needs no escaping; `kind` is the only nullable string and is
+# quoted here rather than at the call site.
+print_status_json() {
+  local kind='null' remaining='null' display='null'
+
+  [[ -z "$STATUS_KIND" ]] || kind="\"$STATUS_KIND\""
+  [[ -z "$STATUS_REMAINING" ]] || remaining="$STATUS_REMAINING"
+  [[ -z "$STATUS_DISPLAY_ALLOWED" ]] || display="$STATUS_DISPLAY_ALLOWED"
+
+  printf '{"state":"%s","running":%s,"kind":%s,"remaining_secs":%s,"display_sleep_allowed":%s}\n' \
+    "$STATUS_STATE" "$STATUS_RUNNING" "$kind" "$remaining" "$display"
+}
+
+# =========================================================
+# Commands
+# =========================================================
+
+cmd_status() {
+  local json=false quiet=false
+
+  while (($# > 0)); do
+    case "$1" in
+    --json) json=true ;;
+    -q | --quiet) quiet=true ;;
+    -h | --help)
+      usage
+      exit "$EXIT_OK"
+      ;;
+    *) die "$EXIT_USAGE" "unknown option for 'status': $1" ;;
+    esac
+    shift
+  done
+
+  require_amphetamine
+  read_status
+
+  # --quiet moves the answer into the exit code, so the two output
+  # modes are mutually exclusive by construction.
+  if [[ "$quiet" == true ]]; then
+    if [[ "$STATUS_STATE" == "active" ]]; then
+      exit "$EXIT_OK"
+    fi
+    exit 1
+  fi
+
+  if [[ "$json" == true ]]; then
+    print_status_json
+  else
+    print_status_human
+  fi
+}
+
+# Parse the shared `[<duration>] [--display]` argument list of `on` and
+# `toggle` into the two globals the start path needs.
+START_MINUTES=""
+START_DISPLAY="false"
+
+parse_start_args() {
+  local command="$1"
+  shift
+
+  START_MINUTES=""
+  START_DISPLAY="false"
+
+  while (($# > 0)); do
+    case "$1" in
+    --display) START_DISPLAY="true" ;;
+    -h | --help)
+      usage
+      exit "$EXIT_OK"
+      ;;
+    -*) die "$EXIT_USAGE" "unknown option for '$command': $1" ;;
+    *)
+      [[ -z "$START_MINUTES" ]] ||
+        die "$EXIT_USAGE" "duration given more than once for '$command'"
+      START_MINUTES="$(parse_duration "$1")"
+      ;;
+    esac
+    shift
+  done
+}
+
+cmd_on() {
+  parse_start_args on "$@"
+  require_amphetamine
+
+  # Unlike the status and stop paths this one is unguarded on purpose:
+  # asking for a session implies wanting Amphetamine running, and the
+  # `tell` launches it when it is not.
+  run_osascript "$(start_script "$START_MINUTES" "$START_DISPLAY")" >/dev/null
+}
+
+cmd_off() {
+  # `off` takes no arguments, so the first one decides everything.
+  if (($# > 0)); then
+    case "$1" in
+    -h | --help)
+      usage
+      exit "$EXIT_OK"
+      ;;
+    *) die "$EXIT_USAGE" "unknown option for 'off': $1" ;;
+    esac
+  fi
+
+  require_amphetamine
+  run_osascript "$STOP_SCRIPT" >/dev/null
+}
+
+# End whatever is running, or start a session when nothing is. An
+# externally managed session counts as active here, so toggling ends it
+# like any other.
+cmd_toggle() {
+  parse_start_args toggle "$@"
+  require_amphetamine
+  read_status
+
+  if [[ "$STATUS_STATE" == "active" ]]; then
+    run_osascript "$STOP_SCRIPT" >/dev/null
+  else
+    run_osascript "$(start_script "$START_MINUTES" "$START_DISPLAY")" >/dev/null
+  fi
+}
+
+# =========================================================
+# Entry point
+# =========================================================
+
+main() {
+  local command="status"
+
+  # A bare invocation reports the status, and so does a leading option,
+  # which belongs to the implied `status` command.
+  if (($# > 0)) && [[ "$1" != -* ]]; then
+    command="$1"
+    shift
+  fi
+
+  case "$command" in
+  status) cmd_status "$@" ;;
+  on) cmd_on "$@" ;;
+  off) cmd_off "$@" ;;
+  toggle) cmd_toggle "$@" ;;
+  help)
+    usage
+    exit "$EXIT_OK"
+    ;;
+  *) die "$EXIT_USAGE" "unknown command: $command" ;;
+  esac
+}
+
+main "$@"
