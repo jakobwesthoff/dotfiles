@@ -255,6 +255,19 @@ To extract a specific range of lines from a file, use the Read tool with
 or `head`/`tail`. The Read tool is purpose-built for this, avoids
 unnecessary Bash invocations, and renders output with line numbers.
 
+### Searching (use rg)
+
+Prefer `rg` (ripgrep) over `grep` for content searches. It is
+substantially faster on large files and trees, recurses without `find`
+plumbing, and its regex engine avoids the pathological backtracking
+that makes wide-context `grep -o` patterns crawl.
+
+Fall back to `grep` only in two cases: `rg` lacks a feature the search
+genuinely needs, or ripgrep's defaults would exclude files the request
+meant to cover. `rg` skips ignored, hidden, and binary files unless
+told otherwise, so try `--hidden`, `--no-ignore`, `-a`, or `-uuu`
+before switching tools.
+
 ### sed (use gsed)
 
 Stock macOS `sed` is BSD sed and not reliable for this workflow. Use
