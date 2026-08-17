@@ -13,8 +13,9 @@ section below.
 - Never call ExitPlanMode until explicitly told all decisions are
   settled.
 - Always inform the user before creating a `todos/` entry.
-- Commit messages: Write tool creates `.tmp-commit-msg`, then
-  `git commit -F`, then `rm` — three separate tool calls, never chained.
+- Commit messages: Write tool creates the message in the scratchpad, then
+  `git -C <repo> commit -F <abs-path>` — two separate tool calls, never
+  chained.
 - Accuracy-critical documents contain no unvalidated sentence.
 - Never hallucinate project-specific answers; the repository is the
   source of truth.
@@ -317,13 +318,21 @@ directly — must follow the rules below.
 
 Commit rules (follow exactly):
 - Atomic commits grouped by semantic feature, each self-contained and buildable.
-- Commit message workflow — three **separate** tool calls, never chained
+- Commit message workflow — two **separate** tool calls, never chained
   with `&&` or `;`:
-  1. Use the **Write tool** to create `.tmp-commit-msg` (never `cat`,
-     `echo`, or heredoc).
-  2. Run `git commit -F .tmp-commit-msg` alone in its own Bash call.
-  3. Run `rm .tmp-commit-msg` alone in its own Bash call.
-  Each step must be its own independent tool invocation.
+  1. Use the **Write tool** (never `cat`, `echo`, or heredoc) to create
+     the message at `<scratchpad>/commit-msg-<slug>.txt`, where
+     `<scratchpad>` is the session scratchpad directory and `<slug>` is a
+     short kebab-case hint at the commit topic. The slug keeps parallel
+     subagents from overwriting each other's messages; derive it from
+     what you already know rather than spending a tool call on it.
+  2. Run `git -C <repo> commit -F <absolute-path-to-message>` alone in
+     its own Bash call. Both paths must be absolute: `-F` resolves
+     against the process CWD, not the repo root, so a relative path and
+     `-C` would disagree about where "here" is.
+  No cleanup step. The scratchpad is session-scoped and discarded with
+  the session, so the message never reaches the working tree and cannot
+  be swept into a later `git add`.
 - Title: concise present-tense, no semantic prefixes (feat:, fix:, etc.).
 - Title-only when the title is self-explanatory. Only add a body for
   caveats, limitations, or non-obvious trade-offs not captured elsewhere.
