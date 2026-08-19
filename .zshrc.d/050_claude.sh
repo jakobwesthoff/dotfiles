@@ -8,3 +8,7 @@ export CLAUDE_CODE_NO_FLICKER=1
 # `promptSuggestionEnabled` setting cannot do this, as it is only consulted
 # once the rollout flag has already passed.
 export CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION=1
+
+# Enable Todo/Task Tracking, as it is disabled now by default in Opus 4.8,
+# Sonnet 5, Fable 5, Mythos 5 and later
+export CLAUDE_CODE_ENABLE_TODO_TOOLS=1
