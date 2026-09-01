@@ -370,3 +370,54 @@ function ohcount() {
     echo "LEARN THE NAME: This tool is called *tokei*"
     tokei "$@"
 }
+
+# Eject the optical drive and do not return until the disc is really out.
+#
+# The old `alias eject="drutil eject"` was fire-and-forget: per man drutil,
+# `eject` is a synonym for `drutil tray eject`, which hands the drive a tray
+# command and exits 0 straight away. It exits 0 even when a still-mounted
+# volume makes macOS refuse the request, which is precisely the situation
+# right after something has read the disc. In `rip-disc && eject && next-step`
+# the next step therefore starts with the disc still in the drive.
+#
+# So: unmount first (diskutil, unlike drutil, reports a busy volume), then
+# ask for the eject, then poll the drive until it confirms the media is gone.
+#
+# Usage: eject [timeout-seconds]   (default 60, applied per phase)
+eject() {
+    local timeout="${1:-60}"
+    local deadline
+
+    if drutil status 2>/dev/null | grep -q 'No Media Inserted'; then
+        return 0
+    fi
+
+    # drutil status prints the media's device node as "Name: /dev/diskN".
+    local device
+    device="$(drutil status 2>/dev/null |
+        sed -n 's|.*Name: *\(/dev/[a-z0-9]*\).*|\1|p' |
+        head -n1)"
+
+    if [ -n "${device}" ]; then
+        deadline=$((SECONDS + timeout))
+        while ! diskutil unmountDisk "${device}" >/dev/null 2>&1; do
+            if [ "${SECONDS}" -ge "${deadline}" ]; then
+                echo "eject: ${device} still busy after ${timeout}s, forcing" >&2
+                diskutil unmountDisk force "${device}" >/dev/null || return 1
+                break
+            fi
+            sleep 1
+        done
+    fi
+
+    drutil eject >/dev/null 2>&1
+
+    deadline=$((SECONDS + timeout))
+    while ! drutil status 2>/dev/null | grep -q 'No Media Inserted'; do
+        if [ "${SECONDS}" -ge "${deadline}" ]; then
+            echo "eject: drive still reports media after ${timeout}s" >&2
+            return 1
+        fi
+        sleep 1
+    done
+}
