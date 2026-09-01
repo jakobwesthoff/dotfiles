@@ -388,7 +388,10 @@ eject() {
     local timeout="${1:-60}"
     local deadline
 
+    # Empty drive: nothing to unmount and nothing to wait for, but keep the
+    # old alias' convenience of opening the tray so a disc can go in.
     if drutil status 2>/dev/null | grep -q 'No Media Inserted'; then
+        drutil tray open >/dev/null 2>&1
         return 0
     fi
 
@@ -398,9 +401,16 @@ eject() {
         sed -n 's|.*Name: *\(/dev/[a-z0-9]*\).*|\1|p' |
         head -n1)"
 
+    # Drive the loop off what is actually mounted rather than off diskutil's
+    # exit status. A disc that is inserted but unmounted, or whose filesystem
+    # macOS cannot read at all, never makes unmountDisk report success, and
+    # would otherwise sit out the entire timeout for no reason.
     if [ -n "${device}" ]; then
         deadline=$((SECONDS + timeout))
-        while ! diskutil unmountDisk "${device}" >/dev/null 2>&1; do
+        while mount | grep -qE "^${device}(s[0-9]+)* "; do
+            if diskutil unmountDisk "${device}" >/dev/null 2>&1; then
+                continue
+            fi
             if [ "${SECONDS}" -ge "${deadline}" ]; then
                 echo "eject: ${device} still busy after ${timeout}s, forcing" >&2
                 diskutil unmountDisk force "${device}" >/dev/null || return 1
