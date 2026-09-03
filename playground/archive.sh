@@ -32,6 +32,7 @@ n_archived=0
 n_skipped=0
 n_emptied=0
 n_restored=0
+n_no_archive=0
 
 # =========================================================
 # Helpers
@@ -40,6 +41,14 @@ n_restored=0
 log()  { printf '%s\n' "$*"; }
 warn() { printf '%s\n' "$*" >&2; }
 die()  { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+
+# Bold yellow, only when stdout is a terminal, so redirected/piped logs stay
+# plain text instead of filling with escape codes.
+if [ -t 1 ]; then
+  highlight() { printf '\033[1;33m%s\033[0m\n' "$*"; }
+else
+  highlight() { printf '%s\n' "$*"; }
+fi
 
 # Absolute cutoff as YYYYMMDD. GNU date and BSD date disagree on how to do
 # relative dates, and both are plausible on this machine depending on whether
@@ -164,6 +173,14 @@ for path in "$ROOT"/*/; do
   name="$(basename "$path")"
   [ "$name" = "archive" ] && continue
 
+  # A .no-archive marker is an explicit opt-out, checked before anything
+  # else so it also protects otherwise-empty or aged-out directories.
+  if [ -e "$path.no-archive" ]; then
+    highlight ">>> $name skipped: .no-archive present <<<"
+    n_no_archive=$((n_no_archive + 1))
+    continue
+  fi
+
   # Empty trees carry no information worth compressing.
   if is_empty_tree "$path"; then
     if [ "$DRY_RUN" -eq 1 ]; then
@@ -204,4 +221,4 @@ for path in "$ARCHIVE_DIR"/*/; do
 done
 
 log ""
-log "archived: $n_archived   skipped: $n_skipped   removed empty: $n_emptied   restored: $n_restored"
+log "archived: $n_archived   skipped: $n_skipped   removed empty: $n_emptied   restored: $n_restored   no-archive: $n_no_archive"
