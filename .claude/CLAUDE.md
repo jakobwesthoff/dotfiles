@@ -3,11 +3,25 @@
 These guidelines apply globally across all my projects. Project-specific
 CLAUDE.md files may extend or override these where appropriate.
 
+# Mandatory: `unslop` before any prose
+
+- Load the `unslop` skill before your first text output in a session,
+  and reload it after every context compaction (skill content does not
+  survive compaction).
+- Applies to all prose: chat replies (even one sentence), commit
+  messages, MR descriptions and review comments, docs, ADRs, READMEs,
+  changelogs, todo entries, Jira and Confluence content, code comments.
+- Only exemption: pure tool work with no prose (reading files, running
+  commands, code edits that touch no comments).
+- No exceptions. No project CLAUDE.md may override this.
+
 # Hard rules
 
 These are absolute. Detailed context for each appears in its own
 section below.
 
+- Load and apply the `unslop` skill before writing any text-based
+  output. No exceptions.
 - Never mention AI, Claude, or Anthropic in commits. Never add
   Co-Authored-By.
 - Never call ExitPlanMode until explicitly told all decisions are
@@ -38,28 +52,21 @@ technically focused. Prioritize technical clarity over politeness.
   knowledge and external search are fine for non-project topics.
 - When in doubt about a design decision, ask rather than assume.
 
-# Writing style: emdash restraint
+# Writing style: no emdashes
 
-Emdashes are fine, but overreliance on them makes prose feel
-choppy and formulaic. The goal is fluent, natural writing, not
-mechanical substitution of one punctuation mark for another.
+Do not use emdashes. The `unslop` skill bans them outright, and that
+ban is mandatory everywhere, so this section only explains how to write
+without them. En dashes and parentheses are not substitutes; swapping
+one mark for another trades one tell for another.
 
-When you catch yourself reaching for an emdash, pause and ask
-whether the sentence reads better restructured: a separate
-sentence, a colon introducing what follows, commas around a mild
-aside, or simply rewriting the clause so no special punctuation is
-needed. Often the best fix is not swapping punctuation but
-rephrasing entirely.
+When you catch yourself reaching for an emdash, restructure instead: a
+separate sentence, a colon introducing what follows, commas around a
+mild aside, or a rewrite so no special punctuation is needed. The best
+fix is usually rephrasing, not swapping punctuation. Do not reach for
+semicolons reflexively either; they are usually worse.
 
-Emdashes remain the right choice for sharp interjections, for
-appositives where commas would create ambiguity, and anywhere
-they genuinely produce the most readable result. Do not replace
-them with semicolons reflexively; semicolons are usually worse.
-
-The signal to watch for: three or more emdashes in a single
-paragraph, or a page where every other sentence uses one. That
-pattern means the writing has fallen into a rut and needs
-variety, not a find-and-replace pass.
+When the emdash is just standing in for a word like "as", "because",
+or "since", write the word instead.
 
 ### Examples
 
@@ -88,13 +95,16 @@ variety, not a find-and-replace pass.
 
 ---
 
-**Good (emdash is the right tool):**
+**Bad (emdash for a dramatic pause before a consequence):**
 > The bridge silently drops the channel rather than forwarding it
 > — gadgets that need streaming must stay native.
 
-Here the emdash creates a deliberate pause before a consequence
-that deserves emphasis. A comma would be too weak; a separate
-sentence would lose the punch.
+**Good (the consequence gets its own sentence):**
+> The bridge silently drops the channel rather than forwarding it.
+> Gadgets that need streaming must stay native.
+
+The emphasis survives the split. A sentence break is a longer pause
+than an emdash, not a weaker one.
 
 ---
 
@@ -117,9 +127,6 @@ sentence would lose the punch.
 **Good:**
 > Each client operates independently as there is no shared state
 > between connections.
-
-When the emdash is just standing in for a word like "as",
-"because", or "since", write the word instead.
 
 # Workflow and tooling
 
