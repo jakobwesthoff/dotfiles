@@ -15,6 +15,17 @@ CLAUDE.md files may extend or override these where appropriate.
   commands, code edits that touch no comments).
 - No exceptions. No project CLAUDE.md may override this.
 
+# Mandatory: `literate-code` before any code
+
+- Load the `literate-code` skill before your first code edit in a
+  session, and reload it after every context compaction.
+- Applies to every edit that creates or changes code, comments
+  included: source, tests, scripts, build and config files, snippets in
+  docs.
+- Only exemption: work that touches no code (reading files, running
+  commands, prose-only edits).
+- No exceptions. No project CLAUDE.md may override this.
+
 # Hard rules
 
 These are absolute. Detailed context for each appears in its own
@@ -22,6 +33,8 @@ section below.
 
 - Load and apply the `unslop` skill before writing any text-based
   output. No exceptions.
+- Load and apply the `literate-code` skill before writing or editing
+  any code. No exceptions.
 - Never mention AI, Claude, or Anthropic in commits. Never add
   Co-Authored-By.
 - Never call ExitPlanMode until explicitly told all decisions are
