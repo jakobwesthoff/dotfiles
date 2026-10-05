@@ -14,6 +14,14 @@
 # restores mtimes, so the retrieved copy is immediately eligible again. That
 # collision is resolved by comparing content, not by refusing to run. See
 # handle_collision().
+#
+# Usage:
+#   archive.sh [--dry-run]       archive every aged-out directory
+#   archive.sh list [pattern]    list archives whose name contains pattern
+#   archive.sh retrieve [pattern]
+#                                take one archive out of storage: restore its
+#                                directory to the playground and delete the
+#                                archive once the restore is proven complete
 
 set -euo pipefail
 
@@ -36,7 +44,6 @@ XZ_OPTS=(-T0 -9 --check=sha256)
 INFO_FILE=.archive-info
 
 DRY_RUN=0
-[ "${1:-}" = "--dry-run" ] && DRY_RUN=1
 
 # Counters for the closing summary.
 n_archived=0
@@ -104,13 +111,16 @@ is_empty_tree() {
 #      a file present on disk that never made it into the archive, since
 #      --compare only ever walks members the archive already contains.
 #
-# Only if all three pass is the original safe to delete.
+# Only if all three pass is the original safe to delete. The same holds in
+# the other direction: a tree extracted from an archive that passes all three
+# is complete, so the archive is safe to delete. The tree is <base>/<name>.
 validate_archive() {
-  local archive="$1" src_dir="$2" name="$3"
+  local archive="$1" base="$2" name="$3"
+  local src_dir="$base/$name"
 
   xz -t "$archive" || return 1
 
-  gtar --compare -Jf "$archive" -C "$ROOT" || return 1
+  gtar --compare -Jf "$archive" -C "$base" || return 1
 
   local n_disk n_arch
   n_disk="$(find "$src_dir" | wc -l | tr -d ' ')"
@@ -381,7 +391,7 @@ archive_dir() {
     die "compression failed for $name"
   fi
 
-  if ! validate_archive "$part" "$src" "$name"; then
+  if ! validate_archive "$part" "$ROOT" "$name"; then
     rm -f "$part"
     die "validation failed for $name; original left untouched"
   fi
@@ -553,106 +563,330 @@ handle_collision() {
 }
 
 # =========================================================
+# Retrieving
+# =========================================================
+
+archive_names() {
+  local archive
+  for archive in "$ARCHIVE_DIR"/*.tar.xz; do
+    [ -e "$archive" ] || continue
+    basename "$archive"
+  done
+}
+
+# Archive filenames containing the pattern, case-insensitively. An empty
+# pattern matches every archive.
+matching_names() {
+  archive_names | grep -iF -- "$1" || true
+}
+
+cmd_list() {
+  local name archive found=0
+  while IFS= read -r name; do
+    [ -n "$name" ] || continue
+    archive="$ARCHIVE_DIR/$name"
+    printf '%s  %6s  %s\n' "$(date -r "$archive" +%Y-%m-%d)" \
+      "$(du -h "$archive" | cut -f1)" "$name"
+    found=1
+  done < <(matching_names "$1")
+  [ "$found" -eq 1 ] || die "no archive name contains '$1'"
+}
+
+# What fzf shows beside the highlighted archive: when it was archived, its
+# provenance record, and the start of its listing.
+cmd_preview() {
+  local archive="$ARCHIVE_DIR/$1" name
+  printf '%s   %s\n\n' "$(date -r "$archive" +%Y-%m-%d)" "$(du -h "$archive" | cut -f1)"
+
+  # .archive-info sorts ahead of nearly every other member, and --occurrence
+  # stops at the first match rather than reading the rest of the archive. An
+  # archive without the record is read to the end before this gives up.
+  name="$(archive_root "$archive")"
+  if gtar -xJOf "$archive" --occurrence "$name/$INFO_FILE" 2>/dev/null; then
+    printf '\n'
+  else
+    printf '(no %s)\n\n' "$INFO_FILE"
+  fi
+
+  { gtar -tvJf "$archive" 2>/dev/null || true; } | gsed 200q
+}
+
+# Resolves a pattern to one archive path in PICKED.
+#
+# An exact archive name, with or without .tar.xz, or a pattern contained in
+# exactly one name picks that archive directly. Anything else opens fzf over
+# all archives with the pattern as the starting query, so a vague or empty
+# pattern is narrowed down by hand.
+pick_archive() {
+  local pattern="$1" name
+  local matches=()
+  while IFS= read -r name; do
+    [ -n "$name" ] && matches+=("$name")
+  done < <(matching_names "$pattern")
+
+  if [ -n "$pattern" ]; then
+    [ "${#matches[@]}" -gt 0 ] || die "no archive name contains '$pattern'"
+    for name in "${matches[@]}"; do
+      if [ "$name" = "$pattern" ] || [ "$name" = "$pattern.tar.xz" ]; then
+        PICKED="$ARCHIVE_DIR/$name"
+        return 0
+      fi
+    done
+    if [ "${#matches[@]}" -eq 1 ]; then
+      PICKED="$ARCHIVE_DIR/${matches[0]}"
+      return 0
+    fi
+  fi
+
+  if ! command -v fzf >/dev/null || ! can_prompt; then
+    printf '%s\n' "${matches[@]}" >&2
+    die "${#matches[@]} archives match; give a pattern that matches only one"
+  fi
+
+  # The preview calls back into this script by absolute path, under bash
+  # rather than the user's $SHELL, which fzf would otherwise use.
+  local self picked
+  self="$ROOT/$(basename "${BASH_SOURCE[0]}")"
+  if ! picked="$(archive_names | fzf \
+      --query "$pattern" \
+      --prompt 'retrieve> ' \
+      --layout reverse \
+      --with-shell 'bash -c' \
+      --preview "$(printf '%q' "$self") __preview {}" \
+      --preview-window 'right,60%')"; then
+    log "nothing picked"
+    exit 0
+  fi
+  PICKED="$ARCHIVE_DIR/$picked"
+}
+
+# Set while a retrieve is in progress, so an aborted one leaves no partial
+# tree behind.
+RETRIEVE_STAGING=""
+
+# Takes one archive out of storage. The directory goes back to its place in
+# the playground with its original mtimes, so an untouched copy is archived
+# again by the next run, and the archive is deleted once the restored tree
+# is proven to hold everything it did.
+cmd_retrieve() {
+  local archive name base n_stray n_entries
+  PICKED=""
+  pick_archive "$1"
+  archive="$PICKED"
+  base="$(basename "$archive")"
+
+  name="$(archive_root "$archive")"
+  [ -n "$name" ] || die "cannot read $base"
+  case "$name" in
+    .*|archive) die "$base holds '$name', which cannot be restored into the playground" ;;
+  esac
+
+  # Every member must sit inside that one directory. This keeps the restore
+  # within its target and refuses archives written by other tools, such as
+  # bsdtar's AppleDouble members beside the directory.
+  n_stray="$(gtar -tJf "$archive" \
+    | awk -v root="$name" '$0 != root "/" && index($0, root "/") != 1 { n++ } END { print n + 0 }')" \
+    || die "cannot list $base"
+  [ "$n_stray" -eq 0 ] \
+    || die "$base has $n_stray members outside $name/; refusing to restore it"
+
+  if [ -e "$ROOT/$name" ] || [ -L "$ROOT/$name" ]; then
+    highlight ">>> $name already exists in the playground <<<"
+    die "retrieving $base would overwrite it; move it aside first"
+  fi
+
+  # Extraction goes to a dot-directory beside the target, which the archive
+  # run's */ glob never matches, so the directory appears under its real name
+  # only once proven complete. One left behind by an interrupted retrieve is
+  # safe to discard because the archive is always the last thing deleted.
+  RETRIEVE_STAGING="$ROOT/.retrieve-$name"
+  trap 'rm -rf "$RETRIEVE_STAGING"' EXIT
+  rm -rf "$RETRIEVE_STAGING"
+  mkdir "$RETRIEVE_STAGING"
+
+  # Archives this script writes list members in sorted, depth-first order,
+  # but an archive from another tool may return to a directory after leaving
+  # it. GNU tar would then set that directory's mtime too early and the late
+  # file would bump it, and validate_archive does not check directory mtimes.
+  # Delaying all directory metadata to the end restores them either way.
+  log "retrieving     $name from $base"
+  gtar --delay-directory-restore -xJf "$archive" -C "$RETRIEVE_STAGING" \
+    || die "extraction failed for $base; archive kept"
+
+  if ! validate_archive "$archive" "$RETRIEVE_STAGING" "$name"; then
+    die "restored $name does not match $base; archive kept"
+  fi
+
+  # Checked again because the playground may have changed during a long
+  # extraction, and mv onto an existing directory would nest inside it.
+  [ ! -e "$ROOT/$name" ] || die "$name appeared in the playground meanwhile; archive kept"
+  mv "$RETRIEVE_STAGING/$name" "$ROOT/$name"
+  rmdir "$RETRIEVE_STAGING"
+  RETRIEVE_STAGING=""
+
+  rm -f "$archive"
+
+  n_entries="$(find "$ROOT/$name" | wc -l | tr -d ' ')"
+  log "retrieved      $name ($n_entries entries), $base deleted"
+  log "               unless something in it changes, the next run archives it again"
+
+  local others
+  others="$(archives_for "$name")"
+  if [ -n "$others" ]; then
+    highlight ">>> more archives of $name remain <<<"
+    printf '%s\n' "$others" | while IFS= read -r archive; do
+      log "  $(basename "$archive")"
+    done
+  fi
+}
+
+# =========================================================
+# Archiving run
+# =========================================================
+
+cmd_archive() {
+  local path name archive target
+  local existing=()
+
+  CUTOFF="$(cutoff_date)"
+
+  # The reference file every directory's contents are compared against. It
+  # lives outside the tree being scanned so that it cannot be mistaken for a
+  # candidate, and is stamped at midnight of the cutoff day.
+  CUTOFF_REF="$(mktemp)"
+  trap 'rm -f "$CUTOFF_REF"' EXIT
+  touch -t "${CUTOFF}0000" "$CUTOFF_REF"
+
+  log "cutoff: directories untouched since $CUTOFF are archived"
+  [ "$DRY_RUN" -eq 1 ] && log "(dry run, nothing will be written or deleted)"
+  log ""
+
+  for path in "$ROOT"/*/; do
+    name="$(basename "$path")"
+    [ "$name" = "archive" ] && continue
+
+    # A .no-archive marker is an explicit opt-out, checked before anything
+    # else so it also protects otherwise-empty or aged-out directories.
+    if [ -e "$path.no-archive" ]; then
+      highlight ">>> $name skipped: .no-archive present <<<"
+      n_no_archive=$((n_no_archive + 1))
+      continue
+    fi
+
+    # Empty trees carry no information worth compressing.
+    if is_empty_tree "$path"; then
+      if [ "$DRY_RUN" -eq 1 ]; then
+        log "would remove   $name (empty)"
+      else
+        log "removing       $name (empty)"
+        rm -rf "${path:?}"
+      fi
+      n_emptied=$((n_emptied + 1))
+      continue
+    fi
+
+    if has_recent_file "$path"; then
+      n_skipped=$((n_skipped + 1))
+      continue
+    fi
+
+    existing=()
+    while IFS= read -r archive; do
+      existing+=("$archive")
+    done < <(archives_for "$name")
+
+    if [ "${#existing[@]}" -eq 0 ]; then
+      # The plain name can already be taken by an archive of another
+      # directory kept beside its own under a suffix: "x.1.tar.xz" holding
+      # "x" when "x.1" comes up. archive_dir would replace it, so this
+      # directory goes beside it under a suffix instead.
+      target="$ARCHIVE_DIR/$name.tar.xz"
+      if [ -e "$target" ]; then
+        target="$ARCHIVE_DIR/$name.$(default_suffix "$name").tar.xz"
+      fi
+      if [ "$DRY_RUN" -eq 1 ]; then
+        log "would archive  $(basename "$target" .tar.xz)"
+      else
+        log "archiving      $(basename "$target" .tar.xz)"
+      fi
+      archive_dir "$name" "$target" "first archive of this directory"
+      n_archived=$((n_archived + 1))
+    else
+      handle_collision "$name" "${existing[@]}"
+    fi
+  done
+
+  # Directories that ended up inside archive/ uncompressed are moved back out.
+  # They are deliberately not archived in this same run: the move restores
+  # them to the normal population, and the next run treats them like any
+  # other directory.
+  for path in "$ARCHIVE_DIR"/*/; do
+    [ -e "$path" ] || continue
+    name="$(basename "$path")"
+    if [ -e "$ROOT/$name" ]; then
+      warn "cannot restore $name: a directory of that name already exists"
+      continue
+    fi
+    if [ "$DRY_RUN" -eq 1 ]; then
+      log "would restore  $name (uncompressed, from archive/)"
+    else
+      log "restoring      $name (uncompressed, from archive/)"
+      mv "$path" "$ROOT/$name"
+    fi
+    n_restored=$((n_restored + 1))
+  done
+
+  log ""
+  log "archived: $n_archived   skipped: $n_skipped   removed empty: $n_emptied   restored: $n_restored   no-archive: $n_no_archive"
+  log "reclaimed: $n_reclaimed   replaced: $n_replaced   beside: $n_beside   unresolved: $n_conflict"
+
+  # An unresolved collision is work the run could not finish, which matters
+  # to whatever scheduled it.
+  [ "$n_conflict" -eq 0 ] || exit 1
+}
+
+# =========================================================
 # Main
 # =========================================================
+
+usage() {
+  cat <<'EOF'
+usage: archive.sh [--dry-run]
+       archive.sh list [pattern]
+       archive.sh retrieve [pattern]
+EOF
+}
 
 command -v gtar >/dev/null || die "gtar (GNU tar) is required"
 command -v gsed >/dev/null || die "gsed (GNU sed) is required"
 command -v xz   >/dev/null || die "xz is required"
 [ -d "$ARCHIVE_DIR" ] || die "archive directory not found: $ARCHIVE_DIR"
 
-CUTOFF="$(cutoff_date)"
-
-# The reference file every directory's contents are compared against. It lives
-# outside the tree being scanned so that it cannot be mistaken for a candidate,
-# and is stamped at midnight of the cutoff day.
-CUTOFF_REF="$(mktemp)"
-trap 'rm -f "$CUTOFF_REF"' EXIT
-touch -t "${CUTOFF}0000" "$CUTOFF_REF"
-
-log "cutoff: directories untouched since $CUTOFF are archived"
-[ "$DRY_RUN" -eq 1 ] && log "(dry run, nothing will be written or deleted)"
-log ""
-
-for path in "$ROOT"/*/; do
-  name="$(basename "$path")"
-  [ "$name" = "archive" ] && continue
-
-  # A .no-archive marker is an explicit opt-out, checked before anything
-  # else so it also protects otherwise-empty or aged-out directories.
-  if [ -e "$path.no-archive" ]; then
-    highlight ">>> $name skipped: .no-archive present <<<"
-    n_no_archive=$((n_no_archive + 1))
-    continue
-  fi
-
-  # Empty trees carry no information worth compressing.
-  if is_empty_tree "$path"; then
-    if [ "$DRY_RUN" -eq 1 ]; then
-      log "would remove   $name (empty)"
-    else
-      log "removing       $name (empty)"
-      rm -rf "${path:?}"
+case "${1:-}" in
+  ""|--dry-run)
+    [ $# -le 1 ] || { usage >&2; exit 2; }
+    if [ "${1:-}" = "--dry-run" ]; then
+      DRY_RUN=1
     fi
-    n_emptied=$((n_emptied + 1))
-    continue
-  fi
-
-  if has_recent_file "$path"; then
-    n_skipped=$((n_skipped + 1))
-    continue
-  fi
-
-  existing=()
-  while IFS= read -r archive; do
-    existing+=("$archive")
-  done < <(archives_for "$name")
-
-  if [ "${#existing[@]}" -eq 0 ]; then
-    # The plain name can already be taken by an archive of another directory
-    # kept beside its own under a suffix: "x.1.tar.xz" holding "x" when "x.1"
-    # comes up. archive_dir would replace it, so this directory goes beside it
-    # under a suffix instead.
-    target="$ARCHIVE_DIR/$name.tar.xz"
-    if [ -e "$target" ]; then
-      target="$ARCHIVE_DIR/$name.$(default_suffix "$name").tar.xz"
-    fi
-    if [ "$DRY_RUN" -eq 1 ]; then
-      log "would archive  $(basename "$target" .tar.xz)"
-    else
-      log "archiving      $(basename "$target" .tar.xz)"
-    fi
-    archive_dir "$name" "$target" "first archive of this directory"
-    n_archived=$((n_archived + 1))
-  else
-    handle_collision "$name" "${existing[@]}"
-  fi
-done
-
-# Directories that ended up inside archive/ uncompressed are moved back out.
-# They are deliberately not archived in this same run: the move restores them
-# to the normal population, and the next run treats them like any other
-# directory.
-for path in "$ARCHIVE_DIR"/*/; do
-  [ -e "$path" ] || continue
-  name="$(basename "$path")"
-  if [ -e "$ROOT/$name" ]; then
-    warn "cannot restore $name: a directory of that name already exists"
-    continue
-  fi
-  if [ "$DRY_RUN" -eq 1 ]; then
-    log "would restore  $name (uncompressed, from archive/)"
-  else
-    log "restoring      $name (uncompressed, from archive/)"
-    mv "$path" "$ROOT/$name"
-  fi
-  n_restored=$((n_restored + 1))
-done
-
-log ""
-log "archived: $n_archived   skipped: $n_skipped   removed empty: $n_emptied   restored: $n_restored   no-archive: $n_no_archive"
-log "reclaimed: $n_reclaimed   replaced: $n_replaced   beside: $n_beside   unresolved: $n_conflict"
-
-# An unresolved collision is work the run could not finish, which matters to
-# whatever scheduled it.
-[ "$n_conflict" -eq 0 ] || exit 1
+    cmd_archive
+    ;;
+  list)
+    [ $# -le 2 ] || { usage >&2; exit 2; }
+    cmd_list "${2:-}"
+    ;;
+  retrieve)
+    [ $# -le 2 ] || { usage >&2; exit 2; }
+    cmd_retrieve "${2:-}"
+    ;;
+  # Internal: fzf's preview command during retrieve.
+  __preview)
+    cmd_preview "$2"
+    ;;
+  -h|--help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac
