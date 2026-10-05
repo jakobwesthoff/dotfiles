@@ -644,16 +644,17 @@ pick_archive() {
   fi
 
   # The preview calls back into this script by absolute path, under bash
-  # rather than the user's $SHELL, which fzf would otherwise use.
+  # rather than the user's $SHELL, which fzf would otherwise use. The layout
+  # follows the other fzf pickers in these dotfiles, such as kcfg: input at
+  # the bottom, preview above the list.
   local self picked
   self="$ROOT/$(basename "${BASH_SOURCE[0]}")"
   if ! picked="$(archive_names | fzf \
       --query "$pattern" \
       --prompt 'retrieve> ' \
-      --layout reverse \
       --with-shell 'bash -c' \
       --preview "$(printf '%q' "$self") __preview {}" \
-      --preview-window 'right,60%')"; then
+      --preview-window up)"; then
     log "nothing picked"
     exit 0
   fi
