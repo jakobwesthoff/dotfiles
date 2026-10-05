@@ -127,16 +127,26 @@ validate_archive() {
 # Comparing a directory against an existing archive
 # =========================================================
 
-# Every archive claiming a given directory name: the plain <name>.tar.xz plus
-# any <name>.<suffix>.tar.xz placed beside it by an earlier conflict.
+# The directory an archive holds, read from the archive itself.
 #
-# Playground directory names contain no dots, so the dot after the stem is an
-# unambiguous separator and the glob cannot reach into a neighbouring
-# directory's archives.
+# Only the first member is needed, and cutting the decompressor off there
+# keeps this fast on archives of several gigabytes. An unreadable archive
+# yields an empty name.
+archive_root() {
+  { gtar -tJf "$1" 2>/dev/null || true; } | gsed -n '1{s:/.*::;p;q}'
+}
+
+# Every archive of a given directory: the plain <name>.tar.xz plus any
+# <name>.<suffix>.tar.xz placed beside it by an earlier conflict.
+#
+# The filename alone cannot decide this because directory names may contain
+# dots. "x.1.tar.xz" is the plain archive of a directory "x.1" or an archive
+# of "x" kept beside under the suffix "1", and the glob for "x" matches both.
+# Each candidate is therefore attributed by the directory it holds.
 archives_for() {
   local name="$1" archive
   for archive in "$ARCHIVE_DIR/$name.tar.xz" "$ARCHIVE_DIR/$name."*".tar.xz"; do
-    if [ -e "$archive" ]; then
+    if [ -e "$archive" ] && [ "$(archive_root "$archive")" = "$name" ]; then
       printf '%s\n' "$archive"
     fi
   done
@@ -309,8 +319,9 @@ default_suffix() {
   printf '%s\n' "$candidate"
 }
 
-# A suffix has to stay inside the naming grammar: no dot, or the stem could no
-# longer be recovered from the filename, and no path separator.
+# Suffixes are limited to letters, digits, underscore and hyphen, which keeps
+# path separators out of the archive name. Which directory an archive belongs
+# to is read from its contents (see archives_for), not parsed from the name.
 valid_suffix() {
   case "$1" in
     ""|*[!A-Za-z0-9_-]*) return 1 ;;
@@ -598,12 +609,20 @@ for path in "$ROOT"/*/; do
   done < <(archives_for "$name")
 
   if [ "${#existing[@]}" -eq 0 ]; then
-    if [ "$DRY_RUN" -eq 1 ]; then
-      log "would archive  $name"
-    else
-      log "archiving      $name"
+    # The plain name can already be taken by an archive of another directory
+    # kept beside its own under a suffix: "x.1.tar.xz" holding "x" when "x.1"
+    # comes up. archive_dir would replace it, so this directory goes beside it
+    # under a suffix instead.
+    target="$ARCHIVE_DIR/$name.tar.xz"
+    if [ -e "$target" ]; then
+      target="$ARCHIVE_DIR/$name.$(default_suffix "$name").tar.xz"
     fi
-    archive_dir "$name" "$ARCHIVE_DIR/$name.tar.xz" "first archive of this directory"
+    if [ "$DRY_RUN" -eq 1 ]; then
+      log "would archive  $(basename "$target" .tar.xz)"
+    else
+      log "archiving      $(basename "$target" .tar.xz)"
+    fi
+    archive_dir "$name" "$target" "first archive of this directory"
     n_archived=$((n_archived + 1))
   else
     handle_collision "$name" "${existing[@]}"
