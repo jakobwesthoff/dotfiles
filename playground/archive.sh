@@ -162,12 +162,16 @@ samples() {
 # tar --compare writes its differences to stdout unprefixed and its warnings
 # about members missing from disk to stderr, so dropping stderr leaves exactly
 # the paths that exist on both sides and disagree.
+#
+# In the C locale GNU tar prints non-ASCII bytes as octal escapes, which would
+# never match the raw names find prints. --quoting-style=literal keeps both
+# sides byte-identical.
 compare_tree() {
   local archive="$1" name="$2"
   local tmp
   tmp="$(mktemp -d)"
 
-  LC_ALL=C gtar -tJf "$archive" \
+  LC_ALL=C gtar --quoting-style=literal -tJf "$archive" \
     | gsed 's:/$::' \
     | awk -v root="$name" '$0 != root' \
     | LC_ALL=C sort -u > "$tmp/arch"
@@ -178,7 +182,7 @@ compare_tree() {
   LC_ALL=C comm -23 "$tmp/arch" "$tmp/disk" > "$tmp/only_arch"
   LC_ALL=C comm -12 "$tmp/arch" "$tmp/disk" > "$tmp/common"
 
-  LC_ALL=C gtar --compare -Jf "$archive" -C "$ROOT" > "$tmp/diff" 2>/dev/null || true
+  LC_ALL=C gtar --quoting-style=literal --compare -Jf "$archive" -C "$ROOT" > "$tmp/diff" 2>/dev/null || true
 
   gsed -n 's/^\(.*\): \(Contents differ\|Size differs\)$/\1/p' \
     "$tmp/diff" | LC_ALL=C sort -u > "$tmp/content_all"
