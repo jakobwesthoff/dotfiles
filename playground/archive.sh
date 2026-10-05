@@ -644,9 +644,9 @@ pick_archive() {
   fi
 
   # The preview calls back into this script by absolute path, under bash
-  # rather than the user's $SHELL, which fzf would otherwise use. The layout
-  # follows the other fzf pickers in these dotfiles, such as kcfg: input at
-  # the bottom, preview above the list.
+  # rather than the user's $SHELL, which fzf would otherwise use. The input
+  # sits at the bottom, like the other fzf pickers in these dotfiles such as
+  # kcfg.
   local self picked
   self="$ROOT/$(basename "${BASH_SOURCE[0]}")"
   if ! picked="$(archive_names | fzf \
@@ -654,7 +654,7 @@ pick_archive() {
       --prompt 'retrieve> ' \
       --with-shell 'bash -c' \
       --preview "$(printf '%q' "$self") __preview {}" \
-      --preview-window up)"; then
+      --preview-window 'right,60%')"; then
     log "nothing picked"
     exit 0
   fi
