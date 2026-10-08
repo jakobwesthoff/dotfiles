@@ -32,21 +32,34 @@
     "deny": [],
     "defaultMode": "default"
   },
-  "model": "opus[1m]",
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
   },
   "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true
+    "frontend-design@claude-plugins-official": true,
+    "slack@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
+  "modelSettings": {
+    "claude-fable-5-1": {
+      "effortLevel": "high"
+    },
+    "claude-opus-5": {
+      "effortLevel": "high"
+    },
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    }
+  },
   "showClearContextOnPlanAccept": true,
   "voice": {
     "enabled": true
   },
   "autoDreamEnabled": true,
+  "idleCompaction": false,
+  "skipWorkflowUsageWarning": true,
   "remoteControlAtStartup": false,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true
