@@ -39,7 +39,7 @@ section below.
   Co-Authored-By.
 - Never call ExitPlanMode until explicitly told all decisions are
   settled.
-- Always inform the user before creating a `todos/` entry.
+- Always inform the user before creating a todo.
 - Commit messages: Write tool creates the message in the scratchpad, then
   `git -C <repo> commit -F <abs-path>` — two separate tool calls, never
   chained.
@@ -217,16 +217,17 @@ Brewfile installs `gnu-sed`, so `gsed` is always available.
 Use `mkulid -l` to generate lowercase ULIDs. Use `-n <count>` to
 generate multiple at once. Useful when creating documents in a
 directory that need a random but chronologically sortable prefix
-(e.g., todo files like `<ulid>-short-description.md`).
+(e.g., files named `<ulid>-short-description.md`).
 
-## Todos (`todos/` folder)
+## Todos
 
-While working, if you come across any bugs or missing features, create
-an entry in the `todos/` folder in the form
-`ulid-short-todo-description.md`. Todos must be concise but reflect all
-topic-relevant collected information as well as the discussions and
-decisions regarding the matter, so the topic can be cleanly deferred to
-a later time.
+While working, when you come across a bug, a missing feature or an open
+question that is out of scope for the current task, record it as a todo
+instead of fixing it on the side or dropping it. Load the `ntropy-todos`
+skill before creating, updating or closing a todo; it covers the vault,
+the format, plain `todos/` folders not yet migrated, and closing. A todo
+carries what was found, the discussion and the decisions, so it can be
+picked up later without this conversation.
 
 Always inform the user before creating a todo unless specifically
 instructed to create one.
