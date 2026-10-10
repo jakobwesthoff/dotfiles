@@ -46,9 +46,6 @@
     "claude-fable-5-1": {
       "effortLevel": "high"
     },
-    "claude-haiku-5-5": {
-      "autoCompactWindow": 100000
-    },
     "claude-opus-5": {
       "effortLevel": "high"
     },
