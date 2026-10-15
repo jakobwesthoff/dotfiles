@@ -232,6 +232,17 @@ picked up later without this conversation.
 Always inform the user before creating a todo unless specifically
 instructed to create one.
 
+## asqr feature gaps
+
+Whenever a session uses `asqr`, watch for things asqr cannot do yet: a
+feature that would let you present, explain or ask something better than
+asqr currently allows. Before proposing one, check `asqr skill` and the
+asqr docs to make sure the feature doesn't already exist. Then bring it up
+with me: what you wanted to show or ask, what you had to do instead, and
+what the feature would look like. If I agree, create a todo for it in the
+asqr project (`~/Development/github/jakobwesthoff/asqr`, its `todos/`
+vault), following the `ntropy-todos` skill.
+
 # Coding conventions
 
 ## Rust guidelines
