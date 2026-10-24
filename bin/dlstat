@@ -1,0 +1,356 @@
+#!/usr/bin/env python3
+# =========================================================================
+# dlstat: what the DisplayLink display costs this Mac
+# =========================================================================
+#
+# A DisplayLink display has no GPU output behind it. macOS renders it as a
+# virtual display, DisplayLinkUserAgent grabs every frame through
+# ScreenCaptureKit, converts and compresses it with Metal and sends it over
+# USB to the DisplayLink adapter, which decodes it for the monitor. That
+# work runs on the Mac's CPU, GPU and memory, spread over several
+# processes. dlstat shows it in one live view and, with --log, appends
+# every sample to a CSV file.
+#
+# What it measures, per process and interval:
+#
+#   CPU     Accumulated CPU time from `ps` (10 ms resolution). The delta
+#           per interval gives CPU %, where 100 % is one fully busy core.
+#   GPU     Accumulated GPU time in ns from the AGXDeviceUserClient
+#           entries in `ioreg`, the counter behind Activity Monitor's
+#           "GPU Time" column. The delta per interval gives GPU %.
+#   Memory  Physical footprint from `top`, the number Activity Monitor
+#           shows as "Memory". On Apple Silicon GPU memory is system
+#           memory, so the footprint includes Metal buffers and
+#           IOSurfaces. `top` reads root-owned processes too, which
+#           proc_pid_rusage refuses without sudo.
+#
+# On top of that it shows the GPU's overall "Device Utilization %" from
+# the IOAccelerator entry in `ioreg`, for all processes together.
+#
+# Which processes count:
+#
+#   Every process with "DisplayLink" in its name belongs to DisplayLink
+#   and goes into the "DisplayLink total" row. WindowServer and replayd
+#   appear below it but are never added. WindowServer composites every
+#   display, the DisplayLink one included, and replayd serves every
+#   ScreenCaptureKit client, so no counter tells their DisplayLink share.
+#   To estimate it, log one run with the DisplayLink display attached and
+#   one without, under similar load, and compare the WindowServer rows.
+#
+# Requirements: macOS, python3 with its standard library only, no sudo.
+# The GPU columns need Apple Silicon, since the counters come from Apple's
+# AGX GPU driver; elsewhere they stay at 0.
+#
+# Usage:
+#
+#   dlstat                         live view, one sample per second
+#   dlstat -i 5 --log ~/dl.csv     every 5 s, also appended to a CSV file
+#   dlstat --help                  options, columns and log format
+# =========================================================================
+
+"""Show live what the DisplayLink display costs in CPU, GPU and memory.
+
+Samples DisplayLink's own processes (all named "DisplayLink...") at a fixed
+interval and shows CPU %, GPU %, their averages since start, and the memory
+footprint with its peak. WindowServer and replayd appear below as context:
+they work for every display and every screen capture client, so they are
+not part of the DisplayLink total. Ctrl-C stops and prints the run's totals.
+"""
+
+HELP_EPILOG = """\
+columns:
+  CPU %       CPU time per wall time in the last interval, 100 = one core
+  GPU %       GPU time per wall time in the last interval
+  avg CPU     CPU % averaged since start
+  avg GPU     GPU % averaged since start
+  mem MB      physical footprint incl. GPU memory (Activity Monitor "Memory")
+  peak MB     highest footprint since start
+
+log format (--log FILE):
+  CSV, one row per process and sample plus a "DisplayLink total" row.
+  Columns: timestamp, group (displaylink or context), process, pid,
+  cpu_pct, gpu_pct, mem_mb, gpu_device_util_pct.
+  An existing file is appended to; a new one starts with a header row.
+
+examples:
+  dlstat                        live view, one sample per second
+  dlstat -i 5 --log ~/dl.csv    every 5 s, also logged
+
+  What does DisplayLink add to WindowServer? Run under the same workload:
+  dlstat --log with.csv         DisplayLink display attached
+  dlstat --log without.csv      DisplayLink display detached
+  and compare the WindowServer rows of both files.
+"""
+
+import argparse
+import csv
+import os
+import plistlib
+import re
+import subprocess
+import sys
+import time
+from datetime import datetime
+
+# DisplayLink's own processes match by name; the shared services that
+# work on its behalf are listed separately so they never inflate its total.
+DISPLAYLINK_PATTERN = re.compile(r"displaylink", re.IGNORECASE)
+CONTEXT_PROCESSES = ("WindowServer", "replayd")
+
+
+# =========================================================================
+# Sampling
+# =========================================================================
+
+
+def parse_ps_time(text):
+    """Convert ps's `[[dd-]hh:]mm:ss.cc` into seconds."""
+    days = 0
+    if "-" in text:
+        day_part, text = text.split("-", 1)
+        days = int(day_part)
+    seconds = 0.0
+    for part in text.split(":"):
+        seconds = seconds * 60 + float(part)
+    return days * 86400 + seconds
+
+
+def sample_cpu():
+    """Return {pid: (name, cpu_seconds)} for every process."""
+    output = subprocess.run(
+        ["ps", "-axo", "pid=,time=,comm="],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    processes = {}
+    for line in output.splitlines():
+        # comm is the last column and may contain spaces
+        # ("DisplayLink Manager"), so split only twice.
+        fields = line.split(None, 2)
+        if len(fields) < 3:
+            continue
+        pid, cpu_time, command = fields
+        processes[int(pid)] = (os.path.basename(command), parse_ps_time(cpu_time))
+    return processes
+
+
+def sample_gpu():
+    """Return {pid: gpu_seconds}, summed over all of a process's GPU clients.
+
+    A process opens one AGXDeviceUserClient per Metal device connection,
+    each listing its command queues under AppUsage. A client that closes
+    takes its accumulated time with it, so a process's sum can drop
+    between samples. The delta computation clamps that to zero.
+    """
+    output = subprocess.run(
+        ["ioreg", "-a", "-l", "-w0", "-r", "-c", "AGXDeviceUserClient"],
+        capture_output=True, check=True,
+    ).stdout
+    gpu_ns = {}
+    for client in plistlib.loads(output) if output.strip() else []:
+        creator = client.get("IOUserClientCreator", "")
+        match = re.match(r"pid (\d+),", creator)
+        if not match:
+            continue
+        pid = int(match.group(1))
+        queues = client.get("AppUsage", [])
+        gpu_ns[pid] = gpu_ns.get(pid, 0) + sum(q.get("accumulatedGPUTime", 0) for q in queues)
+    return {pid: ns / 1e9 for pid, ns in gpu_ns.items()}
+
+
+MEMORY_UNITS = {"B": 1, "K": 2**10, "M": 2**20, "G": 2**30, "T": 2**40}
+
+
+def sample_memory(pids):
+    """Return {pid: footprint_bytes} for the given pids.
+
+    top prints sizes like `577M` or `5169K`, with a trailing `+` or `-`
+    when the value changed since its previous sample.
+    """
+    if not pids:
+        return {}
+    command = ["top", "-l", "1", "-stats", "pid,mem"]
+    for pid in pids:
+        command += ["-pid", str(pid)]
+    output = subprocess.run(command, capture_output=True, text=True, check=True).stdout
+    footprints = {}
+    for line in output.splitlines():
+        match = re.match(r"\s*(\d+)\s+([\d.]+)([BKMGT])[+-]?\s*$", line)
+        if match:
+            pid, value, unit = match.groups()
+            footprints[int(pid)] = float(value) * MEMORY_UNITS[unit]
+    return footprints
+
+
+def sample_gpu_utilization():
+    """Return the GPU's overall busy percentage, or None if unavailable."""
+    output = subprocess.run(
+        ["ioreg", "-a", "-r", "-d", "1", "-w0", "-c", "IOAccelerator"],
+        capture_output=True, check=True,
+    ).stdout
+    for accelerator in plistlib.loads(output) if output.strip() else []:
+        stats = accelerator.get("PerformanceStatistics", {})
+        if "Device Utilization %" in stats:
+            return stats["Device Utilization %"]
+    return None
+
+
+# =========================================================================
+# Live view and log
+# =========================================================================
+
+
+def positive_seconds(text):
+    """argparse type for --interval: a number of seconds above zero."""
+    try:
+        value = float(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"not a number: {text!r}")
+    if value <= 0:
+        raise argparse.ArgumentTypeError(f"must be greater than 0, got {text}")
+    return value
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        epilog=HELP_EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("-i", "--interval", type=positive_seconds, default=1.0,
+                        metavar="SECONDS",
+                        help="time between samples, e.g. 0.5 (default: 1)")
+    parser.add_argument("--log", metavar="FILE",
+                        help="also append every sample to FILE as CSV")
+    args = parser.parse_args()
+
+    # ps, top and ioreg are called with macOS-specific options and output
+    # formats.
+    if sys.platform != "darwin":
+        parser.error("needs macOS")
+
+    log_file = None
+    log_writer = None
+    if args.log:
+        is_new = not os.path.exists(args.log) or os.path.getsize(args.log) == 0
+        log_file = open(args.log, "a", newline="")
+        log_writer = csv.writer(log_file)
+        if is_new:
+            log_writer.writerow(["timestamp", "group", "process", "pid",
+                                 "cpu_pct", "gpu_pct", "mem_mb", "gpu_device_util_pct"])
+
+    previous_cpu = sample_cpu()
+    previous_gpu = sample_gpu()
+    previous_time = time.monotonic()
+    started = previous_time
+
+    # Per row label: CPU and GPU seconds since start for the averages,
+    # and the highest footprint seen.
+    totals = {}
+    peaks = {}
+
+    try:
+        while True:
+            # top and ioreg take up to a second per round, so sleep only
+            # for what is left of the interval.
+            time.sleep(max(0.0, previous_time + args.interval - time.monotonic()))
+            cpu = sample_cpu()
+            gpu = sample_gpu()
+            device_util = sample_gpu_utilization()
+            now = time.monotonic()
+            elapsed = now - previous_time
+
+            rows = []
+            for pid, (name, cpu_seconds) in sorted(cpu.items()):
+                if DISPLAYLINK_PATTERN.search(name):
+                    group = "displaylink"
+                elif name in CONTEXT_PROCESSES:
+                    group = "context"
+                else:
+                    continue
+                # A process that started during this interval has no
+                # previous sample; its whole accumulated time is new.
+                cpu_delta = cpu_seconds - previous_cpu.get(pid, (name, 0.0))[1]
+                gpu_delta = max(0.0, gpu.get(pid, 0.0) - previous_gpu.get(pid, 0.0))
+                rows.append([group, name, pid,
+                             100 * cpu_delta / elapsed, 100 * gpu_delta / elapsed])
+
+            # Footprint is a level, not a counter, so it needs no previous
+            # sample. top only runs for the processes shown.
+            memory = sample_memory([r[2] for r in rows])
+            for row in rows:
+                row.append(memory.get(row[2], 0.0) / 2**20)
+
+            displaylink_rows = [r for r in rows if r[0] == "displaylink"]
+            displaylink_total = ["displaylink", "DisplayLink total", None,
+                                 sum(r[3] for r in displaylink_rows),
+                                 sum(r[4] for r in displaylink_rows),
+                                 sum(r[5] for r in displaylink_rows)]
+
+            for _, label, _, cpu_pct, gpu_pct, mem_mb in [displaylink_total] + rows:
+                total = totals.setdefault(label, [0.0, 0.0])
+                total[0] += cpu_pct * elapsed / 100
+                total[1] += gpu_pct * elapsed / 100
+                peaks[label] = max(peaks.get(label, 0.0), mem_mb)
+
+            # Redraw in place: cursor home, then clear to end of screen.
+            out = ["\033[H\033[J"]
+            out.append(f"DisplayLink cost   {datetime.now():%H:%M:%S}   "
+                       f"interval {args.interval:g}s   "
+                       f"running {now - started:.0f}s\n\n")
+            out.append(f"{'process':<30}{'pid':>7}{'CPU %':>9}{'GPU %':>9}"
+                       f"{'avg CPU':>10}{'avg GPU':>10}{'mem MB':>10}{'peak MB':>10}\n")
+            run_time = now - started
+
+            def line(row):
+                _, label, pid, cpu_pct, gpu_pct, mem_mb = row
+                total = totals[label]
+                pid_text = str(pid) if pid else ""
+                return (f"{label[:29]:<30}{pid_text:>7}{cpu_pct:>9.1f}{gpu_pct:>9.1f}"
+                        f"{100 * total[0] / run_time:>10.1f}"
+                        f"{100 * total[1] / run_time:>10.1f}"
+                        f"{mem_mb:>10.0f}{peaks[label]:>10.0f}\n")
+
+            for row in displaylink_rows:
+                out.append(line(row))
+            if not displaylink_rows:
+                out.append("no DisplayLink processes running "
+                           "(is DisplayLink Manager started?)\n")
+            out.append("-" * 95 + "\n")
+            out.append(line(displaylink_total))
+            out.append("\nshared, not DisplayLink alone:\n")
+            for row in (r for r in rows if r[0] == "context"):
+                out.append(line(row))
+            if device_util is not None:
+                out.append(f"\nGPU device utilization (all processes): {device_util}%\n")
+            out.append("\nCPU % is of one core (800% = 8 cores busy). "
+                       "GPU % is GPU time per wall time.\n"
+                       "mem is the physical footprint, GPU memory included.\n"
+                       "Ctrl-C to stop.\n")
+            sys.stdout.write("".join(out))
+            sys.stdout.flush()
+
+            if log_writer:
+                timestamp = datetime.now().isoformat(timespec="seconds")
+                for group, name, pid, cpu_pct, gpu_pct, mem_mb in rows + [displaylink_total]:
+                    log_writer.writerow([timestamp, group, name, pid or "",
+                                         f"{cpu_pct:.2f}", f"{gpu_pct:.2f}",
+                                         f"{mem_mb:.1f}", device_util])
+                log_file.flush()
+
+            previous_cpu, previous_gpu, previous_time = cpu, gpu, now
+    except KeyboardInterrupt:
+        # The totals end at the last completed sample, not at Ctrl-C.
+        run_time = previous_time - started
+        if "DisplayLink total" in totals and run_time > 0:
+            cpu_s, gpu_s = totals["DisplayLink total"]
+            print(f"\nDisplayLink over {run_time:.0f}s: "
+                  f"{cpu_s:.1f}s CPU (avg {100 * cpu_s / run_time:.1f}%), "
+                  f"{gpu_s:.1f}s GPU (avg {100 * gpu_s / run_time:.1f}%), "
+                  f"peak footprint {peaks['DisplayLink total']:.0f} MB")
+    finally:
+        if log_file:
+            log_file.close()
+
+
+if __name__ == "__main__":
+    main()
