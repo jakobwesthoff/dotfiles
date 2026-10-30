@@ -32,6 +32,7 @@
     "deny": [],
     "defaultMode": "default"
   },
+  "model": "opus[1m]",
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
@@ -58,9 +59,9 @@
     "enabled": true
   },
   "autoDreamEnabled": true,
-  "idleCompaction": false,
   "skipWorkflowUsageWarning": true,
+  "theme": "auto",
+  "idleCompaction": false,
   "remoteControlAtStartup": false,
-  "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true
+  "agentPushNotifEnabled": true
 }
