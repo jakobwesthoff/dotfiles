@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Claude Code status line script
-# Displays: [Model] │ [Directory] [Circle Bar] [%] [Tokens] [Rate Limit] [Cost]
+# Displays: [Account] [Model] │ [Directory] [Circle Bar] [%] [Tokens] [Rate Limit] [Cost]
 #
 # VERSION DETECTION:
 #   Real-time mode  (Claude Code >= 2.1.72): context_window.used_percentage is present in JSON
@@ -328,11 +328,52 @@ for i in "${!parts[@]}"; do
 done
 
 # =========================================================
-# Render the status line
-# Format: [Model] │ [Directory]   [Bar] [%] [Tokens]  [Rate ▄ N% (Xpm)]  [$Cost]
+# Account badge
+#
+# The private and the work account run Claude Code with separate
+# config directories, selected through CLAUDE_CONFIG_DIR, and both
+# use this script. The badge in front of the line shows which one is
+# active: a rounded pill of Nerd Font glyphs in a colour per account.
+# Colours are the numbers 0-7 of the basic ANSI palette, so they
+# follow the terminal theme.
 # =========================================================
 
-printf "${DIM}%s${RESET} │ ${DIM}%s${RESET}   ${bar_color}%s${RESET} ${DIM}%s%%${RESET}  ${token_color}%s${RESET}%b  ${DIM}[%s]${RESET}\n" \
+config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+config_dir="${config_dir%/}"
+
+case "$config_dir" in
+    "$HOME/.claude-jakob")
+        # Private: user icon on yellow
+        badge_color=3
+        badge_label=$''
+        ;;
+    "$HOME/.claude")
+        # Work: building icon on blue
+        badge_color=4
+        badge_label=$''
+        ;;
+    *)
+        # Any other config shows its own name on grey, so it never
+        # passes for one of the two accounts above.
+        badge_color=7
+        badge_label="${config_dir##*/}"
+        badge_label="${badge_label#.claude-}"
+        ;;
+esac
+
+# The half-circle glyphs take the badge colour as foreground and form
+# the rounded ends around the filled middle.
+badge="\033[3${badge_color}m"$''"${RESET}"
+badge="${badge}\033[4${badge_color};30m${badge_label}${RESET}"
+badge="${badge}\033[3${badge_color}m"$''"${RESET}"
+
+# =========================================================
+# Render the status line
+# Format: [Account] [Model] │ [Directory]   [Bar] [%] [Tokens]  [Rate ▄ N% (Xpm)]  [$Cost]
+# =========================================================
+
+printf "%b ${DIM}%s${RESET} │ ${DIM}%s${RESET}   ${bar_color}%s${RESET} ${DIM}%s%%${RESET}  ${token_color}%s${RESET}%b  ${DIM}[%s]${RESET}\n" \
+    "$badge" \
     "$model_name" \
     "$display_dir" \
     "$bar" \
