@@ -304,3 +304,37 @@ EOS
   chmod +x "$stub/xz"
   PATH="$stub:$PATH"
 }
+
+# A flat directory of the named files at <dir>, aged like make_dir's. Each file
+# holds its own name, so two directories built from the same names are
+# identical.
+make_files() {
+  local dir="$1" file
+  shift
+  mkdir -p "$dir"
+  for file in "$@"; do
+    printf '%s\n' "$file" > "$dir/$file"
+  done
+  touch_tree "$dir" 30
+}
+
+# archive/<name>.tar.xz of a flat directory <name> holding the named files,
+# without a provenance record. A directory made with make_files in $ROOT
+# overlaps it by exactly the names the two share.
+make_archive_of() {
+  local name="$1"
+  shift
+  make_files "$FOREIGN/$name" "$@"
+  foreign_archive "$name" "$name"
+}
+
+# old.tar.xz plus a second archive of old kept beside it, which holds new.txt.
+# Leaves no old directory in $ROOT and the beside archive's path in $BESIDE.
+# shellcheck disable=SC2119,SC2154,SC2034 # status is set by bats' run, BESIDE is read by the tests
+make_two_archives_of_old() {
+  collide_with_changed_copy
+  run_with_answers "s -"
+  [ "$status" -eq 0 ]
+  local found=("$ARCHIVE"/old.????-??-??.tar.xz)
+  BESIDE="${found[0]}"
+}
