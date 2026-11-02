@@ -103,6 +103,32 @@ setup() {
   [ -f "$ARCHIVE/alpha.tar.xz" ]
 }
 
+@test "retrieve dies when there are no archives to pick from" {
+  run_without_terminal retrieve
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR: no archives to retrieve"* ]]
+  [[ "$output" != *"archives match"* ]]
+  [[ "$output" != *"unbound variable"* ]]
+}
+
+# fzf is stubbed to see whether it is started.
+@test "retrieve on a terminal does not open fzf when there are no archives" {
+  stub_fzf
+
+  run_with_answers "" retrieve
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR: no archives to retrieve"* ]]
+
+  [ ! -e "$FZF_ARGS_FILE" ]
+}
+
+@test "retrieve with a pattern names the pattern when there are no archives" {
+  run_without_terminal retrieve zzz
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"no archive name contains 'zzz'"* ]]
+  [[ "$output" != *"no archives to retrieve"* ]]
+}
+
 # fzf is stubbed so that a script which wrongly opens it does not wait on a
 # real picker.
 @test "retrieve without a terminal dies on several matches and names them" {

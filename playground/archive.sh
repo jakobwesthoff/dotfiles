@@ -808,6 +808,11 @@ pick_archive() {
     fi
   fi
 
+  # With nothing to pick from, fzf would open on an empty list and the failure
+  # message below would expand an empty array, which bash 3.2 reports as an
+  # unbound variable.
+  [ "${#matches[@]}" -gt 0 ] || die "no archives to retrieve"
+
   if ! command -v fzf >/dev/null || ! can_prompt; then
     printf '%s\n' "${matches[@]}" >&2
     die "${#matches[@]} archives match; give a pattern that matches only one"
