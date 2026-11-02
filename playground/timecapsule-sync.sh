@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Mirror the playground onto the timecapsule dataset of the NAS zocalo.
+# Mirror the playground onto the timecapsule dataset of the NAS.
 #
 # rsync runs over SSH, so the receiving rsync works on the NAS's own disks.
 # Over the SMB mount every file cost several network round trips, and with the
@@ -31,6 +31,39 @@
 #   --host <host>          reach the NAS under this name or IPv4 address
 #                          instead of NAS_HOST
 #   --skip-network-check   sync even outside the home network
+#
+# Configuration file:
+#   The NAS, the account on it and the home network are read from
+#
+#     ${XDG_CONFIG_HOME:-$HOME/.config}/playground/timecapsule-sync
+#
+#   or, when TIMECAPSULE_SYNC_CONFIG is set, from the file it names. The file
+#   stays out of the dotfiles repository because that repository is public.
+#   The script stops before any network access when the file is missing,
+#   unreadable, lacks one of the keys below or contains any other key.
+#
+#   The file holds one KEY=VALUE per line, and all five keys are required:
+#
+#     NAS_HOST=nas.local
+#       The Bonjour name. It is also the name the NAS's SSH host key is
+#       recorded under in known_hosts.
+#     NAS_USER=someone
+#       The account ssh logs in as.
+#     REMOTE_BASE=/mnt/pool/timecapsule/playground
+#       Where the timecapsule SMB share lives on the NAS, so the mirror is
+#       the same tree the share shows.
+#     HOME_GATEWAY=192.168.1.1
+#       The router address that marks the home network.
+#     HOME_SUBNET_PREFIX=192.168.1.
+#       The first three octets of the home network's /24, with the trailing
+#       dot. The NAS address must start with it. Over a VPN the NAS can be
+#       reachable as well, but a sync of gigabytes does not belong there.
+#
+#   Lines starting with # and blank lines are ignored. A value is everything
+#   after the first = minus the spaces, tabs and carriage returns around it,
+#   so it may contain = and spaces, and quotes and # are part of it. When a
+#   key appears twice, the later line wins. The file is read as data and never
+#   run as shell code.
 
 set -euo pipefail
 
@@ -40,33 +73,13 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# The Bonjour name. It is also the name the NAS's SSH host key is recorded
-# under in known_hosts.
-NAS_HOST=zocalo.local
-NAS_USER=jakob
-
-# Where the timecapsule SMB share lives on the NAS, so the mirror is the same
-# tree the share shows.
-REMOTE_BASE=/mnt/shadow/timecapsule/playground
-
-# The home network is recognised by its router and its /24. Over a VPN the
-# NAS can be reachable as well, but a sync of gigabytes does not belong there.
-HOME_GATEWAY=192.168.178.1
-HOME_SUBNET_PREFIX=192.168.178.
+CONFIG_KEYS="NAS_HOST NAS_USER REMOTE_BASE HOME_GATEWAY HOME_SUBNET_PREFIX"
 
 # A mirror faithfully copies a mistake: a playground that is empty or half
 # gone, say from running the wrong copy of this script, would empty the mirror
 # too. A run that would delete more than this percentage of the entries on the
 # NAS stops and asks first.
 MAX_DELETE_PERCENT=20
-
-# BatchMode makes a missing key or an unknown host fail at once instead of
-# waiting on a password prompt nobody may be there to answer.
-#
-# HostKeyAlias checks the host key against the one recorded for NAS_HOST, so
-# --host with an IP address or another name needs no known_hosts entry of its
-# own and still cannot end up talking to a different machine.
-SSH_OPTS=(-o BatchMode=yes -o ConnectTimeout=5 -o "HostKeyAlias=$NAS_HOST")
 
 DRY_RUN=0
 FORCE=0
@@ -95,6 +108,69 @@ can_prompt() {
   [ -c /dev/tty ] || return 1
   { : < /dev/tty; } 2>/dev/null || return 1
   return 0
+}
+
+# =========================================================
+# Configuration file
+# =========================================================
+
+# trim <variable> <text> assigns the text without the spaces, tabs and
+# carriage returns around it to the named variable. Naming the characters
+# keeps the result the same in every locale.
+trim() {
+  local _trim_text="$2" _trim_blank=$' \t\r'
+  _trim_text="${_trim_text#"${_trim_text%%[!"$_trim_blank"]*}"}"
+  _trim_text="${_trim_text%"${_trim_text##*[!"$_trim_blank"]}"}"
+  printf -v "$1" '%s' "$_trim_text"
+}
+
+# Reads the five settings of CONFIG_KEYS into variables of the same names. The
+# file is parsed line by line instead of sourced, so it cannot run code, and
+# only the names in CONFIG_KEYS are ever assigned.
+load_config() {
+  local file line key value k lineno=0 known missing=""
+  file="${TIMECAPSULE_SYNC_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/playground/timecapsule-sync}"
+
+  [ -f "$file" ] || die "config file $file not found or not readable; it needs one KEY=VALUE line each for $CONFIG_KEYS (see the top of $0)"
+  [ -r "$file" ] || die "config file $file not found or not readable; it needs one KEY=VALUE line each for $CONFIG_KEYS (see the top of $0)"
+
+  # A variable of the same name in the environment must not stand in for a key
+  # the file lacks.
+  for k in $CONFIG_KEYS; do
+    printf -v "$k" '%s' ""
+  done
+
+  while IFS= read -r line || [ -n "$line" ]; do
+    lineno=$((lineno + 1))
+    # A byte order mark would otherwise become part of the first key.
+    [ "$lineno" -ne 1 ] || line="${line#$'\xef\xbb\xbf'}"
+    trim line "$line"
+    case "$line" in
+      ''|'#'*) continue ;;
+    esac
+
+    [[ "$line" == *=* ]] || die "$file:$lineno: expected KEY=VALUE"
+    trim key "${line%%=*}"
+    trim value "${line#*=}"
+
+    known=0
+    for k in $CONFIG_KEYS; do
+      [ "$k" != "$key" ] || known=1
+    done
+    [ "$known" -eq 1 ] || die "$file:$lineno: unknown key \"$key\""
+
+    # Without the dot, a prefix such as 192.168.1 also matches 192.168.10.x.
+    if [ "$key" = HOME_SUBNET_PREFIX ] && [ -n "$value" ] && [[ "$value" != *. ]]; then
+      die "$file:$lineno: HOME_SUBNET_PREFIX must end in a dot, e.g. 192.168.1."
+    fi
+
+    printf -v "$key" '%s' "$value"
+  done < "$file"
+
+  for k in $CONFIG_KEYS; do
+    [ -n "${!k}" ] || missing="${missing:+$missing, }$k"
+  done
+  [ -z "$missing" ] || die "$file is missing: $missing"
 }
 
 # =========================================================
@@ -359,6 +435,18 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
+
+load_config
+
+# BatchMode makes a missing key or an unknown host fail at once instead of
+# waiting on a password prompt nobody may be there to answer.
+#
+# HostKeyAlias checks the host key against the one recorded for NAS_HOST, so
+# --host with an IP address or another name needs no known_hosts entry of its
+# own and still cannot end up talking to a different machine. That holds only
+# while SSH_OPTS is built before find_nas replaces NAS_HOST with the --host
+# value.
+SSH_OPTS=(-o BatchMode=yes -o ConnectTimeout=5 -o "HostKeyAlias=$NAS_HOST")
 
 # The Homebrew rsync is needed: the one macOS ships is openrsync, which lacks
 # --info and itemizes differently.
