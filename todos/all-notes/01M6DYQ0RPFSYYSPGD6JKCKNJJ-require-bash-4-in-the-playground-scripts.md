@@ -24,17 +24,13 @@ the same without the trap prints 1, and Homebrew bash prints 1 with the trap.
 
 - 2026-11-02, user: both scripts require bash 4 or newer instead of keeping
   bash 3.2 support.
+- 2026-11-02, user: under bash 3.2 the scripts stop with a message; they do
+  not re-run themselves under a newer bash. A scheduled run calls Homebrew
+  bash explicitly.
 
 ## Suggested fix
 
 Both scripts check `BASH_VERSINFO` before anything else and stop with a
 message naming the bash they run under and how to get a newer one. The test
 runs under `/bin/bash` 3.2 (`ARCHIVE_BASH`, `SYNC_BASH`) change to test that
-refusal, and workarounds that exist only for bash 3.2 can go. Whether the
-scripts re-run themselves under a newer bash when one is installed is open.
-
-## Open questions
-
-- Stop with a message only, or re-run under `/opt/homebrew/bin/bash` when it
-  exists (which keeps a launchd or cron run working whose PATH finds
-  `/bin/bash` first).
+refusal, and workarounds that exist only for bash 3.2 can go.
