@@ -400,7 +400,9 @@ cmd_sync() {
     progress=(--info=progress2)
   fi
 
-  run_rsync "${RSYNC_OPTS[@]}" "${progress[@]}" "$ROOT/" "$DEST/"
+  # The + form expands an empty array to nothing; a plain "${progress[@]}"
+  # counts as unset under set -u in bash 3.2, the bash macOS ships.
+  run_rsync "${RSYNC_OPTS[@]}" ${progress[@]+"${progress[@]}"} "$ROOT/" "$DEST/"
   log "synced         $DEST"
 }
 

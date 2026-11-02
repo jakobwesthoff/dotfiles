@@ -79,26 +79,54 @@ write_config() {
     "HOME_SUBNET_PREFIX=$PLACEHOLDER_PREFIX" > "${1:-$CONFIG}"
 }
 
-# Runs the script under test. Always a dry run: the real transfer is not
-# something these tests exercise.
+# Runs the script under test with the given arguments and leaves the result in
+# bats' status and output. SYNC_BASH picks the interpreter. With SYNC_TTY set
+# the script gets a terminal as stdout through script(1), which needs its
+# stdin to be a file or terminal and so reads /dev/null.
 #
 # With SYNC_TRACE set, every executed line is appended to that file as
 # "+<script>:<line>: <command>". The trace goes to fd 9 so that it does not
-# mix into the output the tests assert on. SYNC_BASH picks the interpreter;
-# bash 3.2 ignores BASH_XTRACEFD and would put the trace into the output, so
-# the combination is refused.
-run_sync() {
+# mix into the output the tests assert on. bash 3.2 ignores BASH_XTRACEFD and
+# would put the trace into the output, so the combination is refused.
+run_script() {
+  local cmd=("${SYNC_BASH:-bash}" "$ROOT/timecapsule-sync.sh" "$@")
+
   if [ -n "${SYNC_TRACE:-}" ]; then
     if [ "${SYNC_BASH:-bash}" = /bin/bash ]; then
       printf 'SYNC_TRACE needs a bash that honours BASH_XTRACEFD\n' >&2
       return 1
     fi
     # shellcheck disable=SC2016 # PS4 is expanded by the traced shell
-    run env SHELLOPTS=xtrace PS4='+${BASH_SOURCE}:${LINENO}: ' BASH_XTRACEFD=9 \
-      "${SYNC_BASH:-bash}" "$ROOT/timecapsule-sync.sh" --dry-run "$@" 9>>"$SYNC_TRACE"
-  else
-    run "${SYNC_BASH:-bash}" "$ROOT/timecapsule-sync.sh" --dry-run "$@"
+    cmd=(env SHELLOPTS=xtrace PS4='+${BASH_SOURCE}:${LINENO}: ' BASH_XTRACEFD=9 "${cmd[@]}")
   fi
+
+  if [ -n "${SYNC_TTY:-}" ]; then
+    run script -q /dev/null "${cmd[@]}" < /dev/null 9>>"${SYNC_TRACE:-/dev/null}"
+  else
+    run "${cmd[@]}" 9>>"${SYNC_TRACE:-/dev/null}"
+  fi
+}
+
+# A dry run: nothing is written to the NAS and the transfer itself is not
+# reached.
+run_sync() {
+  run_script --dry-run "$@"
+}
+
+# A real run up to and including the transfer. Every network tool is a stub,
+# so the transfer is the logged rsync call.
+run_full_sync() {
+  run_script "$@"
+}
+
+# The rsync call that transfers the playground, as the rsync stub logs it. The
+# argument is what the script adds for a terminal, with its leading space.
+expected_transfer_call() {
+  printf 'rsync -e ssh -o BatchMode=yes -o ConnectTimeout=5 -o HostKeyAlias=%s' "$PLACEHOLDER_HOST"
+  printf ' -rlt --delete --delete-excluded --filter=P /archive/*.tar.xz'
+  printf ' --filter=- .DS_Store --filter=+ /archive/ --filter=+ /archive/*.tar.xz'
+  printf ' --filter=- /archive/*%s %s/ %s@%s:%s/testbox/' \
+    "${1:-}" "$ROOT" "$PLACEHOLDER_USER" "$PLACEHOLDER_HOST" "$PLACEHOLDER_BASE"
 }
 
 # Directories left unreadable by a test would block bats' cleanup.

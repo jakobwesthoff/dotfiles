@@ -346,3 +346,37 @@ nc -z -G 2 $PLACEHOLDER_IP 22" ]
   [[ "$output" == "usage:"* ]]
   assert_no_commands_ran
 }
+
+# =========================================================
+# The transfer itself
+# =========================================================
+
+# macOS /bin/bash is 3.2, which treats an empty array as unset. A run with
+# stdout redirected, as from cron or launchd, leaves the progress option array
+# empty. The trace guard refuses /bin/bash, so a traced run uses bash.
+@test "a transfer with stdout redirected completes under the system bash" {
+  write_config
+  if [ -n "${SYNC_TRACE:-}" ]; then
+    SYNC_BASH="${SYNC_BASH:-bash}"
+  else
+    SYNC_BASH="${SYNC_BASH:-/bin/bash}"
+  fi
+
+  run_full_sync --skip-network-check
+
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"unbound variable"* ]]
+  [[ "$output" == *"synced         $PLACEHOLDER_USER@$PLACEHOLDER_HOST:$PLACEHOLDER_BASE/testbox" ]]
+  [ "$(tail -n 1 "$CALLS")" = "$(expected_transfer_call)" ]
+}
+
+@test "a transfer on a terminal asks rsync for progress" {
+  command -v script >/dev/null || skip "script gives the run a terminal"
+  write_config
+
+  SYNC_TTY=1 run_full_sync --skip-network-check
+
+  [ "$status" -eq 0 ]
+  [ -s "$CALLS" ]
+  [ "$(tail -n 1 "$CALLS")" = "$(expected_transfer_call ' --info=progress2')" ]
+}
