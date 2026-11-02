@@ -179,10 +179,26 @@ setup() {
 
   run_archive
   [ "$status" -eq 0 ]
-  [[ "$output" == *"cannot restore stray: a directory of that name already exists"* ]]
+  [[ "$output" == *"cannot restore stray: stray already exists in the playground"* ]]
 
   [ -f "$ARCHIVE/stray/f" ]
   [ "$(cat "$ROOT/stray")" = "occupied" ]
+}
+
+# A link whose target is gone does not exist as far as -e is concerned, yet mv
+# cannot put a directory over it.
+@test "a dangling symlink keeps its name from a restore and the run finishes" {
+  mkdir -p "$ARCHIVE/stray"
+  printf 'x\n' > "$ARCHIVE/stray/f"
+  ln -s "$OUTSIDE/nowhere" "$ROOT/stray"
+
+  run_archive
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"cannot restore stray: stray already exists in the playground"* ]]
+  [[ "$output" == *"reclaimed: 0   replaced: 0   beside: 0   unresolved: 0"* ]]
+
+  [ -f "$ARCHIVE/stray/f" ]
+  [ "$(readlink "$ROOT/stray")" = "$OUTSIDE/nowhere" ]
 }
 
 # =========================================================

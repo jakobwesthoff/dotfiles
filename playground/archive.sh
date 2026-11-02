@@ -1104,8 +1104,10 @@ cmd_archive() {
       n_symlink=$((n_symlink + 1))
       continue
     fi
-    if [ -e "$ROOT/$name" ]; then
-      warn "cannot restore $name: a directory of that name already exists"
+    # -L as well: -e is false for a link whose target is gone, and mv cannot
+    # put a directory over a link.
+    if [ -e "$ROOT/$name" ] || [ -L "$ROOT/$name" ]; then
+      warn "cannot restore $name: $name already exists in the playground"
       continue
     fi
     if [ "$DRY_RUN" -eq 1 ]; then
