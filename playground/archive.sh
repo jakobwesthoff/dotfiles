@@ -6,6 +6,12 @@
 # every file beneath it is older than AGE_DAYS, i.e. its most recently modified
 # file predates the cutoff. Naming plays no part in the decision.
 #
+# A symlinked directory, in the playground or in archive/, is never a working
+# directory. Archiving it would store the link and not the files, delete the
+# link and write the provenance record into the target outside the playground,
+# and removing a link to an empty tree removes the target. The run names such a
+# link, counts it under symlinks and changes neither the link nor its target.
+#
 # Originals are removed only after the archive has been proven to reproduce
 # them exactly. See validate_archive() for what "proven" means here.
 #
@@ -76,6 +82,7 @@ n_skipped=0
 n_emptied=0
 n_restored=0
 n_no_archive=0
+n_symlink=0
 n_reclaimed=0
 n_replaced=0
 n_beside=0
@@ -1023,8 +1030,17 @@ cmd_archive() {
     name="$(basename "$path")"
     [ "$name" = "archive" ] && continue
 
-    # A .no-archive marker is an explicit opt-out, checked before anything
-    # else so it also protects otherwise-empty or aged-out directories.
+    # Checked first: the glob follows links, and every test below would reach
+    # through this one into its target.
+    if [ -L "${path%/}" ]; then
+      highlight ">>> $name skipped: symlink <<<"
+      n_symlink=$((n_symlink + 1))
+      continue
+    fi
+
+    # A .no-archive marker is an explicit opt-out, checked before the
+    # empty-tree and age tests so it also protects otherwise-empty or aged-out
+    # directories.
     if [ -e "$path.no-archive" ]; then
       highlight ">>> $name skipped: .no-archive present <<<"
       n_no_archive=$((n_no_archive + 1))
@@ -1083,6 +1099,11 @@ cmd_archive() {
     [ -e "$path" ] || continue
     name="$(basename "$path")"
     [ "$name" = "index" ] && continue
+    if [ -L "${path%/}" ]; then
+      highlight ">>> archive/$name skipped: symlink <<<"
+      n_symlink=$((n_symlink + 1))
+      continue
+    fi
     if [ -e "$ROOT/$name" ]; then
       warn "cannot restore $name: a directory of that name already exists"
       continue
@@ -1097,7 +1118,7 @@ cmd_archive() {
   done
 
   log ""
-  log "archived: $n_archived   skipped: $n_skipped   removed empty: $n_emptied   restored: $n_restored   no-archive: $n_no_archive"
+  log "archived: $n_archived   skipped: $n_skipped   removed empty: $n_emptied   restored: $n_restored   no-archive: $n_no_archive   symlinks: $n_symlink"
   log "reclaimed: $n_reclaimed   replaced: $n_replaced   beside: $n_beside   unresolved: $n_conflict"
 
   # An unresolved collision is work the run could not finish, which matters

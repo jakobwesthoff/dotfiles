@@ -16,6 +16,9 @@ setup_root() {
   ARCHIVE="$ROOT/archive"
   # Where archives that the script did not write are built from.
   FOREIGN="$BATS_TEST_TMPDIR/foreign"
+  # Directories beside the playground, for symlinks to point at.
+  # shellcheck disable=SC2034 # read by the tests that load this file
+  OUTSIDE="$BATS_TEST_TMPDIR/outside"
 }
 
 # A day-aged timestamp for touch -t. GNU and BSD date disagree on relative
@@ -26,11 +29,16 @@ stamp_days_ago() {
 
 # A directory with two files and a subdirectory, every mtime <days> days ago.
 make_dir() {
-  local name="$1" days="$2"
-  mkdir -p "$ROOT/$name/sub"
-  printf 'alpha\n' > "$ROOT/$name/a.txt"
-  printf 'beta\n' > "$ROOT/$name/sub/b.txt"
-  touch_tree "$ROOT/$name" "$days"
+  make_dir_in "$ROOT" "$1" "$2"
+}
+
+# The same directory under <base>.
+make_dir_in() {
+  local base="$1" name="$2" days="$3"
+  mkdir -p "$base/$name/sub"
+  printf 'alpha\n' > "$base/$name/a.txt"
+  printf 'beta\n' > "$base/$name/sub/b.txt"
+  touch_tree "$base/$name" "$days"
 }
 
 touch_tree() {
@@ -447,6 +455,18 @@ plant_earlier_record() {
 file_state() {
   perl -e '@s = stat($ARGV[0]); printf "%o %d ", $s[2] & 07777, $s[9]' "$1"
   cksum < "$1"
+}
+
+# Everything below a directory: its entries, then mode, mtime and checksum of
+# each file. Two calls print the same text exactly when nothing under the
+# directory was added, removed or changed.
+tree_state() {
+  local entry
+  find "$1" | LC_ALL=C sort
+  find "$1" -type f | LC_ALL=C sort | while IFS= read -r entry; do
+    printf '%s ' "$entry"
+    file_state "$entry"
+  done
 }
 
 # A directory in PATH whose xz ends the script that started it as soon as it

@@ -26,6 +26,111 @@ setup() {
   [ ! -e "$ARCHIVE/keep.tar.xz" ]
 }
 
+# The target sits outside the playground and is aged with everything else, so
+# only the link check keeps it out of the archive.
+@test "a symlinked directory is left in place and its target is untouched" {
+  make_dir_in "$OUTSIDE" real 30
+  ln -s "$OUTSIDE/real" "$ROOT/linked"
+  local before
+  before="$(tree_state "$OUTSIDE/real")"
+
+  run_archive
+  [ "$status" -eq 0 ]
+  [[ "$output" == *">>> linked skipped: symlink <<<"* ]]
+  [[ "$output" == *"symlinks: 1"* ]]
+
+  [ "$(readlink "$ROOT/linked")" = "$OUTSIDE/real" ]
+  [ "$(tree_state "$OUTSIDE/real")" = "$before" ]
+  [ -z "$(ls -A "$ARCHIVE")" ]
+}
+
+@test "a dry run names a symlinked directory" {
+  make_dir_in "$OUTSIDE" real 30
+  ln -s "$OUTSIDE/real" "$ROOT/linked"
+
+  run_archive --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" == *">>> linked skipped: symlink <<<"* ]]
+  [[ "$output" != *"would archive  linked"* ]]
+}
+
+# Removing a link to an empty tree with rm -rf and a trailing slash removes the
+# target on macOS, so the link check has to come before the empty-tree check.
+@test "a symlink to a directory holding no files leaves the target in place" {
+  mkdir -p "$OUTSIDE/hollow/skeleton"
+  ln -s "$OUTSIDE/hollow" "$ROOT/linked"
+
+  run_archive
+  [ "$status" -eq 0 ]
+  [[ "$output" == *">>> linked skipped: symlink <<<"* ]]
+
+  [ -L "$ROOT/linked" ]
+  [ -d "$OUTSIDE/hollow/skeleton" ]
+}
+
+# The middle link lies outside the playground, so the run sees the chain as one
+# entry.
+@test "a symlink to a symlink to a directory is skipped" {
+  make_dir_in "$OUTSIDE" real 30
+  ln -s "$OUTSIDE/real" "$OUTSIDE/hop"
+  ln -s "$OUTSIDE/hop" "$ROOT/chained"
+  local before
+  before="$(tree_state "$OUTSIDE/real")"
+
+  run_archive
+  [ "$status" -eq 0 ]
+  [[ "$output" == *">>> chained skipped: symlink <<<"* ]]
+  [[ "$output" == *"symlinks: 1"* ]]
+
+  [ "$(readlink "$ROOT/chained")" = "$OUTSIDE/hop" ]
+  [ "$(readlink "$OUTSIDE/hop")" = "$OUTSIDE/real" ]
+  [ "$(tree_state "$OUTSIDE/real")" = "$before" ]
+}
+
+@test "a symlink to a directory of the playground is skipped while the directory is archived" {
+  make_dir old 30
+  ln -s "$ROOT/old" "$ROOT/alias"
+
+  run_archive
+  [ "$status" -eq 0 ]
+  [[ "$output" == *">>> alias skipped: symlink <<<"* ]]
+  [[ "$output" == *"archiving      old"* ]]
+
+  [ -f "$ARCHIVE/old.tar.xz" ]
+  [ ! -e "$ARCHIVE/alias.tar.xz" ]
+  [ -L "$ROOT/alias" ]
+}
+
+@test "a symlink counts as a symlink whatever its target says about .no-archive" {
+  make_dir_in "$OUTSIDE" real 30
+  touch "$OUTSIDE/real/.no-archive"
+  ln -s "$OUTSIDE/real" "$ROOT/linked"
+
+  run_archive
+  [ "$status" -eq 0 ]
+  [[ "$output" == *">>> linked skipped: symlink <<<"* ]]
+  [[ "$output" == *"no-archive: 0   symlinks: 1"* ]]
+}
+
+# Neither kind matches the */ glob, so neither was ever a candidate. The
+# stowed scripts in the real playground are links to files.
+@test "a symlink to a file and a dangling symlink are neither named nor touched" {
+  mkdir -p "$OUTSIDE"
+  printf 'x\n' > "$OUTSIDE/file"
+  ln -s "$OUTSIDE/file" "$ROOT/filelink"
+  ln -s "$OUTSIDE/nowhere" "$ROOT/dangling"
+
+  run_archive
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"filelink"* ]]
+  [[ "$output" != *"dangling"* ]]
+  [[ "$output" == *"symlinks: 0"* ]]
+
+  [ "$(readlink "$ROOT/filelink")" = "$OUTSIDE/file" ]
+  [ "$(readlink "$ROOT/dangling")" = "$OUTSIDE/nowhere" ]
+  [ "$(cat "$OUTSIDE/file")" = "x" ]
+}
+
 @test "a dry run reports an empty directory and keeps it" {
   mkdir -p "$ROOT/hollow/skeleton"
 
@@ -47,6 +152,22 @@ setup() {
 
   [ -f "$ARCHIVE/stray/f" ]
   [ ! -e "$ROOT/stray" ]
+}
+
+@test "a symlinked directory in archive/ is not moved to the playground" {
+  make_dir_in "$OUTSIDE" real 30
+  ln -s "$OUTSIDE/real" "$ARCHIVE/lnk"
+  local before
+  before="$(tree_state "$OUTSIDE/real")"
+
+  run_archive
+  [ "$status" -eq 0 ]
+  [[ "$output" == *">>> archive/lnk skipped: symlink <<<"* ]]
+  [[ "$output" == *"symlinks: 1"* ]]
+
+  [ "$(readlink "$ARCHIVE/lnk")" = "$OUTSIDE/real" ]
+  [ ! -e "$ROOT/lnk" ]
+  [ "$(tree_state "$OUTSIDE/real")" = "$before" ]
 }
 
 # A plain file keeps the name taken without being a directory of the
@@ -88,10 +209,12 @@ setup() {
   mkdir -p "$ROOT/hollow/skeleton"
   mkdir -p "$ARCHIVE/stray"
   printf 'x\n' > "$ARCHIVE/stray/f"
+  mkdir -p "$OUTSIDE/real"
+  ln -s "$OUTSIDE/real" "$ROOT/linked"
 
   run_archive
   [ "$status" -eq 0 ]
-  [[ "$output" == *"archived: 1   skipped: 1   removed empty: 1   restored: 1   no-archive: 1"* ]]
+  [[ "$output" == *"archived: 1   skipped: 1   removed empty: 1   restored: 1   no-archive: 1   symlinks: 1"* ]]
   [[ "$output" == *"reclaimed: 0   replaced: 0   beside: 0   unresolved: 0"* ]]
 }
 
