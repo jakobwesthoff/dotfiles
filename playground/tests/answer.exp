@@ -5,19 +5,32 @@
 # Usage: ANSWERS="r" answer.exp <command> [args...]
 #
 # ANSWERS holds one word per prompt, in the order the prompts appear. The
-# word "-" stands for an empty line. The exit status is the command's.
+# word "-" stands for an empty line and "^D" for the end of input on the
+# terminal. The exit status is the command's, except that a prompt without an
+# answer left exits 98 and a run that stays silent for the timeout exits 99,
+# so that a wrong prompt sequence fails instead of hanging. The timeout bounds
+# the wait for output, including the archiving after the last answer, and
+# only guards against a hang.
 
 set timeout 120
 set answers $env(ANSWERS)
 
 proc answer_next {} {
   global answers
+  if {[llength $answers] == 0} {
+    puts "answer.exp: no answer left"
+    exit 98
+  }
   set word [lindex $answers 0]
   set answers [lrange $answers 1 end]
-  if {$word eq "-"} {
-    set word ""
+  if {$word eq "^D"} {
+    send "\004"
+  } else {
+    if {$word eq "-"} {
+      set word ""
+    }
+    send "$word\r"
   }
-  send "$word\r"
   exp_continue
 }
 
@@ -26,6 +39,10 @@ spawn {*}$argv
 expect {
   -re {choice \[r/s/k\]: } answer_next
   -re {suffix \[[^\]]*\]: } answer_next
+  timeout {
+    puts "answer.exp: timed out"
+    exit 99
+  }
   eof
 }
 
