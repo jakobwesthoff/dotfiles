@@ -22,7 +22,8 @@
 # produces them. A listing is written once its archive is in its final place,
 # replaced together with the archive and deleted when retrieve deletes the
 # archive. A listing that cannot be written is a warning only: the archive is
-# already proven good and reindex rebuilds the listing.
+# already proven good and reindex rebuilds the listing. The retrieve preview
+# reads the listing instead of the archive.
 #
 # reindex writes the listing of every archive that has none and deletes the
 # listings of archives that are gone, so it can be rerun to fill gaps. It never
@@ -670,23 +671,60 @@ cmd_list() {
   [ "$found" -eq 1 ] || die "no archive name contains '$1'"
 }
 
+# The path of the provenance record in a listing, or nothing when the listing
+# does not name it.
+#
+# The first line of a listing is the root directory: archives are written as
+# `tar name` with --sort=name. A line is mode, owner/group, size, date, time and
+# the path. Owner and group names may contain spaces, so the path is what
+# follows the first date and time, not a count of fields. awk reads the file
+# itself: a reader that stops early on a pipe would kill its producer with
+# SIGPIPE, which pipefail turns into a failure.
+listing_info_member() {
+  awk -v info="$INFO_FILE" '
+    function path(line) {
+      if (match(line, /[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] [0-9][0-9]:[0-9][0-9] /)) {
+        return substr(line, RSTART + RLENGTH)
+      }
+      return ""
+    }
+    NR == 1 {
+      root = path($0)
+      sub(/\/.*/, "", root)
+      if (root == "") exit
+      want = root "/" info
+      next
+    }
+    path($0) == want { print want; exit }
+  ' "$1"
+}
+
 # What fzf shows beside the highlighted archive: when it was archived, its
-# provenance record, and the start of its listing.
+# provenance record, and the first 200 lines of its listing. Everything but the
+# record comes from the index, so an archive without a listing shows the date
+# and size and a line naming reindex, and is not decompressed.
+#
+# The record is read from the archive only when the listing says it is there,
+# because looking for a missing one decompresses the whole archive. The read
+# stops at the record, which sorts ahead of nearly every other member.
 cmd_preview() {
-  local archive="$ARCHIVE_DIR/$1" name
+  local archive="$ARCHIVE_DIR/$1" listing record
   printf '%s   %s\n\n' "$(date -r "$archive" +%Y-%m-%d)" "$(du -h "$archive" | cut -f1)"
 
-  # .archive-info sorts ahead of nearly every other member, and --occurrence
-  # stops at the first match rather than reading the rest of the archive. An
-  # archive without the record is read to the end before this gives up.
-  name="$(archive_root "$archive")"
-  if gtar -xJOf "$archive" --occurrence "$name/$INFO_FILE" 2>/dev/null; then
+  listing="$(listing_path "$archive")"
+  if [ ! -e "$listing" ]; then
+    printf '(no listing; archive.sh reindex writes it)\n'
+    return 0
+  fi
+
+  record="$(listing_info_member "$listing")"
+  if [ -n "$record" ] && gtar -xJOf "$archive" --occurrence "$record" 2>/dev/null; then
     printf '\n'
   else
     printf '(no %s)\n\n' "$INFO_FILE"
   fi
 
-  { gtar -tvJf "$archive" 2>/dev/null || true; } | gsed 200q
+  gsed 200q "$listing"
 }
 
 # Resolves a pattern to one archive path in PICKED.
