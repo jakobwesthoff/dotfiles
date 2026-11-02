@@ -287,3 +287,20 @@ EOS
   chmod +x "$stub/gtar"
   PATH="$stub:$PATH"
 }
+
+# A directory in PATH whose xz fails when it compresses, i.e. when one of its
+# arguments is -9 as in XZ_OPTS. Testing and decompressing pass through.
+stub_xz_failing_on_compress() {
+  local real stub="$BATS_TEST_TMPDIR/stub-xz"
+  real="$(command -v xz)"
+  mkdir -p "$stub"
+  cat > "$stub/xz" <<EOS
+#!/usr/bin/env bash
+for arg in "\$@"; do
+  [ "\$arg" != -9 ] || exit 1
+done
+exec "$real" "\$@"
+EOS
+  chmod +x "$stub/xz"
+  PATH="$stub:$PATH"
+}
