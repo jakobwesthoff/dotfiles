@@ -639,7 +639,7 @@ handle_collision() {
     replace)
       log "replacing      $(basename "$best")"
       archive_dir "$name" "$best" \
-        "replaces the archive of the same name; changed $CMP_CONTENT, added $CMP_ONLY_DISK, removed $CMP_ONLY_ARCH"
+        "replaces the archive of the same name; content changed $CMP_CONTENT, metadata changed $CMP_META, added $CMP_ONLY_DISK, removed $CMP_ONLY_ARCH"
       n_replaced=$((n_replaced + 1))
       ;;
     beside)

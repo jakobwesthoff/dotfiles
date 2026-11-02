@@ -122,7 +122,26 @@ setup() {
   [ "$(grep -c '^archived: ' <<< "$record")" -eq 2 ]
   [ -z "$(sed -n 5p <<< "$record")" ]
   grep -qx 'reason:    first archive of this directory' <<< "$record"
-  grep -q '^reason:    replaces the archive of the same name; changed [0-9]*, added 1, removed 0$' <<< "$record"
+  grep -q '^reason:    replaces the archive of the same name; content changed [0-9]*, metadata changed [0-9]*, added 1, removed 0$' <<< "$record"
+}
+
+# One path of each kind. The archive holds a, b and c. a has other content
+# under its own stamp, b only another mtime, c is gone and d is new. The
+# directory itself is not counted, so the prompt reads 2 changed, 1 removed, and
+# the record names the two changes separately.
+@test "the reason of a replace names the content and metadata changes the prompt adds up" {
+  make_archive_of old a b c
+  make_files "$ROOT/old" a b d
+  printf 'other\n' > "$ROOT/old/a"
+  touch -t "$(stamp_days_ago 20)" "$ROOT/old/a"
+  touch -t "$(stamp_days_ago 25)" "$ROOT/old/b"
+
+  run_with_answers "r"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"replacing discards content kept nowhere else: 2 changed, 1 removed"* ]]
+
+  record="$(gtar -xJOf "$ARCHIVE/old.tar.xz" old/.archive-info)"
+  grep -qx 'reason:    replaces the archive of the same name; content changed 1, metadata changed 1, added 1, removed 1' <<< "$record"
 }
 
 @test "an archive kept beside another records the overlap that led to it" {
