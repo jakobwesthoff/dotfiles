@@ -139,3 +139,12 @@ listing_oracle() {
 restore_permissions() {
   chmod -R u+rwx "$BATS_TEST_TMPDIR" 2>/dev/null || true
 }
+
+# An archive as another tool or an earlier version of the script would have
+# left it: a plain tarball of a generated directory, without a listing.
+make_unlisted_archive() {
+  local name="$1"
+  make_dir "$name" 30
+  gtar --sort=name -cf - -C "$ROOT" "$name" | xz -c > "$ARCHIVE/$name.tar.xz"
+  rm -rf "${ROOT:?}/$name"
+}

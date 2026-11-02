@@ -22,7 +22,14 @@
 # produces them. A listing is written once its archive is in its final place,
 # replaced together with the archive and deleted when retrieve deletes the
 # archive. A listing that cannot be written is a warning only: the archive is
-# already proven good.
+# already proven good and reindex rebuilds the listing.
+#
+# reindex writes the listing of every archive that has none and deletes the
+# listings of archives that are gone, so it can be rerun to fill gaps. It never
+# rewrites a listing that exists, and it lists one archive per CPU at a time.
+# Run it only when no other archive, retrieve or reindex run is in progress: it
+# removes the part files another run may be writing, and a concurrent retrieve
+# could leave a listing for an archive it has just deleted.
 #
 # Usage:
 #   archive.sh [--dry-run]       archive every aged-out directory
@@ -31,6 +38,8 @@
 #                                take one archive out of storage: restore its
 #                                directory to the playground and delete the
 #                                archive once the restore is proven complete
+#   archive.sh reindex           write the listing of every archive that has
+#                                none and delete listings whose archive is gone
 
 set -euo pipefail
 
@@ -190,7 +199,7 @@ listing_failed() {
   local name
   name="$(basename "$1")"
   if rm -f -- "$(listing_path "$1")" 2>/dev/null; then
-    warn "could not write the listing of $name"
+    warn "could not write the listing of $name; archive.sh reindex rebuilds it"
   else
     warn "could not write the listing of $name, and its old listing could not be deleted: it is stale"
   fi
@@ -813,6 +822,86 @@ cmd_retrieve() {
 }
 
 # =========================================================
+# Rebuilding the index
+# =========================================================
+
+# Lists one archive for the xargs jobs of cmd_reindex.
+cmd_index_one() {
+  if write_listing "$1"; then
+    log "indexed        $(basename "$1")"
+  else
+    warn "cannot list $(basename "$1"); no listing written"
+    exit 1
+  fi
+}
+
+# Number of archives that have no listing.
+count_unlisted() {
+  local archive n=0
+  for archive in "$ARCHIVE_DIR"/*.tar.xz; do
+    [ -e "$archive" ] || continue
+    [ -e "$(listing_path "$archive")" ] || n=$((n + 1))
+  done
+  printf '%s\n' "$n"
+}
+
+# Brings the index in line with the archives: lists every archive that has no
+# listing and deletes listings whose archive is gone. A listing that exists is
+# never rewritten.
+#
+# The archives are listed by one job per CPU. Whether a job worked is judged
+# by recounting the archives without a listing afterwards, which also counts
+# a job that never ran.
+cmd_reindex() {
+  local lst archive todo self jobs
+  local n_stale=0 n_current=0 n_missing n_left
+
+  mkdir -p "$INDEX_DIR" || die "cannot create $INDEX_DIR"
+
+  # Left behind by a run that was interrupted before it renamed its part file.
+  rm -f "${INDEX_DIR:?}"/*.lst.part
+
+  for lst in "$INDEX_DIR"/*.lst; do
+    [ -e "$lst" ] || continue
+    [ ! -e "$ARCHIVE_DIR/$(basename "$lst" .lst)" ] || continue
+    log "removing       $(basename "$lst") (archive gone)"
+    if rm -f -- "$lst"; then
+      n_stale=$((n_stale + 1))
+    else
+      warn "could not delete listing $(basename "$lst")"
+    fi
+  done
+
+  # NUL separated in a file rather than an array: archive names may hold any
+  # byte but NUL, and an empty array breaks under set -u in bash 3.2.
+  todo="$(mktemp)"
+  for archive in "$ARCHIVE_DIR"/*.tar.xz; do
+    [ -e "$archive" ] || continue
+    if [ -e "$(listing_path "$archive")" ]; then
+      n_current=$((n_current + 1))
+    else
+      printf '%s\0' "$archive" >> "$todo"
+    fi
+  done
+
+  if [ -s "$todo" ]; then
+    jobs="$(getconf _NPROCESSORS_ONLN)"
+    self="$ROOT/$(basename "${BASH_SOURCE[0]}")"
+    # "$BASH" keeps the jobs on the interpreter of this run instead of the one
+    # the script's shebang finds.
+    xargs -0 -n 1 -P "$jobs" "$BASH" "$self" __index < "$todo" || true
+  fi
+  n_missing="$(tr -cd '\0' < "$todo" | wc -c | tr -d ' ')"
+  rm -f "$todo"
+
+  n_left="$(count_unlisted)"
+  log ""
+  log "indexed: $((n_missing - n_left))   failed: $n_left   up to date: $n_current   removed stale: $n_stale"
+
+  [ "$n_left" -eq 0 ] || exit 1
+}
+
+# =========================================================
 # Archiving run
 # =========================================================
 
@@ -928,6 +1017,7 @@ usage() {
 usage: archive.sh [--dry-run]
        archive.sh list [pattern]
        archive.sh retrieve [pattern]
+       archive.sh reindex
 EOF
 }
 
@@ -951,6 +1041,14 @@ case "${1:-}" in
   retrieve)
     [ $# -le 2 ] || { usage >&2; exit 2; }
     cmd_retrieve "${2:-}"
+    ;;
+  reindex)
+    [ $# -eq 1 ] || { usage >&2; exit 2; }
+    cmd_reindex
+    ;;
+  # Internal: one job of reindex.
+  __index)
+    cmd_index_one "$2"
     ;;
   # Internal: fzf's preview command during retrieve.
   __preview)
