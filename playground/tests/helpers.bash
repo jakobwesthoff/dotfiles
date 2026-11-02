@@ -14,6 +14,8 @@ setup_root() {
   cp "$BATS_TEST_DIRNAME/../archive.sh" "$ROOT/archive.sh"
   chmod +x "$ROOT/archive.sh"
   ARCHIVE="$ROOT/archive"
+  # Where archives that the script did not write are built from.
+  FOREIGN="$BATS_TEST_TMPDIR/foreign"
 }
 
 # A day-aged timestamp for touch -t. GNU and BSD date disagree on relative
@@ -232,4 +234,56 @@ EOS
 # $FZF_ARGS_FILE.
 fzf_option_value() {
   grep -x -A1 -- "$1" "$FZF_ARGS_FILE" | tail -n 1
+}
+
+# Files under $FOREIGN, aged like make_dir's, for archives that the script
+# did not write. Paths are relative to $FOREIGN.
+make_foreign_tree() {
+  local file
+  for file in "$@"; do
+    mkdir -p "$FOREIGN/$(dirname "$file")"
+    printf '%s\n' "$file" > "$FOREIGN/$file"
+  done
+  touch_tree "$FOREIGN" 30
+}
+
+# archive/<name>.tar.xz holding the given members of $FOREIGN.
+foreign_archive() {
+  local name="$1"
+  shift
+  gtar --sort=name -cf - -C "$FOREIGN" "$@" | xz -c > "$ARCHIVE/$name.tar.xz"
+}
+
+# A directory in PATH whose gtar fails when it extracts, i.e. when one of its
+# arguments is -xJf as in cmd_retrieve. Listing and comparing pass through.
+stub_gtar_failing_on_extract() {
+  local real stub="$BATS_TEST_TMPDIR/stub-gtar-extract"
+  real="$(command -v gtar)"
+  mkdir -p "$stub"
+  cat > "$stub/gtar" <<EOS
+#!/usr/bin/env bash
+for arg in "\$@"; do
+  [ "\$arg" != -xJf ] || exit 2
+done
+exec "$real" "\$@"
+EOS
+  chmod +x "$stub/gtar"
+  PATH="$stub:$PATH"
+}
+
+# A directory in PATH whose gtar creates the directory given as $1 once it
+# has extracted, i.e. a name that appears in the playground during a retrieve.
+stub_gtar_creating_dir_after_extract() {
+  local real stub="$BATS_TEST_TMPDIR/stub-gtar-appear"
+  real="$(command -v gtar)"
+  mkdir -p "$stub"
+  cat > "$stub/gtar" <<EOS
+#!/usr/bin/env bash
+"$real" "\$@" || exit
+for arg in "\$@"; do
+  [ "\$arg" != -xJf ] || mkdir "$1"
+done
+EOS
+  chmod +x "$stub/gtar"
+  PATH="$stub:$PATH"
 }
