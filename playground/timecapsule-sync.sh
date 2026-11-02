@@ -23,6 +23,14 @@
 # TODO: Bring the playgrounds of several machines together, once they have
 # drifted apart. Each machine's mirror is kept separate until then.
 #
+# Needs bash 4.4 or newer, and says so before it does anything else, --help
+# included. A script with set -eu and an EXIT trap exits 0 after an unbound
+# variable error under bash 3.2, which is what macOS ships as /bin/bash, so an
+# aborted run can look successful to cron, launchd or a calling script. bash
+# 4.1 fixed that exit status and bash 4.4 stopped treating an empty array as an
+# unbound variable under set -u. An older bash does not re-run the script under
+# a newer one: run it with bash 4.4 or newer, such as the one Homebrew installs.
+#
 # Usage:
 #   timecapsule-sync.sh [options]
 #
@@ -64,6 +72,17 @@
 #   so it may contain = and spaces, and quotes and # are part of it. When a
 #   key appears twice, the later line wins. The file is read as data and never
 #   run as shell code.
+
+# The check precedes set -euo pipefail and has to run under bash 3.2 itself.
+bash_is_too_old() {
+  [ "$1" -lt 4 ] || { [ "$1" -eq 4 ] && [ "$2" -lt 4 ]; }
+}
+
+if bash_is_too_old "${BASH_VERSINFO[0]:-0}" "${BASH_VERSINFO[1]:-0}"; then
+  printf 'ERROR: %s needs bash 4.4 or newer, but runs under bash %s (%s); run it with bash 4.4 or newer, for example the one Homebrew installs\n' \
+    "${0##*/}" "${BASH_VERSION:-unknown}" "${BASH:-unknown}" >&2
+  exit 1
+fi
 
 set -euo pipefail
 
@@ -400,9 +419,7 @@ cmd_sync() {
     progress=(--info=progress2)
   fi
 
-  # The + form expands an empty array to nothing; a plain "${progress[@]}"
-  # counts as unset under set -u in bash 3.2, the bash macOS ships.
-  run_rsync "${RSYNC_OPTS[@]}" ${progress[@]+"${progress[@]}"} "$ROOT/" "$DEST/"
+  run_rsync "${RSYNC_OPTS[@]}" "${progress[@]}" "$ROOT/" "$DEST/"
   log "synced         $DEST"
 }
 

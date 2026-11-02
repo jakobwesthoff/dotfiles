@@ -7,6 +7,8 @@
 # the script reaches before it syncs is replaced by a stub on PATH, so no test
 # can touch a network, a real host or the real ~/.config.
 
+load system-bash
+
 # The placeholder site the stubs answer for. Tests that change what a stub
 # says export the matching STUB_* variable first.
 PLACEHOLDER_HOST=nas.local
@@ -86,16 +88,11 @@ write_config() {
 #
 # With SYNC_TRACE set, every executed line is appended to that file as
 # "+<script>:<line>: <command>". The trace goes to fd 9 so that it does not
-# mix into the output the tests assert on. bash 3.2 ignores BASH_XTRACEFD and
-# would put the trace into the output, so the combination is refused.
+# mix into the output the tests assert on.
 run_script() {
   local cmd=("${SYNC_BASH:-bash}" "$ROOT/timecapsule-sync.sh" "$@")
 
   if [ -n "${SYNC_TRACE:-}" ]; then
-    if [ "${SYNC_BASH:-bash}" = /bin/bash ]; then
-      printf 'SYNC_TRACE needs a bash that honours BASH_XTRACEFD\n' >&2
-      return 1
-    fi
     # shellcheck disable=SC2016 # PS4 is expanded by the traced shell
     cmd=(env SHELLOPTS=xtrace PS4='+${BASH_SOURCE}:${LINENO}: ' BASH_XTRACEFD=9 "${cmd[@]}")
   fi
@@ -105,6 +102,14 @@ run_script() {
   else
     run "${cmd[@]}" 9>>"${SYNC_TRACE:-/dev/null}"
   fi
+}
+
+# Runs the script through the system bash and leaves stdout in $output and
+# stderr in $stderr. The run is not traced: bash 3.2 ignores BASH_XTRACEFD and
+# would put the trace into the output. Needs bats_require_minimum_version 1.5.0
+# in the test file.
+run_script_under_system_bash() {
+  run --separate-stderr "$SYSTEM_BASH" "$ROOT/timecapsule-sync.sh" "$@"
 }
 
 # A dry run: nothing is written to the NAS and the transfer itself is not

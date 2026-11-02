@@ -2,6 +2,7 @@
 
 # shellcheck disable=SC2030,SC2031 # bats runs each test in a subshell of its own, so exports stay local to it on purpose
 
+bats_require_minimum_version 1.5.0
 load timecapsule-helpers
 
 setup() {
@@ -351,16 +352,10 @@ nc -z -G 2 $PLACEHOLDER_IP 22" ]
 # The transfer itself
 # =========================================================
 
-# macOS /bin/bash is 3.2, which treats an empty array as unset. A run with
-# stdout redirected, as from cron or launchd, leaves the progress option array
-# empty. The trace guard refuses /bin/bash, so a traced run uses bash.
-@test "a transfer with stdout redirected completes under the system bash" {
+# A run with stdout redirected, as from cron or launchd, leaves the progress
+# option array empty, and the transfer has to complete all the same.
+@test "a transfer with stdout redirected completes" {
   write_config
-  if [ -n "${SYNC_TRACE:-}" ]; then
-    SYNC_BASH="${SYNC_BASH:-bash}"
-  else
-    SYNC_BASH="${SYNC_BASH:-/bin/bash}"
-  fi
 
   run_full_sync --skip-network-check
 
@@ -379,4 +374,32 @@ nc -z -G 2 $PLACEHOLDER_IP 22" ]
   [ "$status" -eq 0 ]
   [ -s "$CALLS" ]
   [ "$(tail -n 1 "$CALLS")" = "$(expected_transfer_call ' --info=progress2')" ]
+}
+
+# =========================================================
+# The bash version the script needs
+# =========================================================
+
+@test "--help under an older bash stops with a message and prints no usage" {
+  skip_unless_system_bash_is_old
+
+  run_script_under_system_bash --help
+  [ "$status" -eq 1 ]
+  [ -z "$output" ]
+  [[ "$stderr" == *"ERROR: timecapsule-sync.sh needs bash 4.4 or newer, but runs under bash $(system_bash_version) ($SYSTEM_BASH)"* ]]
+  assert_no_commands_ran
+}
+
+@test "a sync run under an older bash stops before any command" {
+  skip_unless_system_bash_is_old
+  write_config
+
+  run_script_under_system_bash --skip-network-check
+  [ "$status" -eq 1 ]
+  [[ "$stderr" == *"needs bash 4.4 or newer"* ]]
+  assert_no_commands_ran
+}
+
+@test "the version test refuses bash before 4.4 and accepts 4.4 and newer" {
+  assert_version_test_draws_the_line_at_4_4 "$ROOT/timecapsule-sync.sh"
 }

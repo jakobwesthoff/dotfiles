@@ -38,6 +38,14 @@
 # removes the part files another run may be writing, and a concurrent retrieve
 # could leave a listing for an archive it has just deleted.
 #
+# Needs bash 4.4 or newer, and says so before it does anything else, --help
+# included. A script with set -eu and an EXIT trap exits 0 after an unbound
+# variable error under bash 3.2, which is what macOS ships as /bin/bash, so an
+# aborted run can look successful to cron, launchd or a calling script. bash
+# 4.1 fixed that exit status and bash 4.4 stopped treating an empty array as an
+# unbound variable under set -u. An older bash does not re-run the script under
+# a newer one: run it with bash 4.4 or newer, such as the one Homebrew installs.
+#
 # Usage:
 #   archive.sh [--dry-run]       archive every aged-out directory
 #   archive.sh list [pattern]    list archives whose name contains pattern
@@ -47,6 +55,17 @@
 #                                archive once the restore is proven complete
 #   archive.sh reindex           write the listing of every archive that has
 #                                none and delete listings whose archive is gone
+
+# The check precedes set -euo pipefail and has to run under bash 3.2 itself.
+bash_is_too_old() {
+  [ "$1" -lt 4 ] || { [ "$1" -eq 4 ] && [ "$2" -lt 4 ]; }
+}
+
+if bash_is_too_old "${BASH_VERSINFO[0]:-0}" "${BASH_VERSINFO[1]:-0}"; then
+  printf 'ERROR: %s needs bash 4.4 or newer, but runs under bash %s (%s); run it with bash 4.4 or newer, for example the one Homebrew installs\n' \
+    "${0##*/}" "${BASH_VERSION:-unknown}" "${BASH:-unknown}" >&2
+  exit 1
+fi
 
 set -euo pipefail
 
@@ -815,9 +834,7 @@ pick_archive() {
     fi
   fi
 
-  # With nothing to pick from, fzf would open on an empty list and the failure
-  # message below would expand an empty array, which bash 3.2 reports as an
-  # unbound variable.
+  # With nothing to pick from, fzf would open on an empty list.
   [ "${#matches[@]}" -gt 0 ] || die "no archives to retrieve"
 
   if ! command -v fzf >/dev/null || ! can_prompt; then
@@ -977,7 +994,7 @@ cmd_reindex() {
   done
 
   # NUL separated in a file rather than an array: archive names may hold any
-  # byte but NUL, and an empty array breaks under set -u in bash 3.2.
+  # byte but NUL.
   todo="$(mktemp)"
   for archive in "$ARCHIVE_DIR"/*.tar.xz; do
     [ -e "$archive" ] || continue

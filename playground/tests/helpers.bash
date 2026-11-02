@@ -8,6 +8,8 @@
 
 ANSWER_EXP="$BATS_TEST_DIRNAME/answer.exp"
 
+load system-bash
+
 setup_root() {
   ROOT="$BATS_TEST_TMPDIR/root"
   mkdir -p "$ROOT/archive"
@@ -69,8 +71,16 @@ run_archive_split() {
     trace=(SHELLOPTS=xtrace PS4='+${BASH_SOURCE}:${LINENO}: ' BASH_XTRACEFD=9)
   fi
   # shellcheck disable=SC2154 # run sets status, output and stderr
-  run --separate-stderr env ${trace[@]+"${trace[@]}"} \
+  run --separate-stderr env "${trace[@]}" \
     "${ARCHIVE_BASH:-bash}" "$ROOT/archive.sh" "$@" 9>>"${ARCHIVE_TRACE:-/dev/null}"
+}
+
+# Runs the script through the system bash and leaves stdout in $output and
+# stderr in $stderr. The run is not traced: bash 3.2 ignores BASH_XTRACEFD and
+# would put the trace into the output. Needs bats_require_minimum_version 1.5.0
+# in the test file.
+run_archive_under_system_bash() {
+  run --separate-stderr "$SYSTEM_BASH" "$ROOT/archive.sh" "$@"
 }
 
 # Starts a command in a session of its own. A session has no controlling
@@ -88,7 +98,7 @@ run_without_terminal() {
     # shellcheck disable=SC2016 # PS4 is expanded by the traced shell
     trace=(SHELLOPTS=xtrace PS4='+${BASH_SOURCE}:${LINENO}: ' BASH_XTRACEFD=9)
   fi
-  run "${NO_TERMINAL[@]}" env ${trace[@]+"${trace[@]}"} \
+  run "${NO_TERMINAL[@]}" env "${trace[@]}" \
     "${ARCHIVE_BASH:-bash}" "$ROOT/archive.sh" "$@" 9>>"${ARCHIVE_TRACE:-/dev/null}"
 }
 
@@ -130,7 +140,7 @@ run_with_answers() {
     answers="$1"; exp="$2"; shift 2
     ANSWERS="$answers" expect "$exp" "$@" | tr -d "\r" | gsed "s/\x1b\[[0-9;]*m//g"
     exit "${PIPESTATUS[0]}"
-  ' _ "$answers" "$ANSWER_EXP" env ${trace[@]+"${trace[@]}"} \
+  ' _ "$answers" "$ANSWER_EXP" env "${trace[@]}" \
     "${ARCHIVE_BASH:-bash}" "$ROOT/archive.sh" "$@" 9>>"${ARCHIVE_TRACE:-/dev/null}"
 }
 

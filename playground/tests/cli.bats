@@ -120,3 +120,32 @@ setup() {
   [ "$status" -eq 1 ]
   [[ "$stderr" == *"xz is required"* ]]
 }
+
+# =========================================================
+# The bash version the script needs
+# =========================================================
+
+@test "--help under an older bash stops with a message and prints no usage" {
+  skip_unless_system_bash_is_old
+
+  run_archive_under_system_bash --help
+  [ "$status" -eq 1 ]
+  [ -z "$output" ]
+  [[ "$stderr" == *"ERROR: archive.sh needs bash 4.4 or newer, but runs under bash $(system_bash_version) ($SYSTEM_BASH)"* ]]
+}
+
+@test "an archiving run under an older bash changes nothing" {
+  skip_unless_system_bash_is_old
+  make_dir old 30
+
+  run_archive_under_system_bash
+  [ "$status" -eq 1 ]
+  [[ "$stderr" == *"needs bash 4.4 or newer"* ]]
+
+  [ -d "$ROOT/old" ]
+  [ -z "$(ls -A "$ARCHIVE")" ]
+}
+
+@test "the version test refuses bash before 4.4 and accepts 4.4 and newer" {
+  assert_version_test_draws_the_line_at_4_4 "$ROOT/archive.sh"
+}
