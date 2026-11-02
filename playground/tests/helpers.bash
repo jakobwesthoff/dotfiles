@@ -199,3 +199,37 @@ make_unlisted_archive() {
   gtar --sort=name -cf - -C "$ROOT" "$name" | xz -c > "$ARCHIVE/$name.tar.xz"
   rm -rf "${ROOT:?}/$name"
 }
+
+# A directory in PATH whose fzf stands in for the picker. It records its
+# arguments and what it was fed, drains all of stdin so that the script's
+# pipeline sees no broken pipe, and prints the line given as the argument.
+# Without an argument it prints nothing and exits 130, fzf's status for a
+# cancelled pick. The variables are exported because the script runs below
+# bash -c and expect.
+stub_fzf() {
+  local stub="$BATS_TEST_TMPDIR/stub-fzf"
+  FZF_ARGS_FILE="$BATS_TEST_TMPDIR/fzf-args"
+  FZF_INPUT_FILE="$BATS_TEST_TMPDIR/fzf-input"
+  FZF_PICK="${1:-}"
+  FZF_EXIT=130
+  export FZF_ARGS_FILE FZF_INPUT_FILE FZF_PICK FZF_EXIT
+  mkdir -p "$stub"
+  cat > "$stub/fzf" <<'EOS'
+#!/usr/bin/env bash
+printf '%s\n' "$@" > "$FZF_ARGS_FILE"
+cat > "$FZF_INPUT_FILE"
+if [ -n "$FZF_PICK" ]; then
+  grep -Fx -- "$FZF_PICK" "$FZF_INPUT_FILE"
+  exit
+fi
+exit "$FZF_EXIT"
+EOS
+  chmod +x "$stub/fzf"
+  PATH="$stub:$PATH"
+}
+
+# The argument fzf received after the given option, one per line in
+# $FZF_ARGS_FILE.
+fzf_option_value() {
+  grep -x -A1 -- "$1" "$FZF_ARGS_FILE" | tail -n 1
+}
