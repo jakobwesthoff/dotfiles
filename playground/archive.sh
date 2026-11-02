@@ -63,6 +63,11 @@ XZ_OPTS=(-T0 -9 --check=sha256)
 # where it came from without anyone having to guess from the filename.
 INFO_FILE=.archive-info
 
+# Decompressed bytes archive_root hands to tar. The first member of an archive
+# this script writes is the root directory, whose headers fit in it, and the
+# cost does not grow with the archive.
+ROOT_PROBE_BYTES=1048576
+
 DRY_RUN=0
 
 # Counters for the closing summary.
@@ -210,13 +215,22 @@ listing_failed() {
 # Comparing a directory against an existing archive
 # =========================================================
 
-# The directory an archive holds, read from the archive itself.
+# The directory an archive holds, read from its first member.
 #
-# Only the first member is needed, and cutting the decompressor off there
-# keeps this fast on archives of several gigabytes. An unreadable archive
-# yields an empty name.
+# Only the start of the decompressed stream goes to GNU tar, which reads the
+# name, long names included, and stops at the truncated end; its complaint
+# about that is dropped. tar reads ahead of what it prints, so the cut is made
+# on the stream: closing the pipe after the first line would not stop it. When
+# that start yields no name (a first header larger than ROOT_PROBE_BYTES), the
+# whole archive is listed. An unreadable archive yields an empty name.
 archive_root() {
-  { gtar -tJf "$1" 2>/dev/null || true; } | gsed -n '1{s:/.*::;p;q}'
+  local root
+  root="$({ xz -dc -T1 -- "$1" 2>/dev/null | head -c "$ROOT_PROBE_BYTES" \
+      | gtar -tf - 2>/dev/null || true; } | gsed -n '1{s:/.*::;p;q}')"
+  if [ -z "$root" ]; then
+    root="$({ gtar -tJf "$1" 2>/dev/null || true; } | gsed -n '1{s:/.*::;p;q}')"
+  fi
+  printf '%s\n' "$root"
 }
 
 # Every archive of a given directory: the plain <name>.tar.xz plus any

@@ -112,6 +112,127 @@ setup() {
 }
 
 # =========================================================
+# What retrieve reads to name the directory
+# =========================================================
+
+# A hidden directory is refused straight after it is named, so the bytes the
+# counting xz saw are what naming the directory cost. The probe reads about
+# 1 MiB, the archive is 12 MiB.
+@test "naming the directory reads only the start of the archive" {
+  make_big_hidden_archive 12
+  stub_xz_counting_decompressed_bytes
+
+  run_archive retrieve big
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"big.tar.xz holds '.big', which cannot be restored into the playground"* ]]
+
+  [ "$(xz_bytes_read)" -lt 4194304 ]
+}
+
+@test "the bytes read to name the directory do not grow with the archive" {
+  make_big_hidden_archive 12
+  stub_xz_counting_decompressed_bytes
+  run_archive retrieve big
+  [ "$status" -eq 1 ]
+  small="$(xz_bytes_read)"
+
+  make_big_hidden_archive 24
+  rm -f "$XZ_BYTES_FILE"
+  run_archive retrieve big
+  [ "$status" -eq 1 ]
+  large="$(xz_bytes_read)"
+
+  [ "$large" -lt $((small + 131072)) ]
+}
+
+@test "a listing next to the archive does not change what is read" {
+  make_big_hidden_archive 12
+  run_archive reindex
+  [ "$status" -eq 0 ]
+  [ -s "$ARCHIVE/index/big.tar.xz.lst" ]
+  stub_xz_counting_decompressed_bytes
+
+  run_archive retrieve big
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"holds '.big'"* ]]
+
+  [ "$(xz_bytes_read)" -lt 4194304 ]
+}
+
+# 130 bytes is over the 100 that a tar header holds. GNU tar stores such a name
+# in an entry of its own, ././@LongLink, ahead of the member.
+@test "a first member with a GNU long name is named in full" {
+  long=".$(printf 'd%.0s' $(seq 1 130))"
+  make_foreign_tree "$long/f"
+  foreign_archive long "$long"
+
+  run_archive retrieve long
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"long.tar.xz holds '$long', which cannot be restored into the playground"* ]]
+}
+
+# pax stores a long name as a path record in an extended header.
+@test "a first member with a pax long name is named in full" {
+  long=".$(printf 'd%.0s' $(seq 1 130))"
+  make_foreign_tree "$long/f"
+  gtar --format=pax --sort=name -cf - -C "$FOREIGN" "$long" | xz -c > "$ARCHIVE/long.tar.xz"
+
+  run_archive retrieve long
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"long.tar.xz holds '$long', which cannot be restored into the playground"* ]]
+}
+
+# The listing would show a link as "name -> target"; the name alone is the root.
+@test "a symlink as first member is named by the link" {
+  mkdir -p "$FOREIGN/elsewhere"
+  ln -s elsewhere "$FOREIGN/.link"
+  gtar -cf - -C "$FOREIGN" .link | xz -c > "$ARCHIVE/link.tar.xz"
+
+  run_archive retrieve link
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"link.tar.xz holds '.link', which cannot be restored into the playground"* ]]
+}
+
+@test "a file as first member is named by the file" {
+  make_foreign_tree .single
+  foreign_archive single .single
+
+  run_archive retrieve single
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"single.tar.xz holds '.single', which cannot be restored into the playground"* ]]
+}
+
+# The first header is larger than the start of the stream that is read first,
+# so only listing the whole archive finds the name.
+@test "a first header longer than the start that is read still names the directory" {
+  make_foreign_tree .huge/f
+  foreign_archive_with_huge_first_header huge .huge
+  probe="$(xz -dc "$ARCHIVE/huge.tar.xz" | head -c 1048576 | gtar -tf - 2>/dev/null || true)"
+  [ -z "$probe" ]
+  [ "$(gtar -tJf "$ARCHIVE/huge.tar.xz" | head -n 1)" = ".huge/" ]
+
+  run_archive retrieve huge
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"huge.tar.xz holds '.huge', which cannot be restored into the playground"* ]]
+}
+
+@test "an empty file is refused as unreadable" {
+  : > "$ARCHIVE/empty.tar.xz"
+
+  run_archive retrieve empty
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"cannot read empty.tar.xz"* ]]
+}
+
+@test "an xz file that holds no tar archive is refused as unreadable" {
+  printf 'plain text, not a tar archive\n' | xz -c > "$ARCHIVE/text.tar.xz"
+
+  run_archive retrieve text
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"cannot read text.tar.xz"* ]]
+}
+
+# =========================================================
 # A restore that fails
 # =========================================================
 

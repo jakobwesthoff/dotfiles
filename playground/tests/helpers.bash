@@ -338,3 +338,93 @@ make_two_archives_of_old() {
   local found=("$ARCHIVE"/old.????-??-??.tar.xz)
   BESIDE="${found[0]}"
 }
+
+# A directory in PATH whose xz counts what it decompresses. Every call with an
+# argument that starts with -d, i.e. the script's `xz -dc` and the `xz -d` that
+# gtar starts for -J, runs the real xz through a filter that passes the data on,
+# stops when its reader leaves and appends the number of bytes it saw to
+# $XZ_BYTES_FILE before the stub exits, so the count is in place when `run`
+# returns. Other calls pass through. Install it after the fixture is built.
+stub_xz_counting_decompressed_bytes() {
+  local real stub="$BATS_TEST_TMPDIR/stub-xz-count"
+  real="$(command -v xz)"
+  XZ_BYTES_FILE="$BATS_TEST_TMPDIR/xz-bytes"
+  export XZ_BYTES_FILE
+  rm -f "$XZ_BYTES_FILE"
+  mkdir -p "$stub"
+  cat > "$stub/xz" <<EOS
+#!/usr/bin/env bash
+for arg in "\$@"; do
+  case "\$arg" in
+    -d*)
+      "$real" "\$@" | perl -e '
+        \$SIG{PIPE} = "IGNORE";
+        my (\$n, \$buf) = (0, "");
+        while (my \$got = read(STDIN, \$buf, 65536)) {
+          \$n += \$got;
+          print STDOUT \$buf or last;
+        }
+        open(my \$out, ">>", \$ENV{XZ_BYTES_FILE}) or die "\$!";
+        print \$out "\$n\n";
+        close(\$out);
+      '
+      exit "\${PIPESTATUS[0]}"
+      ;;
+  esac
+done
+exec "$real" "\$@"
+EOS
+  chmod +x "$stub/xz"
+  PATH="$stub:$PATH"
+}
+
+# What the counting xz saw in total, 0 when it was never asked to decompress.
+xz_bytes_read() {
+  if [ -e "$XZ_BYTES_FILE" ]; then
+    awk '{ total += $1 } END { print total + 0 }' "$XZ_BYTES_FILE"
+  else
+    printf '0\n'
+  fi
+}
+
+# archive/big.tar.xz holding the hidden directory .big, which is one file of
+# incompressible data of <mib> MiB. Retrieving it dies at once, because a hidden
+# directory cannot be restored, so a test sees what naming the directory reads
+# and nothing else. The archive is named without the dot because archive names
+# beginning with one are not listed.
+make_big_hidden_archive() {
+  local mib="$1"
+  rm -rf "${FOREIGN:?}/.big"
+  mkdir -p "$FOREIGN/.big"
+  head -c $((mib * 1048576)) /dev/urandom > "$FOREIGN/.big/data"
+  foreign_archive big .big
+}
+
+# archive/<name>.tar.xz holding the hidden directory <member> as a pax stream
+# whose first header carries a record of 1.2 MB, longer than anything the
+# script's own archives start with. $FOREIGN/<member> must exist. The record is
+# an extended header for the next entry, built by hand because tar offers no
+# way to write one that large.
+foreign_archive_with_huge_first_header() {
+  local name="$1" member="$2"
+  {
+    perl -e '
+      my $body = " comment=" . ("x" x 1200000) . "\n";
+      my ($len, $digits);
+      for $digits (1 .. 10) {
+        $len = length($body) + $digits;
+        last if length($len) == $digits;
+      }
+      my $data = "$len$body";
+      my $head = pack("a100 a8 a8 a8 a12 a12 a8 a1 a100 a6 a2 a32 a32 a8 a8 a155 x12",
+        "PaxHeader/x", "0000644", "0000000", "0000000",
+        sprintf("%011o", length($data)), "00000000000", "        ", "x",
+        "", "ustar", "00", "", "", "", "", "");
+      my $sum = 0;
+      $sum += ord($_) for split //, $head;
+      substr($head, 148, 8) = sprintf("%06o", $sum) . "\0 ";
+      print $head, $data, "\0" x ((512 - length($data) % 512) % 512);
+    '
+    gtar --format=pax --sort=name -cf - -C "$FOREIGN" "$member"
+  } | xz -c > "$ARCHIVE/$name.tar.xz"
+}
