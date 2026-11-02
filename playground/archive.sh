@@ -454,12 +454,50 @@ write_archive_info() {
   touch -r "$CUTOFF_REF" "$info"
 }
 
+# The record is written into the directory so that it ends up inside the
+# archive, before anything has proven the archive good. Until the archive is in
+# place, the previous record, or its absence, is held in a directory of its own
+# and put back by undo_archive_info, so a directory that did not get archived
+# carries no entry for an archive that does not exist. cp -p keeps the mode and
+# the mtime, which write_archive_info stamps on purpose.
+HELD_INFO_DIR=""
+HELD_INFO=""
+
+hold_archive_info() {
+  HELD_INFO="$ROOT/$1/$INFO_FILE"
+  HELD_INFO_DIR="$(mktemp -d)"
+  if [ -e "$HELD_INFO" ]; then
+    cp -p "$HELD_INFO" "$HELD_INFO_DIR/record"
+  fi
+}
+
+# Puts the held record back, and does nothing when none is held. The exit trap
+# of an archiving run calls it, so it also runs when the run ends in die or is
+# ended by a signal.
+undo_archive_info() {
+  [ -n "$HELD_INFO_DIR" ] || return 0
+  rm -f "$HELD_INFO.new"
+  if [ ! -e "$HELD_INFO_DIR/record" ]; then
+    rm -f "$HELD_INFO"
+  elif ! cp -p "$HELD_INFO_DIR/record" "$HELD_INFO"; then
+    warn "could not restore $HELD_INFO"
+  fi
+  release_archive_info
+}
+
+release_archive_info() {
+  rm -rf "$HELD_INFO_DIR"
+  HELD_INFO_DIR=""
+  HELD_INFO=""
+}
+
 # Compress $ROOT/<name> to the given archive path and delete the original.
 #
 # The original outlives every step that could fail. An existing archive at the
 # target is moved aside rather than deleted, and only dropped once the
 # replacement is in place, so no window exists in which the name has no
-# archive behind it.
+# archive behind it. The directory's previous record is put back if the run
+# ends before the archive is in place.
 archive_dir() {
   local name="$1" target="$2" reason="$3"
   local src="$ROOT/$name"
@@ -470,6 +508,7 @@ archive_dir() {
     return 0
   fi
 
+  hold_archive_info "$name"
   write_archive_info "$name" "$target" "$reason"
 
   rm -f "$part"
@@ -494,6 +533,7 @@ archive_dir() {
   else
     mv "$part" "$target"
   fi
+  release_archive_info
 
   write_listing "$target" || listing_failed "$target"
 
@@ -967,7 +1007,7 @@ cmd_archive() {
   # lives outside the tree being scanned so that it cannot be mistaken for a
   # candidate, and is stamped at midnight of the cutoff day.
   CUTOFF_REF="$(mktemp)"
-  trap 'rm -f "$CUTOFF_REF"' EXIT
+  trap 'undo_archive_info; rm -f "$CUTOFF_REF"' EXIT
   touch -t "${CUTOFF}0000" "$CUTOFF_REF"
 
   log "cutoff: directories untouched since $CUTOFF are archived"

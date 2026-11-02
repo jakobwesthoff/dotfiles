@@ -428,3 +428,67 @@ foreign_archive_with_huge_first_header() {
     gtar --format=pax --sort=name -cf - -C "$FOREIGN" "$member"
   } | xz -c > "$ARCHIVE/$name.tar.xz"
 }
+
+# An .archive-info in the directory old that an earlier archive run could have
+# left: its own text, mode 600 and an mtime in 2020, which no cutoff stamp can be
+# mistaken for.
+plant_earlier_record() {
+  printf '%s\n' \
+    'archived:  2020-01-01' \
+    'directory: old' \
+    'archive:   old.tar.xz' \
+    'reason:    first archive of this directory' > "$ROOT/old/.archive-info"
+  chmod 600 "$ROOT/old/.archive-info"
+  touch -t 202001010101 "$ROOT/old/.archive-info"
+}
+
+# Mode, mtime in seconds and checksum of a file, on one line. stat takes
+# incompatible flags on BSD and GNU, perl does not.
+file_state() {
+  perl -e '@s = stat($ARGV[0]); printf "%o %d ", $s[2] & 07777, $s[9]' "$1"
+  cksum < "$1"
+}
+
+# A directory in PATH whose xz ends the script that started it as soon as it
+# compresses, i.e. when one of its arguments is -9 as in XZ_OPTS, the way a kill
+# from outside would. It lets go of the captured output first and waits a second,
+# because the script is gone by then and `run` would otherwise wait for the stub.
+# $PPID is the script: archive_dir runs its pipeline in the main shell.
+stub_xz_terminating_the_script_on_compress() {
+  local real stub="$BATS_TEST_TMPDIR/stub-xz-term"
+  real="$(command -v xz)"
+  mkdir -p "$stub"
+  cat > "$stub/xz" <<EOS
+#!/usr/bin/env bash
+for arg in "\$@"; do
+  if [ "\$arg" = -9 ]; then
+    exec >/dev/null 2>&1
+    kill -TERM "\$PPID"
+    sleep 1
+    exit 1
+  fi
+done
+exec "$real" "\$@"
+EOS
+  chmod +x "$stub/xz"
+  PATH="$stub:$PATH"
+}
+
+# A directory in PATH whose cp fails when it writes an .archive-info, i.e. when
+# the last argument ends in /.archive-info, as in the copy that puts a record
+# back. Copying a record away passes.
+stub_cp_failing_on_the_record() {
+  local real stub="$BATS_TEST_TMPDIR/stub-cp"
+  real="$(command -v cp)"
+  mkdir -p "$stub"
+  cat > "$stub/cp" <<EOS
+#!/usr/bin/env bash
+for last; do :; done
+case "\$last" in
+  */.archive-info) exit 1 ;;
+esac
+exec "$real" "\$@"
+EOS
+  chmod +x "$stub/cp"
+  PATH="$stub:$PATH"
+}

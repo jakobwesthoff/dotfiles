@@ -194,6 +194,106 @@ setup() {
   [ ! -e "$ARCHIVE/old.tar.xz.part" ]
 }
 
+# The record is written into the directory before the archive exists. When no
+# archive comes out of the run, the directory is as it was.
+@test "a failing compression leaves no record in a directory that had none" {
+  make_dir old 30
+  stub_xz_failing_on_compress
+
+  run_archive
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR: compression failed for old"* ]]
+
+  [ ! -e "$ROOT/old/.archive-info" ]
+  [ ! -e "$ROOT/old/.archive-info.new" ]
+}
+
+@test "a failing compression restores the earlier record with its mode and mtime" {
+  make_dir old 30
+  plant_earlier_record
+  before="$(file_state "$ROOT/old/.archive-info")"
+  stub_xz_failing_on_compress
+
+  run_archive
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR: compression failed for old"* ]]
+
+  [ "$(file_state "$ROOT/old/.archive-info")" = "$before" ]
+}
+
+@test "a failing validation restores the earlier record with its mode and mtime" {
+  make_dir old 30
+  plant_earlier_record
+  before="$(file_state "$ROOT/old/.archive-info")"
+  stub_gtar_dropping_a_listing_line
+
+  run_archive
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR: validation failed for old"* ]]
+
+  [ "$(file_state "$ROOT/old/.archive-info")" = "$before" ]
+}
+
+@test "runs that fail twice leave the earlier record alone" {
+  make_dir old 30
+  plant_earlier_record
+  before="$(file_state "$ROOT/old/.archive-info")"
+  stub_xz_failing_on_compress
+
+  run_archive
+  [ "$status" -eq 1 ]
+  run_archive
+  [ "$status" -eq 1 ]
+
+  [ "$(file_state "$ROOT/old/.archive-info")" = "$before" ]
+}
+
+@test "a run ended by SIGTERM restores the earlier record" {
+  make_dir old 30
+  plant_earlier_record
+  before="$(file_state "$ROOT/old/.archive-info")"
+  stub_xz_terminating_the_script_on_compress
+
+  run_archive
+  [ "$status" -eq 143 ]
+
+  [ "$(file_state "$ROOT/old/.archive-info")" = "$before" ]
+  [ ! -e "$ARCHIVE/old.tar.xz" ]
+}
+
+# What the run keeps while the archive is not in place is gone again once it is.
+@test "a successful run keeps the record in the archive and leaves no held copy" {
+  make_dir old 30
+  plant_earlier_record
+  # shellcheck disable=SC2030,SC2031 # every test runs in a shell of its own
+  export TMPDIR="$BATS_TEST_TMPDIR/tmp"
+  mkdir "$TMPDIR"
+
+  run_archive
+  [ "$status" -eq 0 ]
+
+  record="$(gtar -xJOf "$ARCHIVE/old.tar.xz" old/.archive-info)"
+  [ "$(grep -c '^archived: ' <<< "$record")" -eq 2 ]
+  [ -z "$(ls -A "$TMPDIR")" ]
+}
+
+@test "a record that cannot be put back is reported and the held copy is removed" {
+  make_dir old 30
+  plant_earlier_record
+  # shellcheck disable=SC2030,SC2031 # every test runs in a shell of its own
+  export TMPDIR="$BATS_TEST_TMPDIR/tmp"
+  mkdir "$TMPDIR"
+  stub_xz_failing_on_compress
+  stub_cp_failing_on_the_record
+
+  run_archive
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR: compression failed for old"* ]]
+  [[ "$output" == *"could not restore $ROOT/old/.archive-info"* ]]
+
+  [ -z "$(ls -A "$TMPDIR")" ]
+}
+
 @test "a replace leaves neither a part file nor the superseded archive" {
   collide_with_changed_copy
 
