@@ -50,6 +50,57 @@ run_archive() {
   fi
 }
 
+# Like run_archive, but stdout lands in $output and stderr in $stderr. Needs
+# bats_require_minimum_version 1.5.0 in the test file.
+run_archive_split() {
+  local trace=()
+  if [ -n "${ARCHIVE_TRACE:-}" ]; then
+    # shellcheck disable=SC2016 # PS4 is expanded by the traced shell
+    trace=(SHELLOPTS=xtrace PS4='+${BASH_SOURCE}:${LINENO}: ' BASH_XTRACEFD=9)
+  fi
+  # shellcheck disable=SC2154 # run sets status, output and stderr
+  run --separate-stderr env ${trace[@]+"${trace[@]}"} \
+    "${ARCHIVE_BASH:-bash}" "$ROOT/archive.sh" "$@" 9>>"${ARCHIVE_TRACE:-/dev/null}"
+}
+
+# Starts a command in a session of its own. A session has no controlling
+# terminal, so opening /dev/tty fails and the script finds nobody to ask. The
+# device node stays a character device, which is why can_prompt has to try to
+# open it. macOS has no setsid(1). setsid(2) fails for a process group leader,
+# and the die turns that into a visible error instead of a run that still has
+# a terminal.
+NO_TERMINAL=(perl -MPOSIX -e 'POSIX::setsid() != -1 or die "setsid: $!\n"; exec @ARGV')
+
+# Runs the script like run_archive, without a controlling terminal.
+run_without_terminal() {
+  local trace=()
+  if [ -n "${ARCHIVE_TRACE:-}" ]; then
+    # shellcheck disable=SC2016 # PS4 is expanded by the traced shell
+    trace=(SHELLOPTS=xtrace PS4='+${BASH_SOURCE}:${LINENO}: ' BASH_XTRACEFD=9)
+  fi
+  run "${NO_TERMINAL[@]}" env ${trace[@]+"${trace[@]}"} \
+    "${ARCHIVE_BASH:-bash}" "$ROOT/archive.sh" "$@" 9>>"${ARCHIVE_TRACE:-/dev/null}"
+}
+
+# Limits PATH to the tools the script and the helpers need, minus the named
+# one, followed by the system directories. gtar, gsed, xz and fzf live next
+# to bash in Homebrew's directory, so removing that directory from PATH
+# would remove all of them at once. Skips the test where the system
+# directories provide the tool themselves.
+path_without() {
+  local omit="$1" dir="$BATS_TEST_TMPDIR/path-without-$1" tool real
+  if PATH=/usr/bin:/bin command -v "$omit" > /dev/null; then
+    skip "$omit is in the system directories"
+  fi
+  mkdir -p "$dir"
+  for tool in bash gtar gsed xz expect fzf; do
+    [ "$tool" != "$omit" ] || continue
+    real="$(command -v "$tool")" || continue
+    ln -s "$real" "$dir/$tool"
+  done
+  PATH="$dir:/usr/bin:/bin"
+}
+
 # Runs the script on a terminal of its own and types the given answers at its
 # prompts, one per prompt; "-" is an empty line. A test started from a
 # terminal has /dev/tty, so every test that can reach a collision prompt has
