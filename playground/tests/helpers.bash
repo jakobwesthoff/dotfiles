@@ -32,7 +32,7 @@ make_dir() {
 }
 
 touch_tree() {
-  find "$1" -exec touch -t "$(stamp_days_ago "$2")" {} +
+  find "$1" -exec touch -h -t "$(stamp_days_ago "$2")" {} +
 }
 
 # Runs the script under test. With ARCHIVE_TRACE set, every executed line,
@@ -60,10 +60,17 @@ run_archive() {
 run_with_answers() {
   local answers="$1"
   shift
+  local trace=()
+  if [ -n "${ARCHIVE_TRACE:-}" ]; then
+    # shellcheck disable=SC2016 # PS4 is expanded by the traced shell
+    trace=(SHELLOPTS=xtrace PS4='+${BASH_SOURCE}:${LINENO}: ' BASH_XTRACEFD=9)
+  fi
   run bash -c '
-    ANSWERS="$1" expect "$2" "${@:3}" | tr -d "\r" | gsed "s/\x1b\[[0-9;]*m//g"
+    answers="$1"; exp="$2"; shift 2
+    ANSWERS="$answers" expect "$exp" "$@" | tr -d "\r" | gsed "s/\x1b\[[0-9;]*m//g"
     exit "${PIPESTATUS[0]}"
-  ' _ "$answers" "$ANSWER_EXP" "${ARCHIVE_BASH:-bash}" "$ROOT/archive.sh" "$@"
+  ' _ "$answers" "$ANSWER_EXP" env ${trace[@]+"${trace[@]}"} \
+    "${ARCHIVE_BASH:-bash}" "$ROOT/archive.sh" "$@" 9>>"${ARCHIVE_TRACE:-/dev/null}"
 }
 
 # Puts back a directory from its archive without deleting the archive, so a
@@ -101,4 +108,34 @@ exec "$real" "\$@"
 EOF
   chmod +x "$stub/gtar"
   PATH="$stub:$PATH"
+}
+
+# A directory in PATH whose mv fails for any listing part file and passes
+# everything else on, i.e. a listing that cannot be put in place.
+stub_mv_failing_on_listing_parts() {
+  local real stub="$BATS_TEST_TMPDIR/stub-mv"
+  real="$(command -v mv)"
+  mkdir -p "$stub"
+  cat > "$stub/mv" <<EOS
+#!/usr/bin/env bash
+for arg in "\$@"; do
+  case "\$arg" in
+    *.lst.part) exit 1 ;;
+  esac
+done
+exec "$real" "\$@"
+EOS
+  chmod +x "$stub/mv"
+  PATH="$stub:$PATH"
+}
+
+# The listing the script is specified to write for an archive, produced
+# independently of the script's own code.
+listing_oracle() {
+  LC_ALL=C TZ=UTC gtar --quoting-style=literal -tvf "$1"
+}
+
+# Directories left unwritable by a test would block bats' cleanup.
+restore_permissions() {
+  chmod -R u+rwx "$BATS_TEST_TMPDIR" 2>/dev/null || true
 }

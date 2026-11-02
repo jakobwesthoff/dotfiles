@@ -15,6 +15,15 @@
 # collision is resolved by comparing content, not by refusing to run. See
 # handle_collision().
 #
+# Each archive this script writes has a listing at archive/index/<archive file
+# name>.lst: the verbose `tar -tv` output of its members (mode, owner, size,
+# mtime in UTC, path). Searching these files with rg or fzf finds archive
+# contents without decompressing them. write_listing is the one place that
+# produces them. A listing is written once its archive is in its final place,
+# replaced together with the archive and deleted when retrieve deletes the
+# archive. A listing that cannot be written is a warning only: the archive is
+# already proven good.
+#
 # Usage:
 #   archive.sh [--dry-run]       archive every aged-out directory
 #   archive.sh list [pattern]    list archives whose name contains pattern
@@ -31,6 +40,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ARCHIVE_DIR="$ROOT/archive"
+INDEX_DIR="$ARCHIVE_DIR/index"
 AGE_DAYS=14
 
 # xz -9 gives a 64 MiB dictionary, which measured within 1% of every
@@ -131,6 +141,59 @@ validate_archive() {
   fi
 
   return 0
+}
+
+# =========================================================
+# Listings
+# =========================================================
+
+# The member listing of an archive, in the format every listing file has.
+#
+# Times are printed in UTC because tar formats them in the reader's time zone,
+# which would make two listings of one archive differ. The C locale and
+# literal quoting keep names byte-identical to what find prints, as in
+# compare_tree. xz runs single-threaded: each decompression thread holds a
+# block buffer, and one thread measured 69 MB against 969 MB for a 3-block
+# archive.
+list_members() {
+  xz -dc -T1 "$1" | TZ=UTC LC_ALL=C gtar --quoting-style=literal -tvf -
+}
+
+listing_path() {
+  printf '%s/%s.lst\n' "$INDEX_DIR" "$(basename "$1")"
+}
+
+# Writes the listing of an archive. The listing is built in a part file that
+# no glob of this script matches and renamed into place, so a listing is
+# either complete or absent. Returns 1 without leaving a part file when it
+# cannot be written.
+write_listing() {
+  local archive="$1" final part
+  final="$(listing_path "$archive")"
+  part="$final.part"
+
+  mkdir -p "$INDEX_DIR" 2>/dev/null || return 1
+  if list_members "$archive" > "$part" 2>/dev/null \
+      && [ -s "$part" ] \
+      && mv "$part" "$final"; then
+    return 0
+  fi
+  rm -f "$part"
+  return 1
+}
+
+# The listing of an archive could not be written. The archive is proven good,
+# so this only warns. An old listing of the same name is deleted: it describes
+# an archive that is gone, and a search through it would return members the
+# archive does not have.
+listing_failed() {
+  local name
+  name="$(basename "$1")"
+  if rm -f -- "$(listing_path "$1")" 2>/dev/null; then
+    warn "could not write the listing of $name"
+  else
+    warn "could not write the listing of $name, and its old listing could not be deleted: it is stale"
+  fi
 }
 
 # =========================================================
@@ -396,6 +459,10 @@ archive_dir() {
     die "validation failed for $name; original left untouched"
   fi
 
+  # Deleted before the archive moves into place so that a listing never
+  # outlives the archive it describes, even if this run is killed in between.
+  rm -f -- "$(listing_path "$target")" 2>/dev/null || true
+
   if [ -e "$target" ]; then
     mv "$target" "$superseded"
     mv "$part" "$target"
@@ -403,6 +470,8 @@ archive_dir() {
   else
     mv "$part" "$target"
   fi
+
+  write_listing "$target" || listing_failed "$target"
 
   rm -rf "$src"
 }
@@ -726,6 +795,8 @@ cmd_retrieve() {
   RETRIEVE_STAGING=""
 
   rm -f "$archive"
+  rm -f -- "$(listing_path "$archive")" 2>/dev/null \
+    || warn "could not delete listing $(basename "$archive").lst"
 
   n_entries="$(find "$ROOT/$name" | wc -l | tr -d ' ')"
   log "retrieved      $name ($n_entries entries), $base deleted"
@@ -817,6 +888,7 @@ cmd_archive() {
     fi
   done
 
+  # The index directory is part of the archive folder and stays there.
   # Directories that ended up inside archive/ uncompressed are moved back out.
   # They are deliberately not archived in this same run: the move restores
   # them to the normal population, and the next run treats them like any
@@ -824,6 +896,7 @@ cmd_archive() {
   for path in "$ARCHIVE_DIR"/*/; do
     [ -e "$path" ] || continue
     name="$(basename "$path")"
+    [ "$name" = "index" ] && continue
     if [ -e "$ROOT/$name" ]; then
       warn "cannot restore $name: a directory of that name already exists"
       continue
