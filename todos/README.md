@@ -78,7 +78,6 @@ those citations change with it (`rg -i <ulid>` finds them).
 
 ## Components
 
-- `playground`: the scripts in `playground/` and their tests
 - `zsh`: `.zshrc`, `.zshrc.d/`, `.zprofile`, `.zprofile.d/`, `.zshenv`,
   `.zsh/` and the powerlevel10k config
 - `bin`: the scripts in `bin/`
@@ -137,7 +136,7 @@ VAULT="$(git rev-parse --show-toplevel)/todos"
 ntropy --vault "$VAULT" search -n 'not status:blocked and not status:needs-discussion and not horizon:someday and not kind:plan'
 ntropy --vault "$VAULT" search -n status:needs-discussion
 ntropy --vault "$VAULT" search -n 'impact:critical or impact:high'
-ntropy --vault "$VAULT" search -n component:playground
+ntropy --vault "$VAULT" search -n component:zsh
 ntropy --vault "$VAULT" search -n -P '<ULID>'     # print one todo
 ```
 

@@ -28,7 +28,6 @@ _darcs
 ^/initial_macos_setup\.sh$
 ^/update-brewfile-from-system$
 ^/todos$
-^/playground/tests$
 
 # Claude Code runtime artifacts that can appear under .claude/ when a
 # Claude Code session runs in this repo
