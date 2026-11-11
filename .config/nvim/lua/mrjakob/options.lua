@@ -10,9 +10,7 @@ vim.opt.shiftwidth = 4 -- Amount to indent with << and >>
 vim.opt.tabstop = 4 -- How many spaces are shown per Tab
 vim.opt.softtabstop = 4 -- How many spaces are applied when pressing Tab
 
-vim.opt.smarttab = true
 vim.opt.smartindent = true
-vim.opt.autoindent = true -- Keep identation from previous line
 
 -- Always show relative line numbers
 vim.opt.number = true
@@ -73,4 +71,3 @@ vim.opt.cmdheight = 0
 -- Apply rounded borders to all floating windows globally (LSP hover,
 -- signature help, diagnostics, code actions, completion docs, etc.).
 vim.o.winborder = "rounded"
-

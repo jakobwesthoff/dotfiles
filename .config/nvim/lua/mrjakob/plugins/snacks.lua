@@ -5,6 +5,7 @@ return {
   lazy = false,
   ---@type snacks.Config
   opts = {
+    -- Only the current scope gets a guide, and only in the current window.
     indent = {
       enabled = true,
       animate = {
@@ -12,18 +13,11 @@ return {
       },
       indent = {
         enabled = false, -- Enable to show all indent guides not only the current scope
-        only_current = true, -- only current window
-        only_scope = true, -- only on scope
       },
       scope = {
-        enabled = true,
         only_current = true, -- only current window
       },
-      chunk = {
-        enabled = false,
-        only_current = false, -- only current window
-      },
-      -- filter for buffers, turn off the indents for markdown
+      -- snacks' default buffer filter, plus no guides in markdown
       filter = function(buf)
         return vim.g.snacks_indent ~= false
           and vim.b[buf].snacks_indent ~= false

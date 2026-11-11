@@ -20,7 +20,7 @@ return {
       },
       winopts = {
         preview = {
-          wrap = "wrap",
+          wrap = true,
         },
       },
     })

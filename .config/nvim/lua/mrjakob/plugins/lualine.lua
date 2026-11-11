@@ -120,7 +120,6 @@ return {
           right = "\u{e0bb}",
         },
         globalstatus = false,
-        icons_enabled = true,
       },
       sections = {
         lualine_a = {
@@ -183,9 +182,7 @@ return {
           },
           {
             "filename",
-            file_status = true,
             path = 1,
-            shorting_target = 40,
             symbols = {
               modified = "󰐖 ", -- Show when file is modified
               readonly = " ", -- Show when file is readonly
@@ -229,9 +226,7 @@ return {
           },
           {
             "filename",
-            file_status = true,
             path = 1,
-            shorting_target = 40,
             symbols = {
               modified = "󰐖 ", -- Show when file is modified
               readonly = " ", -- Show when file is readonly

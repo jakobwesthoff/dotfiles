@@ -7,22 +7,13 @@ return {
   event = { "BufRead Cargo.toml" },
   config = function()
     require("crates").setup({
+      -- crates' in-process language server: code actions, completion and
+      -- hover for Cargo.toml through the regular LSP keymaps.
       lsp = {
         enabled = true,
-        -- Handled by our LspAttach Autocommand
-        -- on_attach = function(client, bufnr)
-        --   -- the same on_attach function as for your other lsp's
-        -- end,
         actions = true,
         completion = true,
         hover = true,
-      },
-      completion = {
-        crates = {
-          enabled = true,
-          max_results = 8,
-          min_chars = 3,
-        },
       },
     })
   end,
