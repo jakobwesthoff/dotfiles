@@ -67,6 +67,7 @@ vim.opt.inccommand = "split"
 vim.opt.scrolloff = 10
 
 -- Disable commandline until it is needed. This gives us a cleaner look and an extra line ;)
+-- Messages then show in ui2's msg window (enabled in setup.lua).
 vim.opt.cmdheight = 0
 
 -- Apply rounded borders to all floating windows globally (LSP hover,

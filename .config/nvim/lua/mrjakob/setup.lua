@@ -41,9 +41,24 @@ require("mrjakob.lsp")
 -- nvim updates, hence the pcall. Keep an eye on it (message rendering, fzf-lua
 -- floats, fidget, tmux); remove this block to fall back to the classic
 -- message UI.
-pcall(function()
+--
+-- 'cmdheight' 0 (options.lua) relies on this: ui2's msg window is where
+-- messages show without a command line. If ui2 fails to load, messages and
+-- vim.notify go to the hidden command line.
+local ui2_ok, ui2_err = pcall(function()
   require("vim._core.ui2").enable({
-    -- Route messages to the ephemeral msg window.
-    msg = { targets = "msg" },
+    msg = {
+      targets = {
+        -- Messages go to the ephemeral msg window ...
+        default = "msg",
+        -- ... except output of commands typed on the command line (:ls,
+        -- :map, :hi), which goes to the pager so it stays until the next
+        -- key instead of fading after the msg window's timeout.
+        typed_cmd = "pager",
+      },
+    },
   })
 end)
+if not ui2_ok then
+  vim.notify_once("ui2 message UI failed to load: " .. tostring(ui2_err), vim.log.levels.WARN)
+end
