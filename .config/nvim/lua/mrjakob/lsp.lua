@@ -41,6 +41,12 @@ end
 -- component, and [d/]d navigation, which keeps buffer text uncluttered.
 vim.diagnostic.config({ signs = { text = diagnostic_signs } })
 
+-- nvim-highlight-colors renders color values, including the ones servers
+-- report through textDocument/documentColor, and also covers buffers without
+-- such a server. Neovim's own document color highlighting is on by default
+-- and would draw the same colors a second time.
+vim.lsp.document_color.enable(false)
+
 -- Enable every server from the registry. nvim-lspconfig supplies each server's
 -- base config (its lsp/<name>.lua on the runtimepath); our after/lsp/<name>.lua
 -- files and the "*" config above layer on top via the documented merge order.
