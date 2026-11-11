@@ -2,7 +2,6 @@
   "blink.cmp": { "branch": "main", "commit": "78336bc89ee5365633bcf754d93df01678b5c08f" },
   "conform.nvim": { "branch": "master", "commit": "016802de402556da54c36bd7359b441266b01cdd" },
   "crates.nvim": { "branch": "main", "commit": "afcd1cc3eeceb5783676fc8464389b9216a29d05" },
-  "dressing.nvim": { "branch": "master", "commit": "2d7c2db2507fa3c4956142ee607431ddb2828639" },
   "fidget.nvim": { "branch": "main", "commit": "9e0201673e08e997e7cf52afca5565c70bd117f3" },
   "fzf-lua": { "branch": "main", "commit": "22f0bbd3140a8a3b34fec75e5a640513ca6d4ce3" },
   "gruvbox-material.nvim": { "branch": "master", "commit": "26d6cc7bff7b083405b4902edc0a8a64f45df933" },
