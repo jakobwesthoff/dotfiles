@@ -71,3 +71,10 @@ vim.opt.cmdheight = 0
 -- Apply rounded borders to all floating windows globally (LSP hover,
 -- signature help, diagnostics, code actions, completion docs, etc.).
 vim.o.winborder = "rounded"
+
+-- The language providers only serve remote plugins written in Python, Node,
+-- Perl or Ruby. No installed plugin is one, so the hosts stay off.
+vim.g.loaded_python3_provider = 0
+vim.g.loaded_node_provider = 0
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_ruby_provider = 0
