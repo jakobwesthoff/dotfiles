@@ -20,7 +20,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
       vim.keymap.set("n", "<leader>uh", function()
         local buf = vim.api.nvim_get_current_buf()
         vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = buf }), { bufnr = buf })
-      end, { buffer = event.buf, desc = "Toggle [U]i Inlay [H]ints" })
+      end, { buf = event.buf, desc = "Toggle [U]i Inlay [H]ints" })
     end
   end,
 })

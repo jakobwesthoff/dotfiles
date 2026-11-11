@@ -13,9 +13,9 @@ vim.keymap.set("n", "<Leader>ud", function()
 end, { desc = "Toggle [D]iagnostics" })
 
 -- Delete words with CTRL-Backspace/Alt-Backspace in insert and command-line mode
-vim.keymap.set("i", "<C-BS>", "<C-w>", { noremap = true, silent = true })
-vim.keymap.set("c", "<C-BS>", "<C-w>", { noremap = true, silent = true })
-vim.keymap.set("i", "<M-BS>", "<C-w>", { noremap = true, silent = true })
+vim.keymap.set("i", "<C-BS>", "<C-w>")
+vim.keymap.set("c", "<C-BS>", "<C-w>")
+vim.keymap.set("i", "<M-BS>", "<C-w>")
 
 -- Jump to windows based on their window number using <Leader>number
 -- Allowed for window numbers 1-6
@@ -35,22 +35,16 @@ vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup("keymaps-lsp-attach", { clear = true }),
   callback = function(event)
-    -- All of the following gX keybindings are a little more
-    -- involved, as we are checking first if there is only one
-    -- match. If there is we directly go there. Otherwise we open
-    -- fzf-lua for the results.
-
     -- Buffer-local keymap helper for the LSP mappings below; callers pass a
     -- normal opts table and the attaching buffer is injected automatically.
     local function map(mode, lhs, rhs, opts)
       opts = opts or {}
-      opts.buffer = event.buf
+      opts.buf = event.buf
       vim.keymap.set(mode, lhs, rhs, opts)
     end
 
     -- fzf-lua's LSP pickers jump straight to the location on a single result
-    -- (jump1) and open the picker otherwise, so they replace the hand-rolled
-    -- single-vs-many logic these mappings used to carry.
+    -- (jump1) and open the picker otherwise.
 
     -- [G]oto [D]efinition(s)
     map("n", "gd", function()
@@ -138,8 +132,9 @@ end, { desc = "Previous todo comment" })
 -- Browse undo history with fzf-lua's undotree picker (diff preview per state)
 vim.keymap.set("n", "<leader>uu", function()
   require("fzf-lua").undotree()
-end, { remap = false, desc = "[U]ndo history [U]i" })
+end, { desc = "[U]ndo history [U]i" })
 
--- Keep the selection if indentlevel is changed
-vim.keymap.set("v", "<", "<gv")
-vim.keymap.set("v", ">", ">gv")
+-- Keep the selection if indentlevel is changed. Visual mode only ("x"): in
+-- Select mode, as in snippet placeholders, < and > must type themselves.
+vim.keymap.set("x", "<", "<gv")
+vim.keymap.set("x", ">", ">gv")
