@@ -114,7 +114,9 @@ brew "kubernetes-cli"
 brew "kubectx"
 brew "kubecolor"
 brew "kubeconform"
-brew "helm@3"
+# helm@3 is keg-only. Without `link: true`, `brew bundle` unlinks it on
+# every run and `helm` disappears from PATH.
+brew "helm@3", link: true
 brew "azure/kubelogin/kubelogin", trusted: true
 brew "azure-cli"
 brew "skopeo"
