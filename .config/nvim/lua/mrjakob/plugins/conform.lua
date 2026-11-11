@@ -8,46 +8,31 @@ return { -- Autoformat
       function()
         require("conform").format({ async = true, lsp_format = "fallback" })
       end,
-      mode = "",
+      mode = { "n", "x" },
       desc = "[C]ode [F]ormat",
     },
   },
   opts = {
-    notify_on_error = true,
     format_on_save = function(bufnr)
-      -- Disable "format_on_save lsp_fallback" for languages that don't
-      -- have a well standardized coding style. You can add additional
-      -- languages here or re-enable it for the disabled ones.
-      local disable_lsp_filetypes = { c = true, cpp = true }
-      -- Override the default timeout_ms value for specific languages
-      local default_timeout = 500
+      local ft = vim.bo[bufnr].filetype
+
+      -- Filetypes that are never formatted on save. Returning nothing skips
+      -- the format (conform's recipe for per-filetype opt-outs).
+      local ignore_filetypes = {}
+      if ignore_filetypes[ft] then
+        return
+      end
+
+      -- Languages without a well standardized coding style get no LSP
+      -- formatting as a fallback when no conform formatter is configured.
+      local no_lsp_fallback = { c = true, cpp = true }
+      -- Formatters slower than the default timeout.
       local timeout_override = { php = 5000 }
-      -- Disable formatting on save completely for certain languages
-      local disable_filetypes = {}
 
-      local lsp_format_opt
-      if disable_lsp_filetypes[vim.bo[bufnr].filetype] then
-        lsp_format_opt = "never"
-      else
-        lsp_format_opt = "fallback"
-      end
-
-      local timeout = default_timeout
-      if timeout_override[vim.bo[bufnr].filetype] then
-        timeout = timeout_override[vim.bo[bufnr].filetype]
-      end
-
-      if disable_filetypes[vim.bo[bufnr].filetype] then
-        return {
-          formatters = {},
-          lsp_format = "never",
-        }
-      else
-        return {
-          timeout_ms = timeout,
-          lsp_format = lsp_format_opt,
-        }
-      end
+      return {
+        timeout_ms = timeout_override[ft] or 500,
+        lsp_format = no_lsp_fallback[ft] and "never" or "fallback",
+      }
     end,
     formatters_by_ft = {
       lua = { "stylua" },
