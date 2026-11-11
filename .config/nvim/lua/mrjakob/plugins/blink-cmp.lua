@@ -35,6 +35,20 @@ return {
 
     sources = {
       default = { "lsp", "path", "snippets", "buffer" },
+      -- lazydev completes module names in require() and ---@module for the
+      -- Neovim config and plugins. Lua buffers only; the rest keep the
+      -- default sources.
+      per_filetype = {
+        lua = { inherit_defaults = true, "lazydev" },
+      },
+      providers = {
+        lazydev = {
+          name = "LazyDev",
+          module = "lazydev.integrations.blink",
+          -- Rank its module names above the LSP's generic suggestions.
+          score_offset = 100,
+        },
+      },
     },
   },
 }
