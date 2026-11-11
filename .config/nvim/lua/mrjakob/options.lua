@@ -4,6 +4,11 @@
 -- still type themselves in Insert and Select mode (snippet placeholders). It
 -- reaches [x/]x mappings for the multibyte ü since Neovim 0.13.
 vim.opt.langmap = "ü[+]"
+-- 'langmap' also translates the register name after ", so "+ would select the
+-- non-existent register ] and the clipboard register would be unreachable.
+-- Mapping lookup sees the translated "], and a mapping's result is exempt from
+-- 'langmap' ('langremap' is off), so this restores "+.
+vim.keymap.set({ "n", "x" }, '"]', '"+', { desc = "Clipboard register despite langmap" })
 
 vim.opt.expandtab = true -- Convert tabs to spaces
 vim.opt.shiftwidth = 4 -- Amount to indent with << and >>
