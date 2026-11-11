@@ -13,10 +13,6 @@
 # refresh it when sessions are created or closed outside sesh, and the
 # picker's ctrl-d kill binding refreshes before reloading the list.
 #
-# The hooks and kill binding need a sesh that has the `cache refresh`
-# command. The PATH setup in .zprofile.d/050_go.sh prefers the locally
-# built ~/go/bin/sesh over the Homebrew bottle for this reason.
-#
 # Upstream documents the cache as experimental. To revert, remove
 # `cache = true` and delete ~/.cache/sesh/sessions.gob.
 cache = true
