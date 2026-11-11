@@ -32,6 +32,9 @@ require("lazy").setup({
     -- import your plugins
     { import = "mrjakob.plugins" },
   },
+  -- No plugin here needs luarocks; lazy refuses one that would, with a
+  -- message, instead of reporting a broken hererocks setup in checkhealth.
+  rocks = { enabled = false },
 })
 
 -- Keymaps and LSP wiring refer to plugins, so they load after lazy.nvim.
