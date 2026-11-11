@@ -1,27 +1,13 @@
 return {
   {
     -- nvim-lspconfig is used purely as a data provider: it ships the per-server
-    -- base configs under its `lsp/` directory. The actual wiring (capabilities,
-    -- attach behavior, diagnostics, enabling) lives in lua/mrjakob/lsp.lua, the
+    -- base configs under its `lsp/` directory. The actual wiring (attach
+    -- behavior, diagnostics, enabling) lives in lua/mrjakob/lsp.lua, the
     -- enabled-server list in lua/mrjakob/servers.lua, and per-server overrides
     -- in after/lsp/<name>.lua. Loaded eagerly so its configs are on the
     -- runtimepath when servers attach.
     "neovim/nvim-lspconfig",
     lazy = false,
-    dependencies = {
-      "mason-org/mason.nvim",
-      -- LSP progress + notifications in the bottom-right corner.
-      {
-        "j-hui/fidget.nvim",
-        opts = {
-          notification = {
-            override_vim_notify = true,
-          },
-        },
-      },
-      -- Provides the completion capabilities broadcast in lua/mrjakob/lsp.lua.
-      "saghen/blink.cmp",
-    },
   },
   -- LSP Plugins
   {
