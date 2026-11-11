@@ -4,6 +4,11 @@
 vim.g.mapleader = ","
 vim.g.maplocalleader = ","
 
+-- Options and autocmds need no plugin, so they load first: plugin setup code
+-- then runs against the final option values.
+require("mrjakob.options")
+require("mrjakob.autocmds")
+
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.uv.fs_stat(lazypath) then
@@ -29,9 +34,7 @@ require("lazy").setup({
   },
 })
 
--- Loading additional configs
-require("mrjakob.options")
-require("mrjakob.autocmds")
+-- Keymaps and LSP wiring refer to plugins, so they load after lazy.nvim.
 require("mrjakob.keymaps")
 require("mrjakob.lsp")
 
