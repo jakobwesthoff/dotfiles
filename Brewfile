@@ -9,6 +9,7 @@ tap "azure/kubelogin"
 tap "felixkratz/formulae"
 tap "koekeishiya/formulae"
 tap "mutagen-io/mutagen"
+tap "bjoernschotte/tap"
 
 # =========================================================
 # Shell & Terminal
@@ -23,6 +24,8 @@ brew "sesh"
 brew "screen"
 brew "yazi"
 brew "dialog"
+brew "ttyd"
+brew "vhs"
 
 # =========================================================
 # Core CLI Utilities
@@ -32,6 +35,7 @@ brew "coreutils"
 brew "binutils"
 brew "gnu-sed"
 brew "gnu-tar"
+brew "grep"
 brew "moreutils"
 brew "tree"
 brew "watch"
@@ -40,7 +44,6 @@ brew "pstree"
 brew "fd"
 brew "ripgrep"
 brew "bat"
-brew "hexyl"
 brew "jq"
 brew "yq"
 brew "kondo"
@@ -63,6 +66,7 @@ brew "sshpass"
 
 brew "git"
 brew "git-lfs"
+brew "git-filter-repo"
 brew "gh"
 brew "glab"
 
@@ -76,6 +80,7 @@ brew "rust-analyzer"
 brew "typescript-language-server"
 brew "clang-format"
 brew "stylua"
+brew "luacheck"
 
 # =========================================================
 # Languages & Runtimes
@@ -96,7 +101,6 @@ brew "uv"
 brew "cmake"
 brew "autoconf"
 brew "just"
-brew "scriptisto"
 brew "shellcheck"
 brew "shfmt"
 brew "ansible"
@@ -109,8 +113,11 @@ brew "stow"
 brew "kubernetes-cli"
 brew "kubectx"
 brew "kubecolor"
+brew "kubeconform"
 brew "helm@3"
 brew "azure/kubelogin/kubelogin"
+brew "azure-cli"
+brew "skopeo"
 brew "sops"
 
 # =========================================================
@@ -122,6 +129,7 @@ brew "flac"
 brew "imagemagick"
 brew "pngcrush"
 brew "oxipng"
+brew "webp"
 brew "yt-dlp", args: ["HEAD"]
 
 # =========================================================
@@ -130,7 +138,7 @@ brew "yt-dlp", args: ["HEAD"]
 
 brew "aspell"
 brew "pandoc"
-brew "texlive"
+brew "typst"
 
 # =========================================================
 # System Monitoring & Info
@@ -140,8 +148,10 @@ brew "btop"
 brew "htop"
 brew "hwatch"
 brew "fastfetch"
+brew "smartmontools"
 brew "watson"
 brew "tokei"
+brew "ccusage"
 
 # =========================================================
 # Compression & Archives
@@ -149,7 +159,6 @@ brew "tokei"
 
 brew "p7zip"
 brew "pbzip2"
-brew "lzop"
 
 # =========================================================
 # Security & Encryption
@@ -164,7 +173,6 @@ brew "gnutls"
 
 brew "midnight-commander"
 brew "mas"
-brew "worktrunk"
 
 # =========================================================
 # Libraries & Low-Level
@@ -177,6 +185,7 @@ brew "e2fsprogs"
 # Third-Party Tapped Formulae
 # =========================================================
 
+brew "bjoernschotte/tap/atlcli"
 brew "felixkratz/formulae/borders"
 brew "koekeishiya/formulae/skhd"
 brew "koekeishiya/formulae/yabai"
@@ -193,47 +202,32 @@ brew "restic"
 # Casks — Browsers
 # =========================================================
 
-cask "arc"
-cask "google-chrome"
 cask "zen"
 
 # =========================================================
 # Casks — Communication
 # =========================================================
 
-cask "discord"
 cask "slack"
-cask "signal"
-cask "zoom"
 
 # =========================================================
-# Casks — Productivity & Notes
+# Casks — Productivity
 # =========================================================
 
-cask "alfred"
-cask "obsidian"
-cask "rocket"
+cask "libreoffice"
 
 # =========================================================
 # Casks — Development
 # =========================================================
 
-cask "claude"
 cask "ghostty"
 cask "orbstack"
-cask "tower"
-cask "wireshark-app"
 
 # =========================================================
 # Casks — Media & Design
 # =========================================================
 
-cask "affinity-designer"
-cask "affinity-photo"
-cask "handbrake-app"
 cask "imageoptim"
-cask "obs"
-cask "subler"
 cask "upscayl"
 cask "vlc"
 
@@ -243,36 +237,12 @@ cask "vlc"
 
 cask "1password"
 cask "appcleaner"
-cask "bartender"
-cask "elgato-control-center"
-cask "hammerspoon"
-cask "istat-menus@6"
-cask "keyboard-cleaner"
 cask "utm"
+cask "viscosity"
 cask "zerotier-one"
 
 # =========================================================
-# Casks — File Transfer & Storage
+# Casks — Hardware
 # =========================================================
 
-cask "libreoffice"
-cask "transmit"
-
-# =========================================================
-# Casks — 3D Printing & Hardware
-# =========================================================
-
-cask "bambu-studio"
 cask "raspberry-pi-imager"
-
-# =========================================================
-# Casks — Fonts
-# =========================================================
-
-cask "font-dejavu"
-cask "font-fira-code"
-cask "font-fira-code-nerd-font"
-cask "font-jetbrains-mono"
-cask "font-jetbrains-mono-nerd-font"
-cask "font-victor-mono-nerd-font"
-
