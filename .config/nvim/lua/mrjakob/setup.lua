@@ -33,7 +33,6 @@ require("lazy").setup({
 require("mrjakob.options")
 require("mrjakob.autocmds")
 require("mrjakob.keymaps")
-require("mrjakob.lastpos")
 require("mrjakob.lsp")
 
 -- EXPERIMENTAL: native redesigned message/cmdline UI (vim._core.ui2). It is an
