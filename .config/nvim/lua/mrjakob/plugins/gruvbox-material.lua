@@ -5,10 +5,6 @@ return {
   lazy = false,
   priority = 1000,
   config = function()
-    local search_flip_search_opts = nil
-    local search_flip_inc_search_opts = nil
-    local search_flip_flipped = false
-
     require("gruvbox-material").setup({
       contrast = "hard",
 
@@ -17,7 +13,6 @@ return {
       },
       customize = function(group, opts)
         local colors = require("gruvbox-material.colors").get(vim.o.background, "hard")
-        -- print(vim.inspect(colors))
 
         if group == "CursorLineNr" then
           opts.link = nil
@@ -27,7 +22,7 @@ return {
         end
 
         -- Paren Matches should be orange without background
-        if group == "MatchParen" or group == "MatchParenCur" or group == "MatchWord" then
+        if group == "MatchParen" then
           opts.link = nil
           opts.fg = colors.orange
           opts.bg = nil
@@ -35,7 +30,8 @@ return {
           return opts
         end
 
-        -- Change background for completion and hover popups
+        -- Change background for completion and hover popups. The transparent
+        -- background mode clears these, so they are set back to bg3 here.
         if
           group == "Pmenu"
           or group == "PmenuExtra"
@@ -50,7 +46,6 @@ return {
         -- Change completion selection line
         if group == "PmenuSel" then
           opts.bg = colors.yellow
-          -- opts.fg = colors.bg0
         end
 
         -- Set search and incsearch to more appropriate colors
@@ -65,7 +60,6 @@ return {
       end,
     })
     -- TODO: The light theme needs work
-    -- AUTO CHANGE MARKER: LIGHT/DARK
     vim.opt.background = "dark"
     vim.cmd.colorscheme("gruvbox-material")
   end,

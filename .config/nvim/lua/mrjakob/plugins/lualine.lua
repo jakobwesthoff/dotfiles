@@ -154,14 +154,6 @@ return {
         lualine_c = {
           {
             "diagnostics",
-            -- Override with "fat" symbols
-            -- symbols = {
-            -- error = " ",
-            -- hint = " ",
-            -- info = " ",
-            -- warn = " ",
-            -- },
-            -- cond = truncateCondition,
             separator = "",
           },
           {

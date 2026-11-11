@@ -25,23 +25,19 @@ return {
       },
     })
 
-    local function fzf_directories(opts)
+    local function fzf_directories()
       local fzf_lua = require("fzf-lua")
       local fzf_path = require("fzf-lua.path")
-      opts = opts or {}
 
       local cwd = vim.fn.getcwd()
-      opts.prompt = fzf_path.shorten(cwd) .. "> "
-      opts.cwd = cwd
-
-      -- opts.fn_transform = function(x)
-      --   return fzf_lua.utils.ansi_codes.magenta(x)
-      -- end
-      --
-      opts.actions = {
-        ["default"] = function(selected)
-          require("oil").open_float(cwd .. "/" .. selected[1])
-        end,
+      local opts = {
+        prompt = fzf_path.shorten(cwd) .. "> ",
+        cwd = cwd,
+        actions = {
+          ["default"] = function(selected)
+            require("oil").open_float(cwd .. "/" .. selected[1])
+          end,
+        },
       }
 
       -- The directory listing is built from `fd`; without it fzf_exec would
@@ -54,8 +50,6 @@ return {
       fzf_lua.fzf_exec("fd --type d", opts)
     end
 
-    vim.api.nvim_create_user_command("FzfDirectories", function()
-      fzf_directories({})
-    end, {})
+    vim.api.nvim_create_user_command("FzfDirectories", fzf_directories, {})
   end,
 }
