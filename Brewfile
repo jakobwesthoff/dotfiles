@@ -118,7 +118,6 @@ brew "kubeconform"
 # every run and `helm` disappears from PATH.
 brew "helm@3", link: true
 brew "azure/kubelogin/kubelogin", trusted: true
-brew "azure-cli"
 brew "skopeo"
 brew "sops"
 
@@ -226,6 +225,7 @@ cask "libreoffice"
 # Casks — Development
 # =========================================================
 
+cask "azure-cli"
 cask "ghostty"
 cask "orbstack"
 
