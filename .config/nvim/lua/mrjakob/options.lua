@@ -23,8 +23,9 @@ vim.opt.cursorline = true
 -- Show column of cursor
 -- vim.opt.cursorcolumn = true
 
--- Treesitter folding is enabled per-buffer (see plugins/treesitter.lua). Open
--- files fully unfolded so folds are opt-in rather than collapsing everything.
+-- Tree-sitter folding is enabled window-local wherever tree-sitter runs (see
+-- plugins/treesitter.lua). Open files fully unfolded so folds are opt-in
+-- rather than collapsing everything.
 vim.opt.foldlevelstart = 99
 
 -- Store undos between sessions
