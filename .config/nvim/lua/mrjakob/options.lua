@@ -1,9 +1,9 @@
 -- Some keyboard mappings as I don't want to break my fingers, while typing on a "german" keyboard ;)
--- Essentially this remaps [] to ü+ with all its modifier key combinations as well
+-- Essentially this remaps [] to ü+ with all its modifier key combinations as well.
+-- 'langmap' applies in Normal, Visual and Operator-pending mode only, so ü and +
+-- still type themselves in Insert and Select mode (snippet placeholders). It
+-- reaches [x/]x mappings for the multibyte ü since Neovim 0.13.
 vim.opt.langmap = "ü[+]"
--- Plain langmap remapping does not seem to do the trick :(
-vim.keymap.set({ "n", "v", "o" }, "ü", "[", { remap = true })
-vim.keymap.set({ "n", "v", "o" }, "+", "]", { remap = true })
 
 vim.opt.expandtab = true -- Convert tabs to spaces
 vim.opt.shiftwidth = 4 -- Amount to indent with << and >>
