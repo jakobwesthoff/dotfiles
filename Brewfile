@@ -115,7 +115,7 @@ brew "kubectx"
 brew "kubecolor"
 brew "kubeconform"
 brew "helm@3"
-brew "azure/kubelogin/kubelogin"
+brew "azure/kubelogin/kubelogin", trusted: true
 brew "azure-cli"
 brew "skopeo"
 brew "sops"
@@ -185,12 +185,16 @@ brew "e2fsprogs"
 # Third-Party Tapped Formulae
 # =========================================================
 
-brew "bjoernschotte/tap/atlcli"
-brew "felixkratz/formulae/borders"
-brew "koekeishiya/formulae/skhd"
-brew "koekeishiya/formulae/yabai"
-brew "mdnmdn/asimeow/asimeow"
-brew "mutagen-io/mutagen/mutagen"
+# Homebrew only loads formulae from non-official taps once they are
+# trusted. `trusted: true` writes that trust during `brew bundle`, and
+# `brew bundle cleanup --force` resets the trust store to the entries
+# declared here, so every tapped formula needs the flag to keep working.
+brew "bjoernschotte/tap/atlcli", trusted: true
+brew "felixkratz/formulae/borders", trusted: true
+brew "koekeishiya/formulae/skhd", trusted: true
+brew "koekeishiya/formulae/yabai", trusted: true
+brew "mdnmdn/asimeow/asimeow", trusted: true
+brew "mutagen-io/mutagen/mutagen", trusted: true
 
 # =========================================================
 # Backup
