@@ -2,19 +2,14 @@
 -- LSP wiring — the behavior shared by every language server.
 --
 -- Required once from lua/mrjakob/setup.lua, after lazy.nvim has loaded the
--- plugins (so blink.cmp and nvim-lspconfig are available). This file holds the
+-- plugins: nvim-lspconfig's server configs are on the runtimepath by then,
+-- mason has put its bin directory on PATH, and blink.cmp has added its
+-- completion capabilities to the "*" config. This file holds the
 -- cross-cutting setup only; the two other concerns live elsewhere:
 --
 --   * WHICH servers to enable      -> lua/mrjakob/servers.lua
 --   * per-server SETTINGS overrides -> after/lsp/<server name>.lua
 -- =============================================================================
-
--- Advertise blink.cmp's completion capabilities to every server. The "*"
--- wildcard config is merged into every server's resolved config, so this is
--- the one place capabilities need to be set.
-vim.lsp.config("*", {
-  capabilities = require("blink.cmp").get_lsp_capabilities(),
-})
 
 -- On attach, give servers that support inlay hints a buffer-local toggle.
 vim.api.nvim_create_autocmd("LspAttach", {
@@ -49,5 +44,5 @@ vim.lsp.document_color.enable(false)
 
 -- Enable every server from the registry. nvim-lspconfig supplies each server's
 -- base config (its lsp/<name>.lua on the runtimepath); our after/lsp/<name>.lua
--- files and the "*" config above layer on top via the documented merge order.
+-- files and blink.cmp's "*" config layer on top via the documented merge order.
 vim.lsp.enable(vim.tbl_keys(require("mrjakob.servers")))
