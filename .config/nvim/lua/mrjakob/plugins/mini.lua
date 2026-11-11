@@ -1,6 +1,6 @@
 return {
   {
-    "echasnovski/mini.ai",
+    "nvim-mini/mini.ai",
     opts = {
       -- mini's default next/last variants (an/in/al/il) take over Neovim's
       -- own an/in (tree-sitter incremental selection) and al/il (whole
@@ -16,7 +16,7 @@ return {
     },
   },
   {
-    "echasnovski/mini.bracketed",
+    "nvim-mini/mini.bracketed",
     -- mini keeps owning buffer/diagnostic/location/quickfix even though
     -- Neovim 0.11 ships native bracket maps for them: mini adds counts,
     -- wraparound, and Visual/Operator-pending modes that the native maps
