@@ -243,6 +243,48 @@ what the feature would look like. If I agree, create a todo for it in the
 asqr project (`~/Development/github/jakobwesthoff/asqr`, its `todos/`
 vault), following the `ntropy-todos` skill.
 
+## Terminal bell
+
+Ring the terminal bell whenever you stop and need me:
+
+- you need my input or a decision before you can go on: a question, a
+  choice, a container, credential or access only I can provide, a blocker
+  you cannot resolve yourself;
+- you have finished everything I asked for and wait for the next task.
+  This counts after a turn that did work with tool calls; a plain
+  conversational answer without tool work does not ring.
+
+Do not ring for progress updates, or when the only thing you wait for is
+work of your own (a build, a test run, an agent). A background
+`asqr wait` is waiting for me, so asking through asqr rings.
+
+Ring immediately before you hand over to me: right before AskUserQuestion
+or ExitPlanMode, right after `asqr ask` and before you start waiting, and
+otherwise as the last tool call of the turn. Your final message follows as
+usual. Ring once per thing you wait on me for: when a turn ends again while
+the same question is still open and nothing new needs me, do not ring
+again, and if you run more tools after ringing, do not ring a second time
+in that turn.
+
+Only the session I talk to rings, and only in an interactive terminal
+session. A subagent or an agent started by a skill or workflow never
+rings; it reports to its lead, and a lead that passes a subagent's
+question on to me rings for it. Runs with `-p`, scheduled or background
+sessions do not ring.
+
+How: run `~/.claude/bin/bell` alone in its own Bash call (allowed in
+`settings.json`, so it never prompts). Permission prompts, MCP dialogs and
+a session that fails on an API error or usage limit ring through hooks in
+`settings.json` (`~/.claude/bin/bell --hook`); do not ring for those
+yourself. Script and settings live in `~/dotfiles` and are linked with
+stow.
+
+The bell is strictly an extra. Ask, report and notify exactly as you
+would without it: questions still go through the channel you would use
+anyway (asqr where a session uses it, otherwise chat). If the bell call
+fails, is denied or is not available, go on without it: do not retry, do
+not ask me about it.
+
 # Coding conventions
 
 ## Rust guidelines

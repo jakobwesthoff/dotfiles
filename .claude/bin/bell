@@ -1,0 +1,49 @@
+#!/bin/sh
+# Rings the terminal bell of the Claude Code session that runs this, so that
+# Jakob notices when a session needs him (rule "Terminal bell" in
+# ~/.claude/CLAUDE.md). The bell is only ever an extra: anything that goes
+# wrong here stays silent and exits 0, so it can never hold up a session.
+#
+#   bell          ring from a Bash tool call
+#   bell --hook   print the JSON a Claude Code hook returns to ring the bell
+#
+# Claude Code runs Bash tool calls without a controlling terminal, so a plain
+# printf '\a' would end up in the captured output. The bell is written to the
+# terminal of the nearest ancestor process named `claude` instead, which is
+# the terminal the session is shown in. Inside tmux that is the session's own
+# pane; tmux and its configuration decide how a bell from another session
+# shows. A process without a `claude` ancestor on a terminal (a script, a
+# background session) rings nothing.
+#
+# Hooks also run without a terminal, but Claude Code writes the escape
+# sequence a hook returns as `terminalSequence` to its own terminal, and a
+# bare BEL is on its allowlist.
+#
+# Under Claude Code's Bash sandbox, writing to the terminal device may be
+# blocked; the bell then stays silent.
+
+if [ "${1:-}" = "--hook" ]; then
+  printf '%s\n' '{"terminalSequence":"\u0007"}'
+  exit 0
+fi
+
+# Nothing below may print: a missing `ps` or `tr`, an unwritable terminal or
+# a vanished process all end in silence.
+exec 2>/dev/null
+
+pid=$$
+while [ "${pid:-1}" -gt 1 ]; do
+  command=$(ps -o comm= -p "$pid")
+  # macOS prints the command as invoked, which can be a full path.
+  if [ "${command##*/}" = "claude" ]; then
+    tty=$(ps -o tty= -p "$pid" | tr -d ' ')
+    case "$tty" in
+      '' | '?' | '??') ;;
+      *) printf '\a' >"/dev/$tty" ;;
+    esac
+    break
+  fi
+  pid=$(ps -o ppid= -p "$pid" | tr -d ' ')
+done
+
+exit 0
