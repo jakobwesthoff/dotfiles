@@ -256,11 +256,14 @@ Ring the terminal bell whenever you stop and need me:
 
 Do not ring for progress updates, or when the only thing you wait for is
 work of your own (a build, a test run, an agent). A background
-`asqr wait` is waiting for me, so asking through asqr rings.
+`asqr wait` is waiting for me, so asking through asqr counts as a stop.
+However, asqr rings by itself when a watcher is connected to the queue, so
+then do not ring as well. Ring only when `asqr ask` warns that no asqr is
+watching the queue (`asqr status --json` shows it in `watched_by`).
 
 Ring immediately before you hand over to me: right before AskUserQuestion
-or ExitPlanMode, right after `asqr ask` and before you start waiting, and
-otherwise as the last tool call of the turn. Your final message follows as
+or ExitPlanMode, right after an `asqr ask` nobody is watching and before
+you start waiting, and otherwise as the last tool call of the turn. Your final message follows as
 usual. Ring once per thing you wait on me for: when a turn ends again while
 the same question is still open and nothing new needs me, do not ring
 again, and if you run more tools after ringing, do not ring a second time
