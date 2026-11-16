@@ -95,6 +95,12 @@ fi
 
 echo "Adjusting padding (on DISPLAY $YDISPLAY SPACE $YSPACE) for recording of ${REC_WIDTH}x${REC_HEIGHT} (from ${YWIDTH}x${YHEIGHT})"
 
+# The single window centering from yabairc rewrites left and right padding on
+# every window event and would undo the recording layout. Pausing it with this
+# space lets resume put the normal padding back after the recording.
+"$HOME/bin/yabai_center_single" pause "$YSPACE"
+echo "Run 'yabai_center_single resume' after recording to restore the padding."
+
 LEFT_PADDING="$((YWIDTH - REC_WIDTH + REC_PADDING_LEFT))"
 TOP_PADDING="${REC_PADDING_TOP}"
 RIGHT_PADDING="${REC_PADDING_RIGHT}"

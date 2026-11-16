@@ -1,0 +1,234 @@
+#!/usr/bin/env bash
+#
+# Usage: yabai_center_single <max-width>    center lone tiled windows at <max-width>
+#        yabai_center_single refresh        the same, with <max-width> from yabairc
+#        yabai_center_single pause [space]  stop all padding changes until resume
+#        yabai_center_single resume         restore the paused space, center again
+#
+# Keeps a lone tiled window on a wide display from stretching across the
+# whole screen. yabai has no per-window maximum width, but it tiles into the
+# space area minus the space padding. So whenever a space holds exactly one
+# tile and that tile would end up wider than <max-width>, this widens the
+# left and right padding of the space to center the tile at <max-width>.
+# Every other space gets the global left and right padding. The script
+# therefore owns the left and right padding of every tiling space: a value
+# set by hand is overwritten by the next window event, and "pause" is the
+# way to keep one.
+#
+# <max-width> is in points, the unit yabai uses for every frame and padding.
+# It doubles as the display threshold: on a display too narrow to produce a
+# tile wider than <max-width>, no space ever gets centered. A stack (a stack
+# layout space or stacked windows in one node) counts as one tile, since it
+# shows one window at a time. The width comes from the full display frame,
+# so a Dock shown on the left or right edge of a wide display makes the tile
+# narrower than <max-width>.
+#
+# yabairc runs this from signals and is the one place <max-width> is set;
+# "refresh" reads it back from those signals. Floating the only tiled window
+# of a space resizes no other window, so no window_resized signal arrives,
+# and an skhd binding that toggles float runs "refresh" afterwards.
+#
+# "pause" is for tools that set their own per-space padding, such as
+# yabai_recording, which passes the space it changes. "resume" puts the
+# global padding back on that space and centers again.
+
+set -euo pipefail
+
+# The per-user temporary directory cannot hold files planted by other
+# accounts, which /tmp can. getconf gives the same path to yabai's signals,
+# skhd and an interactive shell, whatever their environment.
+state_dir=$(getconf DARWIN_USER_TEMP_DIR)
+pause_file="${state_dir%/}/yabai_center_single.paused"
+pending_lock="${state_dir%/}/yabai_center_single.pending"
+run_lock="${state_dir%/}/yabai_center_single.run"
+
+usage() {
+    cat >&2 <<'EOF'
+usage: yabai_center_single <max-width>    center lone tiled windows at <max-width> points
+       yabai_center_single refresh        the same, with <max-width> from the yabairc signals
+       yabai_center_single pause [space]  stop all padding changes until resume
+       yabai_center_single resume         restore the paused space's padding, center again
+EOF
+    exit 64
+}
+
+registered_max_width() {
+    yabai -m signal --list \
+        | jq -r 'first(.[].action
+                       | capture("yabai_center_single (?<width>[0-9]+)$").width)
+                 // empty'
+}
+
+# =========================================================
+# Centering
+# =========================================================
+
+center() {
+    local max_width=$1
+
+    # yabai forks one process per signal without waiting for any of them,
+    # and window_resized arrives in bursts (a relayout resizes every window
+    # of a space, a mouse resize sends one per step). At most one instance
+    # runs and one waits; every other instance exits at once. That loses
+    # nothing: an instance that finds the waiting slot taken started after
+    # its event, and the waiting instance queries yabai only after it holds
+    # the run lock, which is later still.
+    exec 8>>"$pending_lock"
+    /usr/bin/lockf -s -t 0 8 || return 0
+    exec 9>>"$run_lock"
+    if ! /usr/bin/lockf -s -t 10 9; then
+        echo "yabai_center_single: another run has held the lock for 10 s" >&2
+        return 1
+    fi
+    # Leaving the waiting slot before the first query lets the next event
+    # queue another run, which then sees whatever this one misses.
+    exec 8>&-
+
+    # Tested under the run lock, so that once "pause" has taken the lock
+    # itself, no run that started earlier can still write.
+    if [ -e "$pause_file" ]; then
+        return 0
+    fi
+
+    local base_left base_right desired
+    base_left=$(yabai -m config left_padding)
+    base_right=$(yabai -m config right_padding)
+
+    # yabai reports the window of the first and of the last leaf of each
+    # space's tree, 0 for an empty tree. Both being the same window means a
+    # single tile. Invisible spaces are included: yabai lays out a space with
+    # its current padding the moment it becomes visible, and a write to an
+    # invisible space only marks it for that layout.
+    #
+    # The side padding is rounded up so the tile never exceeds <max-width>,
+    # and never drops below the global padding when left and right differ.
+    desired=$(jq -nr \
+        --argjson max "$max_width" \
+        --argjson left "$base_left" \
+        --argjson right "$base_right" \
+        --argjson displays "$(yabai -m query --displays)" \
+        --argjson spaces "$(yabai -m query --spaces)" '
+        $spaces[]
+        | select(.type != "float" and (."is-native-fullscreen" | not))
+        | . as $space
+        | ($displays[] | select(.index == $space.display) | .frame.w | floor) as $display_width
+        | if ."first-window" != 0
+             and ."first-window" == ."last-window"
+             and $display_width - $left - $right > $max then
+              (($display_width - $max) / 2 | ceil) as $side
+              | "\(.index) \([$side, $left] | max) \([$side, $right] | max)"
+          else
+              "\(.index) \($left) \($right)"
+          end')
+
+    # Every padding write makes yabai relayout the space, so only a
+    # difference is written. A space can disappear between the query above
+    # and its turn here; it is skipped instead of failing the whole run.
+    local space left right current_left current_right top bottom
+    while read -r space left right; do
+        [ -n "$space" ] || continue
+
+        current_left=$(yabai -m config --space "$space" left_padding) || continue
+        current_right=$(yabai -m config --space "$space" right_padding) || continue
+        if [ "$current_left" -eq "$left" ] && [ "$current_right" -eq "$right" ]; then
+            continue
+        fi
+
+        # --padding sets all four sides in one relayout. The current top and
+        # bottom values go back in unchanged.
+        top=$(yabai -m config --space "$space" top_padding) || continue
+        bottom=$(yabai -m config --space "$space" bottom_padding) || continue
+        yabai -m space "$space" --padding "abs:$top:$bottom:$left:$right" || continue
+    done <<< "$desired"
+}
+
+# =========================================================
+# Pause and resume
+# =========================================================
+
+pause() {
+    local space=${1:-}
+    local created=1
+    if [ -e "$pause_file" ]; then
+        created=
+    fi
+
+    # The pause file holds the id of the space to restore on resume. The id
+    # survives spaces being created, destroyed or reordered in between,
+    # which shift the index. A second pause without a space keeps the space
+    # recorded by the first.
+    # The id is looked up before the file is written, so a failed lookup
+    # leaves no pause behind that nobody asked for.
+    if [ -n "$space" ]; then
+        local space_id
+        space_id=$(yabai -m query --spaces --space "$space" | jq -e '.id')
+        printf '%s\n' "$space_id" > "$pause_file"
+    elif [ -n "$created" ]; then
+        : > "$pause_file"
+    fi
+
+    # Every run tests the pause file once it holds the run lock, so taking
+    # that lock here waits out the one run that may have started before the
+    # file existed. After this, nothing overwrites the caller's padding.
+    exec 9>>"$run_lock"
+    if ! /usr/bin/lockf -s -t 10 9; then
+        if [ -n "$created" ]; then
+            rm -f "$pause_file"
+        fi
+        echo "could not pause single window centering: a run has held the lock for 10 s" >&2
+        exit 1
+    fi
+    echo "single window centering paused"
+}
+
+resume() {
+    local space_id space
+    if [ -e "$pause_file" ]; then
+        space_id=$(cat "$pause_file")
+
+        # The restore happens while the pause file still exists, so no run
+        # can interleave with it.
+        if [ -n "$space_id" ]; then
+            space=$(yabai -m query --spaces \
+                | jq --argjson id "$space_id" '.[] | select(.id == $id) | .index')
+            if [ -n "$space" ]; then
+                yabai -m space "$space" --padding "abs:$(yabai -m config top_padding):$(yabai -m config bottom_padding):$(yabai -m config left_padding):$(yabai -m config right_padding)"
+            fi
+        fi
+        rm -f "$pause_file"
+    fi
+    echo "single window centering resumed"
+}
+
+# =========================================================
+# Entry point
+# =========================================================
+
+case "${1:-}" in
+    pause)
+        pause "${2:-}"
+        exit 0
+        ;;
+    resume)
+        resume
+        max_width=$(registered_max_width)
+        ;;
+    refresh)
+        max_width=$(registered_max_width)
+        ;;
+    [1-9]*)
+        case "$1" in
+            *[!0-9]*) usage ;;
+        esac
+        max_width=$1
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+# An empty width means yabairc registered no centering signals, so centering
+# is switched off and refresh or resume have nothing to apply.
+if [ -n "$max_width" ]; then
+    center "$max_width"
+fi

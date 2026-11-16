@@ -27,6 +27,27 @@ yabai -m config                                 \
 
 echo "yabai configuration loaded.."
 
+# Center a lone tiled window at this width (in points) instead of letting it
+# span the whole ultrawide. Displays that are not wide enough never center.
+# Any change in the number of tiled windows on a space resizes some tiled
+# window, so window_resized catches what has no signal of its own: mouse
+# drops onto another display, windows leaving native fullscreen, windows sent
+# to another space. Labels make a reload replace the signals instead of adding
+# them twice.
+single_window_max_width=2080
+if [ -x "$HOME/bin/yabai_center_single" ]; then
+    for event in window_created window_destroyed window_minimized window_deminimized \
+                 window_resized application_hidden application_visible space_changed \
+                 mission_control_exit display_added display_removed display_resized; do
+        yabai -m signal --add event="$event" label="center_single_$event" \
+            action="$HOME/bin/yabai_center_single $single_window_max_width"
+    done
+    "$HOME/bin/yabai_center_single" "$single_window_max_width"
+    echo "single window centering active"
+else
+    echo "yabai_center_single not found, single window centering off" >&2
+fi
+
 #borders active_color=0xffFFBF29 inactive_color=0x00000000 width=8.0 hidpi=on &
 #borders active_color=0xFFD0A863 inactive_color=0x00000000 width=8.0 hidpi=on &
 borders active_color=0xFFF3B23E inactive_color=0x00000000 width=8.0 hidpi=on &

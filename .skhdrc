@@ -139,7 +139,9 @@
 # alt - e : yabai -m window --toggle split
 
 # float / unfloat window
-ctrl + alt - t : yabai -m window --toggle float
+# Floating the only tiled window of a space resizes no other window, so no
+# signal reaches the single window centering from yabairc. Refresh it here.
+ctrl + alt - t : yabai -m window --toggle float; "$HOME/bin/yabai_center_single" refresh
 
 # toggle sticky(+float), topmost, picture-in-picture
 # alt - p : yabai -m window --toggle sticky;\
