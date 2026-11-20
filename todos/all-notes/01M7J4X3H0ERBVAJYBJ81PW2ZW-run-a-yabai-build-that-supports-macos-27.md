@@ -9,7 +9,8 @@ tags: [tooling]
 # Run a yabai build that supports macOS 27
 
 Found in the 2026-11-16 review of the single window centering
-(`bin/yabai_center_single`). The installed yabai is the Homebrew stable
+(`yabai_center_single`, which lives in the yabai-center-single
+repository and is installed by `checkout_dependencies.sh`). The installed yabai is the Homebrew stable
 release v7.1.25 (`brew "koekeishiya/formulae/yabai"` in the `Brewfile`),
 and it does not recognise macOS 27 (Golden Gate). On this machine
 (macOS 27.0.1) it skips every code path it reserves for macOS 15 and 26,
@@ -41,8 +42,13 @@ Golden Gate"), which is on yabai's master but in no release yet.
 - Space created and destroyed events and the window notification
   updates meant for macOS 15 and later are missing; their exact effect
   on 27 is not measured.
-- The single window centering does not depend on any of these: it is
-  driven by `window_resized` and the other window and space signals.
+- The single window centering reads the number of tiles per space from
+  yabai's window tree. Without the window notifications above, a window
+  that closed can stay in that tree and keep a lone window at the global
+  padding. Not observed yet. The yabai-center-single repository tracks
+  this, with the queries that tell it apart from a script bug, in its
+  todo 01M7WNGQFT76BN2DQX3TCE23H6 (Check the centering against a stale
+  yabai window tree on macOS 27).
 
 ## Suggested fix
 
