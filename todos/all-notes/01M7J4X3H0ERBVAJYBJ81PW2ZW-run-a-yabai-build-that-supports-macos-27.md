@@ -11,7 +11,7 @@ tags: [tooling]
 Found in the 2026-11-16 review of the single window centering
 (`yabai_center_single`, which lives in the yabai-center-single
 repository and is installed by `checkout_dependencies.sh`). The installed yabai is the Homebrew stable
-release v7.1.25 (`brew "koekeishiya/formulae/yabai"` in the `Brewfile`),
+release v7.1.25 (`brew "asmvik/formulae/yabai"` in the `Brewfile`),
 and it does not recognise macOS 27 (Golden Gate). On this machine
 (macOS 27.0.1) it skips every code path it reserves for macOS 15 and 26,
 so parts of yabai silently do not work.
@@ -53,9 +53,9 @@ Golden Gate"), which is on yabai's master but in no release yet.
 ## Suggested fix
 
 Upgrade to the first yabai release that contains `b2dc8b4`
-(`brew upgrade koekeishiya/formulae/yabai`), then repeat the Mission
+(`brew upgrade asmvik/formulae/yabai`), then repeat the Mission
 Control logger test. If something visibly breaks before that release,
-`brew reinstall --HEAD koekeishiya/formulae/yabai` builds master
+`brew reinstall --HEAD asmvik/formulae/yabai` builds master
 instead; the formula builds and ad-hoc signs it.
 
 ## Decisions

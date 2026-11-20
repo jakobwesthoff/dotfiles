@@ -169,7 +169,7 @@ scan_casks() {
 
 # Index the tap/brew/cask lines of the Brewfile. Matching is by
 # (type, short name) so a tap-qualified entry like
-# `brew "koekeishiya/formulae/skhd"` pairs with the installed keg
+# `brew "asmvik/formulae/skhd"` pairs with the installed keg
 # "skhd". All other lines (comments, banners, mas/vscode/... entries)
 # pass through untouched.
 parse_brewfile() {

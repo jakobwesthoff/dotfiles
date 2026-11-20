@@ -7,7 +7,7 @@
 tap "mdnmdn/asimeow"
 tap "azure/kubelogin"
 tap "felixkratz/formulae"
-tap "koekeishiya/formulae"
+tap "asmvik/formulae"
 tap "mutagen-io/mutagen"
 tap "bjoernschotte/tap"
 
@@ -192,8 +192,8 @@ brew "e2fsprogs"
 # declared here, so every tapped formula needs the flag to keep working.
 brew "bjoernschotte/tap/atlcli", trusted: true
 brew "felixkratz/formulae/borders", trusted: true
-brew "koekeishiya/formulae/skhd", trusted: true
-brew "koekeishiya/formulae/yabai", trusted: true
+brew "asmvik/formulae/skhd", trusted: true
+brew "asmvik/formulae/yabai", trusted: true
 brew "mdnmdn/asimeow/asimeow", trusted: true
 brew "mutagen-io/mutagen/mutagen", trusted: true
 
