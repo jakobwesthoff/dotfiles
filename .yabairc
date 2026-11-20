@@ -34,15 +34,23 @@ echo "yabai configuration loaded.."
 # drops onto another display, windows leaving native fullscreen, windows sent
 # to another space. Labels make a reload replace the signals instead of adding
 # them twice.
+#
+# window_focused, application_front_switched and system_woke change no
+# layout. They let a padding the other events left wrong last only until the
+# next focus change. A run that finds every padding right writes nothing.
 single_window_max_width=2080
 if [ -x "$HOME/bin/yabai_center_single" ]; then
     for event in window_created window_destroyed window_minimized window_deminimized \
                  window_resized application_hidden application_visible space_changed \
-                 mission_control_exit display_added display_removed display_resized; do
+                 mission_control_exit display_added display_removed display_resized \
+                 window_focused application_front_switched system_woke; do
         yabai -m signal --add event="$event" label="center_single_$event" \
             action="$HOME/bin/yabai_center_single $single_window_max_width"
     done
-    "$HOME/bin/yabai_center_single" "$single_window_max_width"
+    # The run that wins the lock keeps passing while the burst of
+    # window_resized from yabai's start-up tiling marks it, so it runs in the
+    # background and the rest of this file does not wait for it.
+    "$HOME/bin/yabai_center_single" "$single_window_max_width" &
     echo "single window centering active"
 else
     echo "yabai_center_single not found, single window centering off" >&2
