@@ -306,60 +306,102 @@ kw(){
 
 alias kwp="kw get pods"
 
-# Select a KUBECONFIG yaml with fzf
+# Point KUBECONFIG at a config file in ~/.kube and select its namespace.
 #
-# Use either kubens to select namespaces or $configfile.namespaces as static
-# list in cases namespaces can't be accessed.
+# Without arguments both the config and the namespace are picked with fzf.
+# The namespace picker reads $configfile.namespaces as a static list when
+# that file exists, for clusters whose namespaces can't be listed, and falls
+# back to kubens otherwise.
 kcfg() {
-    local no_namespace=""
-    if [[ "$#" -ge 1 ]] && [[ "$1" == "--no-namespace" ]]; then
-        no_namespace="true"
+    local kube_dir="$HOME/.kube"
+    local usage="Usage: kcfg [CONFIG [NAMESPACE]]
+
+Point KUBECONFIG at CONFIG in ${kube_dir} and switch to NAMESPACE.
+CONFIG may omit its .yaml or .yml extension. Without NAMESPACE the
+config keeps its stored namespace. Without arguments both are picked
+with fzf.
+
+  -h, --help  show this help"
+
+    local arg
+    local -a positional
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help)
+                printf '%s\n' "$usage"
+                return 0
+                ;;
+            -*)
+                printf 'kcfg: unknown option %s\n\n%s\n' "$arg" "$usage" >&2
+                return 1
+                ;;
+            *)
+                positional+=("$arg")
+                ;;
+        esac
+    done
+
+    if (( ${#positional[@]} > 2 )); then
+        printf 'kcfg: too many arguments\n\n%s\n' "$usage" >&2
+        return 1
     fi
 
-    local yellow red cyan magenta normal
-    # yellow=$(tput setaf 3 || true)
-    # red=$(tput setaf 1 || true)
-    # cyan=$(tput setaf 4 || true)
-    magenta=$(tput setaf 5 || true)
-    normal=$(tput sgr0 || true)
-  
-    local -a possibilities
+    local config namespace
 
-    local kubeconfig_filename="${KUBECONFIG##*/}"
-    local kubeconfig_dirname="${KUBECONFIG%/*}"
-
-    local search_dir="$HOME/.kube"
-
-    while read -r possibility; do
-        filename=${possibility##*/}
-
-        if [[ "$search_dir" == "$kubeconfig_dirname" ]] && [[ "${filename}" == "$kubeconfig_filename" ]]; then
-            possibilities+=("${magenta}${filename}${normal}")
-        else
-            possibilities+=("$filename")
-        fi
-    done < <(find "$search_dir" -maxdepth 1 -mindepth 1 -type f \( -name "*.yaml" -o -name "*.yml" \))
-
-    local selected_config
-    selected_config="$(printf "%s\n" "${possibilities[@]}" | fzf --ansi --preview 'yq ".contexts[].context" '"${search_dir}"'/{}' --preview-window up)"
-
-    if [ -n "$selected_config" ]; then
-        export KUBECONFIG="${search_dir}/${selected_config}"
-
-        if [ -z "${no_namespace}" ]; then
-            local namespace_file="${search_dir}/${selected_config}.namespaces"
-            if [ -f "$namespace_file" ]; then
-                # Use file-based namespace selection
-                local selected_ns
-                selected_ns="$(cat "$namespace_file" | fzf)"
-                if [ -n "$selected_ns" ]; then
-                    kubectl config set-context --current --namespace="$selected_ns"
-                fi
-            else
-                # Use existing kubens behavior
-                kubens
+    if (( ${#positional[@]} > 0 )); then
+        # Naming the config means the destination is known, so there is no
+        # namespace picker on this path.
+        local candidate
+        for candidate in "${positional[1]}" "${positional[1]}.yaml" "${positional[1]}.yml"; do
+            if [[ -f "$kube_dir/$candidate" ]]; then
+                config="$candidate"
+                break
             fi
+        done
+        if [[ -z "$config" ]]; then
+            printf 'kcfg: no config named %s in %s\n' "${positional[1]}" "$kube_dir" >&2
+            return 1
         fi
+        export KUBECONFIG="$kube_dir/$config"
+        namespace="${positional[2]}"
+    else
+        # The active config is highlighted in the picker. fzf --ansi strips
+        # the escape codes again from the line it prints.
+        local current="" magenta normal file
+        local -a configs
+        if [[ "${KUBECONFIG:h}" == "$kube_dir" ]]; then
+            current="${KUBECONFIG:t}"
+        fi
+        magenta=$(tput setaf 5 || true)
+        normal=$(tput sgr0 || true)
+        for file in "$kube_dir"/*.(yaml|yml)(N.:t); do
+            if [[ "$file" == "$current" ]]; then
+                configs+=("$magenta$file$normal")
+            else
+                configs+=("$file")
+            fi
+        done
+
+        config="$(printf '%s\n' "${configs[@]}" \
+            | fzf --ansi --preview "yq '.contexts[].context' ${(q)kube_dir}/{}" --preview-window up)"
+        if [[ -z "$config" ]]; then
+            return 0
+        fi
+        export KUBECONFIG="$kube_dir/$config"
+
+        local namespace_file="$KUBECONFIG.namespaces"
+        if [[ ! -f "$namespace_file" ]]; then
+            kubens
+            return
+        fi
+        namespace="$(fzf < "$namespace_file")"
+    fi
+
+    # The namespace goes straight into the context instead of through
+    # `kubens NAME`, because kubens checks it against the cluster and fails
+    # where namespaces can't be listed.
+    if [[ -n "$namespace" ]]; then
+        kubectl config set-context --current --namespace="$namespace"
     fi
 }
 
