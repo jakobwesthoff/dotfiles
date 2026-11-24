@@ -288,6 +288,13 @@ anyway (asqr where a session uses it, otherwise chat). If the bell call
 fails, is denied or is not available, go on without it: do not retry, do
 not ask me about it.
 
+## Keeping the Mac awake
+
+Never run `caffeinate` (or `pmset`, or any other tool that keeps the Mac
+awake) yourself. I keep the Mac awake with Amphetamine. When I say I am
+leaving the computer while long work runs, remind me in one line to
+check that Amphetamine is on.
+
 # Coding conventions
 
 ## Rust guidelines
