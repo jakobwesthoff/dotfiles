@@ -11,13 +11,21 @@ else
 	ssh-add --apple-use-keychain
 fi
 
+# ~/.ssh/config names private hosts, so it stays out of this public
+# repository; the step only makes sure the keychain lines are in it.
+# ssh takes the first value it finds per option, so a Host * block at the
+# end supplies these two without overriding any host-specific setting.
 if grep -q "UseKeychain yes" ~/.ssh/config 2>/dev/null; then
 	ok "SSH config has UseKeychain"
 else
-	warn "$HOME/.ssh/config is missing UseKeychain/AddKeysToAgent"
-	info "Ensure your Host * block includes:"
-	info "  UseKeychain yes"
-	info "  AddKeysToAgent yes"
-	ask "Press ENTER when done"
-	read -r
+	mkdir -p ~/.ssh
+	chmod 700 ~/.ssh
+	cat >>~/.ssh/config <<'SSHCONFIG'
+
+Host *
+  UseKeychain yes
+  AddKeysToAgent yes
+SSHCONFIG
+	chmod 600 ~/.ssh/config
+	ok "Added UseKeychain and AddKeysToAgent to ~/.ssh/config"
 fi

@@ -66,7 +66,7 @@ ok "${#packages[@]} packages installed"
   is the way to bring a machine up to date.
 - Numbers group the steps: 0xx checks and updates, 1xx packages, 2xx
   languages and toolchains, 3xx tools, 5xx services and security, 6xx
-  manual settings, 7xx shell, 8xx OS settings, 9xx linking.
+  lock screen and login, 7xx shell, 8xx OS settings, 9xx linking.
 
 Package lists
 -------------
