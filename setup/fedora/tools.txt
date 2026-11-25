@@ -13,6 +13,7 @@
 cargo antiq
 cargo ntropy
 cargo asqr
+cargo patine
 
 # =========================================================
 # Shell & Terminal
