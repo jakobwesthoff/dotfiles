@@ -186,6 +186,39 @@ place:
   repository attack prevention). Avoid this by using full paths or
   `git -C <path>`.
 
+### The Bash tool runs zsh
+
+The Bash tool's shell is zsh, not bash, and zsh breaks three habits
+from bash and POSIX sh. Each has cost real work:
+
+- **No word splitting of variables.** `spec="piece stamp"; set --
+  $spec` leaves one argument, and `for x in $list` runs once with the
+  whole string. A restore loop built paths like `piece stamp/piece
+  stamp--.tar.zst` that way, and every copy failed while the error
+  looked like a network problem. Command substitution (`$(...)`) does
+  split.
+- **A glob without a match aborts the command** with `no matches
+  found` before it runs: `ls plans/tools/build-slots/*/holder` when no
+  slot is held, `todos/all-notes/<ULID>-*.md` for a missing note, and
+  any unquoted `?`, `*` or `[` in an argument, such as `gh api
+  'repos/o/r/commits?per_page=5'` written without quotes. The `(N)`
+  qualifier does not help in this tool's shell.
+- **Reserved names.** `status` is read-only (assigning it fails), and
+  `path` is tied to `PATH` (assigning it breaks every later command).
+
+The rule that avoids all three:
+
+- A command that loops, splits a value, uses `set --`, or uses a glob
+  that may match nothing goes into a bash script: write it with the
+  Write tool to the scratchpad, starting with `#!/usr/bin/env bash`
+  and `set -euo pipefail`, run `shellcheck` on it, then run it with
+  `bash <script>`. A short one may run inline as `bash -c '...'`.
+- A plain zsh command uses no such construct: it names its files
+  directly, quotes every argument that holds `?`, `*`, `[`, `#`, `^`
+  or `~` as text, and finds files with `rg --files -g '<glob>'` or
+  `find` instead of a shell glob that may be empty.
+- Never name a shell variable `status`, `path` or `argv`.
+
 ### Reading line ranges
 
 To extract a specific range of lines from a file, use the Read tool with
