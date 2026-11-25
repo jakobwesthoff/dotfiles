@@ -1,19 +1,10 @@
-# Tools Fedora does not package, installed by initial_fedora_setup.sh
-# through their own ecosystem.
+# Tools Fedora does not package and the Mac gets from Homebrew, installed
+# through their own ecosystem by setup/base/setup.d/300-tools.sh.
 #
 # Each line is `<manager> <arguments...>`:
 #   cargo  cargo install --locked <arguments>
 #   go     go install <arguments>
 #   npm    npm install --global --prefix ~/.local <arguments>
-
-# =========================================================
-# Own tools
-# =========================================================
-
-cargo antiq
-cargo ntropy
-cargo asqr
-cargo patine
 
 # =========================================================
 # Shell & Terminal

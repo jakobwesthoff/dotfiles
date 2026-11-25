@@ -10,7 +10,8 @@ setup/
 ├── lib.sh                      helpers for setup.sh, link.sh, presetups and steps
 ├── checkout_dependencies.sh    repositories the dotfiles rely on (run by link.sh)
 ├── base/
-│   └── setup.d/                steps for every machine
+│   ├── setup.d/                steps for every machine
+│   └── tools.txt               tools every machine gets (cargo)
 ├── macos/
 │   ├── presetup.sh             Xcode tools, Homebrew, bash, dialog, git, stow
 │   ├── setup.d/
@@ -20,7 +21,7 @@ setup/
     ├── presetup.sh             dialog, git, stow
     ├── setup.d/
     ├── packages.txt            dnf packages
-    ├── tools.txt               tools Fedora does not package
+    ├── tools.txt               tools Fedora lacks and the Mac gets from Homebrew
     └── xterm-ghostty.terminfo
 ```
 
@@ -83,6 +84,12 @@ cd ~/dotfiles/setup/macos
 ./update-brewfile-from-system
 ```
 
-`fedora/packages.txt` lists dnf packages, one per line. `fedora/tools.txt`
-lists the tools Fedora does not package, each line naming the installer
-to use (`cargo`, `go` or `npm`) followed by its arguments.
+`fedora/packages.txt` lists dnf packages, one per line.
+
+Any layer may have a `tools.txt` for tools installed through their own
+ecosystem, each line naming the installer (`cargo`, `go` or `npm`)
+followed by its arguments. `base/setup.d/300-tools.sh` installs the
+lists of all layers in the chain, `base` first, and installs every entry
+again on each run, so newer releases replace installed ones.
+`base/tools.txt` holds my own tools; `fedora/tools.txt` the ones Fedora
+does not package and the Mac gets from Homebrew.

@@ -1,0 +1,18 @@
+# Tools every machine gets, installed through their own ecosystem by
+# setup/base/setup.d/300-tools.sh. Every run installs them again, so a
+# newer release replaces the installed one, a local development build
+# included.
+#
+# Each line is `<manager> <arguments...>`:
+#   cargo  cargo install --locked <arguments>
+#   go     go install <arguments>
+#   npm    npm install --global --prefix ~/.local <arguments>
+
+# =========================================================
+# Own tools
+# =========================================================
+
+cargo antiq
+cargo ntropy
+cargo asqr
+cargo patine
