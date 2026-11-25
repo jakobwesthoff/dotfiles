@@ -23,6 +23,12 @@ section "Linking dotfiles for ${chain[*]}"
 "${DOTFILES_DIR}/setup/checkout_dependencies.sh"
 ok "Dependencies checked out"
 
+# Claude Code writes its login, history and project state into its config
+# directories. When one does not exist yet, stow would link the whole
+# directory into the repository and all of that would land there; as
+# real directories, only the dotfiles inside get linked.
+mkdir -p "${HOME}/.claude" "${HOME}/.claude-jakob"
+
 # Only layers with something to link have a home/ directory.
 packages=()
 for name in "${chain[@]}"; do
