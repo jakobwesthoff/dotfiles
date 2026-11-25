@@ -3,8 +3,8 @@ set -euo pipefail
 
 # Sets up a Fedora machine (written for mother, a headless Fedora Server)
 # as a work box reached over SSH: system updates and repositories, the
-# packages from packages.txt, the tools from tools.txt, Rust, nvm,
-# Claude Code, SSH hardening, automatic security updates and the
+# packages from packages.txt, Rust, kache, the tools from tools.txt,
+# nvm, Claude Code, SSH hardening, automatic security updates and the
 # dotfiles checkout. Stowing the dotfiles stays a manual step, printed
 # at the end.
 
@@ -134,6 +134,30 @@ fi
 . "$HOME/.cargo/env"
 rustup component add rust-analyzer
 ok "Rust $(rustc --version | cut -d' ' -f2) with rust-analyzer"
+
+# =========================================================
+# kache
+# =========================================================
+
+section "kache"
+
+# Compiler cache for Rust and C/C++. It comes before the tools from
+# tools.txt so their cargo builds already go through the cache.
+# --no-shell because the shell parts (shims on PATH, test runner,
+# completions loading) live in .zshrc.d/050_kache.sh; kache init only
+# writes ~/.cargo/config.toml and the login service here.
+if command -v kache &>/dev/null; then
+	skip "kache already installed"
+else
+	info "Installing kache (this compiles for a while)..."
+	cargo install kache --locked
+	ok "kache installed"
+fi
+kache init --yes --no-shell
+kache init --shims
+mkdir -p "$HOME/.local/share/kache/completions"
+kache completions zsh >"$HOME/.local/share/kache/completions/kache.zsh"
+ok "kache set up with shims and zsh completions"
 
 # =========================================================
 # Tools outside Fedora

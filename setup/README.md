@@ -37,8 +37,9 @@ macOS
 
 `initial_macos_setup.sh` sets up a new Mac from scratch: checks
 prerequisites, installs Homebrew, clones and stows the dotfiles,
-installs the `Brewfile` and the Mac App Store apps, starts the services
-and writes the macOS defaults. It is opinionated and tailored to my
+installs the `Brewfile` (which also lists the Mac App Store apps), sets
+up Rust with rustup, kache and Claude Code, starts the services and
+writes the macOS defaults. It is opinionated and tailored to my
 machines.
 
 ```sh
@@ -62,7 +63,8 @@ Fedora
 `initial_fedora_setup.sh` sets up a Fedora machine I work on over SSH,
 such as a headless server: upgrades the system, enables RPM Fusion,
 installs the development tools group and `packages.txt`, sets up Rust
-with rustup, installs the tools from `tools.txt`, nvm and Claude Code,
+with rustup and kache, installs the tools from `tools.txt`, nvm and
+Claude Code,
 makes zsh the login shell, limits sshd to keys, creates an SSH key for
 GitHub, turns on automatic security updates and clones the dotfiles.
 It does not stow them; it prints how to do that at the end. Run it from

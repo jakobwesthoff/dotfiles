@@ -164,6 +164,62 @@ brew bundle install --file="$HOME/dotfiles/setup/macos/Brewfile"
 ok "Brewfile packages and Mac App Store apps installed"
 
 # =========================================================
+# Rust
+# =========================================================
+
+section "Rust"
+
+# rustup from rustup.rs rather than Homebrew: toolchains in ~/.rustup and
+# cargo in ~/.cargo, the layout .zprofile.d/050_rust.sh expects.
+# --no-modify-path because the shell configuration comes from the dotfiles.
+if [ -x "$HOME/.cargo/bin/rustup" ]; then
+	skip "rustup already installed"
+else
+	info "Installing rustup with the stable toolchain..."
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+	ok "rustup installed"
+fi
+# shellcheck source=/dev/null
+. "$HOME/.cargo/env"
+
+# =========================================================
+# kache
+# =========================================================
+
+section "kache"
+
+# Compiler cache for Rust and C/C++. --no-shell because the shell parts
+# (shims on PATH, test runner, completions loading) live in
+# .zshrc.d/050_kache.sh; kache init only writes ~/.cargo/config.toml and
+# the login service here.
+if command -v kache &>/dev/null; then
+	skip "kache already installed"
+else
+	info "Installing kache (this compiles for a while)..."
+	cargo install kache --locked
+	ok "kache installed"
+fi
+kache init --yes --no-shell
+kache init --shims
+mkdir -p "$HOME/.local/share/kache/completions"
+kache completions zsh >"$HOME/.local/share/kache/completions/kache.zsh"
+ok "kache set up with shims and zsh completions"
+
+# =========================================================
+# Claude Code
+# =========================================================
+
+section "Claude Code"
+
+if [ -x "$HOME/.local/bin/claude" ]; then
+	skip "Claude Code already installed (it updates itself)"
+else
+	info "Installing Claude Code with the native installer..."
+	curl -fsSL https://claude.ai/install.sh | bash
+	ok "Claude Code installed"
+fi
+
+# =========================================================
 # Services
 # =========================================================
 
