@@ -5,10 +5,6 @@ if which gsed &>/dev/null; then
 fi
 alias tree="tree -AC"
 
-# Open a webserver serving the current directory and execute a browser to point
-# at it
-alias server='open http://localhost:8000 && python3 -m http.server'
-
 # XDebug traces with php
 alias ptrace="php -d 'xdebug.auto_trace=1' -d 'xdebug.collect_params=1' -d 'xdebug.trace_output_dir=./'"
 alias pprofile="php -d 'xdebug.profiler_enable=1' -d 'xdebug.profiler_output_dir=./'"

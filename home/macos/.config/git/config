@@ -1,0 +1,6 @@
+# Git reads this file in addition to ~/.gitconfig (from home/base), so
+# the macOS layer can add settings without providing the same path.
+
+# Store HTTPS credentials in the macOS keychain.
+[credential]
+	helper = osxkeychain
