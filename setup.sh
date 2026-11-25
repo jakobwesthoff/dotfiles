@@ -131,13 +131,16 @@ fi
 
 # Many steps need sudo; ask once and keep the timestamp fresh for the
 # whole run, since dnf, brew and cargo steps take long enough for it to
-# expire in between.
+# expire in between. The loop is stopped when setup.sh exits, however it
+# exits, so it does not outlive the run.
 sudo -v
 while true; do
 	sudo -n true
 	sleep 60
 	kill -0 "$$" || exit
 done 2>/dev/null &
+sudo_keepalive_pid=$!
+trap 'kill "${sudo_keepalive_pid}" 2>/dev/null' EXIT
 
 # Each step runs in its own subshell from its layer's setup directory,
 # so a step cannot leak variables or a changed directory into the next.
