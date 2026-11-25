@@ -150,7 +150,7 @@ else
 fi
 
 pushd "$HOME/dotfiles"
-./checkout_dependencies.sh
+./setup/checkout_dependencies.sh
 stow -R .
 popd
 ok "Dotfiles dependencies checked out and stowed"
@@ -158,7 +158,7 @@ ok "Dotfiles dependencies checked out and stowed"
 cd "$HOME/dotfiles"
 
 info "Running brew bundle install (this may take a while)..."
-brew bundle install
+brew bundle install --file="$HOME/dotfiles/setup/macos/Brewfile"
 ok "Brewfile packages installed"
 
 # =========================================================

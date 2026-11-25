@@ -398,7 +398,7 @@ main() {
   check_dependencies
 
   if [[ ! -f $BREWFILE ]]; then
-    fail "no Brewfile found in $PWD. Run this from the directory containing the Brewfile you want to update (e.g. your dotfiles checkout)."
+    fail "no Brewfile found in $PWD. Run this from the directory containing the Brewfile you want to update (e.g. setup/macos in your dotfiles checkout)."
   fi
   BREWFILE=$(readlink -f "$BREWFILE" 2>/dev/null || echo "$BREWFILE")
   if [[ ! -t 0 || ! -t 1 ]]; then

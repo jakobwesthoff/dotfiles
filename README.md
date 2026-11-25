@@ -12,10 +12,12 @@ The file structure is supposed to be *installed* using
 
 ```sh
 cd dotfiles
+setup/checkout_dependencies.sh
 stow .
 ```
 
-Most of the needed dependencies can be installed using the `checkout_dependencies.sh`.
+`setup/checkout_dependencies.sh` clones the repositories the dotfiles
+rely on and has to run before `stow`.
 
 [Scriptisto](https://github.com/igor-petruk/scriptisto) is needed for some
 of the scripts in this repository. Please install it in conjunction with
@@ -27,5 +29,8 @@ checkout:
 
 ```sh
 cd dotfiles
-./initial_macos_setup.sh
+setup/macos/initial_macos_setup.sh
 ```
+
+Everything used for setting up a machine lives in `setup/`, which stow
+ignores. See [setup/README.md](setup/README.md).

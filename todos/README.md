@@ -86,8 +86,9 @@ those citations change with it (`rg -i <ulid>` finds them).
 - `config`: `.config/` (ghostty, nvim, sesh, worktrunk, asimeow), tmux,
   `.gitconfig` and `.inputrc`
 - `window-manager`: `.yabairc` and `.skhdrc`
-- `macos-setup`: `initial_macos_setup.sh`, `checkout_dependencies.sh`,
-  the `Brewfile`, `update-brewfile-from-system` and the stow ignore list
+- `macos-setup`: `setup/checkout_dependencies.sh`, everything in
+  `setup/macos/` (`initial_macos_setup.sh`, the `Brewfile`,
+  `update-brewfile-from-system`) and the stow ignore list
 - `project`: repository-wide docs and decisions; only when no other
   component fits
 
