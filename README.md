@@ -39,5 +39,15 @@ cd dotfiles
 A new machine needs its own layer first: `layers/<short hostname>`
 holding the name of its parent, such as `macos` or `fedora`.
 
+On a machine without git or a checkout, one line does all of it: it
+installs git if needed (the Xcode Command Line Tools on a Mac), clones
+this repository into `~/dotfiles` and starts `setup.sh`. A layer name
+for a machine without its own layer goes after `-s --`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/jakobwesthoff/dotfiles/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/jakobwesthoff/dotfiles/main/bootstrap.sh | bash -s -- fedora
+```
+
 Everything used for setting up a machine lives in `setup/`. See
 [setup/README.md](setup/README.md).
