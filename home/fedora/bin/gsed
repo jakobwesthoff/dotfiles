@@ -1,0 +1,4 @@
+#!/bin/sh
+# Fedora's sed is GNU sed. Scripts and Claude sessions written on macOS
+# call it as gsed, the name Homebrew's gnu-sed uses there.
+exec sed "$@"

@@ -242,8 +242,9 @@ before switching tools.
 ### sed (use gsed)
 
 Stock macOS `sed` is BSD sed and not reliable for this workflow. Use
-GNU sed explicitly instead: `gsed -e "s|PAT|REPL|g" -i file`. The
-Brewfile installs `gnu-sed`, so `gsed` is always available.
+GNU sed explicitly instead: `gsed -e "s|PAT|REPL|g" -i file`. `gsed`
+is always available: on macOS the Brewfile installs `gnu-sed`, on
+Fedora `~/bin/gsed` runs the system's GNU sed.
 
 ### ULID generation
 
