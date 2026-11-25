@@ -1,0 +1,4 @@
+#!/bin/sh
+# Fedora's date is GNU date. The git alias `cif` and scripts written on
+# macOS call it as gdate, the name Homebrew's coreutils use there.
+exec date "$@"
