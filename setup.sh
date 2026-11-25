@@ -143,7 +143,11 @@ done 2>/dev/null &
 # so a step cannot leak variables or a changed directory into the next.
 # A failing step stops the run: later steps may depend on it, and every
 # step skips what is already done, so rerunning after a fix is cheap.
-while IFS= read -r index; do
+#
+# The chosen indexes come in on fd 4, not stdin: stdin stays the
+# terminal, so a step that asks for ENTER reads the keyboard instead of
+# swallowing the next step's index.
+while IFS= read -r index <&4; do
 	IFS=$'\t' read -r number _ name file description <<<"${steps[$index]}"
 	section "${name} ${number}: ${description}"
 	if ! (
@@ -156,6 +160,6 @@ while IFS= read -r index; do
 		info "Fix the cause and run ./setup.sh again; finished steps skip themselves."
 		exit 1
 	fi
-done <<<"${chosen}"
+done 4<<<"${chosen}"
 
 printf '\n%b  Done!%b\n\n' "${bold}${green}" "${reset}"
