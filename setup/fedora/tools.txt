@@ -11,7 +11,9 @@
 # =========================================================
 
 go github.com/joshmedeski/sesh/v2@latest
-cargo yazi-fm yazi-cli
+# yazi refuses `cargo install yazi-fm yazi-cli` from crates.io; its build
+# script asks for yazi-build, which builds and installs both.
+cargo --force yazi-build
 
 # =========================================================
 # Core CLI Utilities
