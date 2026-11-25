@@ -17,12 +17,14 @@ setup/
 │   ├── setup.d/
 │   ├── Brewfile                Homebrew packages, casks, fonts, App Store apps
 │   └── update-brewfile-from-system
-└── fedora/
-    ├── presetup.sh             dialog, git, stow
-    ├── setup.d/
-    ├── packages.txt            dnf packages
-    ├── tools.txt               tools Fedora lacks and the Mac gets from Homebrew
-    └── xterm-ghostty.terminfo
+├── fedora/
+│   ├── presetup.sh             dialog, git, stow
+│   ├── setup.d/
+│   ├── packages.txt            dnf packages
+│   ├── tools.txt               tools Fedora lacks and the Mac gets from Homebrew
+│   └── xterm-ghostty.terminfo
+└── mother/
+    └── setup.d/                kache's store on the NVMe at /scratch
 ```
 
 How setup.sh runs
