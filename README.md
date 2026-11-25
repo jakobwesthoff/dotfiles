@@ -20,12 +20,13 @@ stow .
 rely on and has to run before `stow`.
 
 In order to configure a completely new machine including installing software
-(highly opinionated and tailored to my needs), run the following script after
-checkout: 
+(highly opinionated and tailored to my needs), run the script for its
+platform after checkout:
 
 ```sh
 cd dotfiles
-setup/macos/initial_macos_setup.sh
+setup/macos/initial_macos_setup.sh    # on a Mac
+setup/fedora/initial_fedora_setup.sh  # on Fedora
 ```
 
 Everything used for setting up a machine lives in `setup/`, which stow

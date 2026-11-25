@@ -1,0 +1,47 @@
+# Tools Fedora does not package, installed by initial_fedora_setup.sh
+# through their own ecosystem.
+#
+# Each line is `<manager> <arguments...>`:
+#   cargo  cargo install --locked <arguments>
+#   go     go install <arguments>
+#   npm    npm install --global --prefix ~/.local <arguments>
+
+# =========================================================
+# Own tools
+# =========================================================
+
+cargo antiq
+cargo ntropy
+cargo asqr
+
+# =========================================================
+# Shell & Terminal
+# =========================================================
+
+go github.com/joshmedeski/sesh/v2@latest
+cargo yazi-fm yazi-cli
+
+# =========================================================
+# Core CLI Utilities
+# =========================================================
+
+cargo kondo
+
+# =========================================================
+# Build Tools & Automation
+# =========================================================
+
+go mvdan.cc/sh/v3/cmd/shfmt@latest
+
+# =========================================================
+# System Monitoring & Info
+# =========================================================
+
+cargo hwatch
+npm ccusage
+
+# =========================================================
+# Document & Text Processing
+# =========================================================
+
+cargo typst-cli
