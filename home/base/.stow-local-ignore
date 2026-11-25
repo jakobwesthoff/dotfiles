@@ -23,8 +23,6 @@ _darcs
 
 # Custom stuff
 \.DS_Store
-^/setup$
-^/todos$
 
 # Claude Code runtime artifacts that can appear under .claude/ when a
 # Claude Code session runs in this repo
