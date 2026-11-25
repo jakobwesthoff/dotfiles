@@ -24,15 +24,20 @@ echo
 echo "Installing zgenom"
 checkout_or_update https://github.com/jandamm/zgenom.git .zgenom
 
-echo
-echo "Installing yabai-center-single"
-checkout_or_update https://github.com/jakobwesthoff/yabai-center-single.git .yabai-center-single
-# .yabairc, .skhdrc and bin/yabai_recording call it as ~/bin/yabai_center_single,
-# and ~/bin is on PATH for running "yabai_center_single resume" by hand.
 # This runs before stow, so ~/bin is created as a real directory here and stow
 # links the dotfiles' own scripts into it one by one instead of replacing it
-# with a link to dotfiles/bin, which would put this link into the repository.
+# with a link to dotfiles/bin. Anything else placed in ~/bin, such as the
+# yabai-center-single link below, would otherwise end up in the repository.
 mkdir -p bin
-ln -sfn "${HOME}/.yabai-center-single/bin/yabai_center_single" bin/yabai_center_single
+
+# yabai is a macOS window manager, so its helper is useless anywhere else.
+if [ "$(uname -s)" = "Darwin" ]; then
+    echo
+    echo "Installing yabai-center-single"
+    checkout_or_update https://github.com/jakobwesthoff/yabai-center-single.git .yabai-center-single
+    # .yabairc, .skhdrc and bin/yabai_recording call it as ~/bin/yabai_center_single,
+    # and ~/bin is on PATH for running "yabai_center_single resume" by hand.
+    ln -sfn "${HOME}/.yabai-center-single/bin/yabai_center_single" bin/yabai_center_single
+fi
 
 popd &>/dev/null
