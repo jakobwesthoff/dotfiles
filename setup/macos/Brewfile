@@ -233,6 +233,7 @@ cask "orbstack"
 # Casks — Media & Design
 # =========================================================
 
+cask "handbrake-app"
 cask "imageoptim"
 cask "upscayl"
 cask "vlc"
@@ -242,6 +243,7 @@ cask "vlc"
 # =========================================================
 
 cask "1password"
+cask "1password-cli"
 cask "appcleaner"
 cask "utm"
 cask "viscosity"
