@@ -34,8 +34,8 @@ macOS
 `initial_macos_setup.sh` sets up a new Mac from scratch: checks
 prerequisites, installs Homebrew, clones and stows the dotfiles,
 installs the `Brewfile` and the Mac App Store apps, starts the services
-and writes the macOS defaults. It is opinionated and tailored to one
-person's machines.
+and writes the macOS defaults. It is opinionated and tailored to my
+machines.
 
 ```sh
 ~/dotfiles/setup/macos/initial_macos_setup.sh
