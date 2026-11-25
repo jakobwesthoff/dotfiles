@@ -157,59 +157,11 @@ ok "Dotfiles dependencies checked out and stowed"
 
 cd "$HOME/dotfiles"
 
+# The Brewfile also lists the Mac App Store apps, which brew bundle
+# installs through mas. That needs an App Store sign-in.
 info "Running brew bundle install (this may take a while)..."
 brew bundle install --file="$HOME/dotfiles/setup/macos/Brewfile"
-ok "Brewfile packages installed"
-
-# =========================================================
-# Mac App Store
-# =========================================================
-
-section "Mac App Store"
-
-mas_apps=(
-	"937984704  Amphetamine"
-	"1091189122 Bear"
-	"711074010  CopyQueue"
-	"1524172135 Creator's Best Friend"
-	"425264550  Disk Speed Test"
-	"498672703  Droplr"
-	"975937182  Fantastical"
-	"682658836  GarageBand"
-	"409183694  Keynote"
-	"409203825  Numbers"
-	"409201541  Pages"
-	"425424353  The Unarchiver"
-	"533696630  Webcam Settings"
-	"1295203466 Windows App"
-	"497799835  Xcode"
-	"457622435  Yoink"
-)
-
-mas_failed=0
-for entry in "${mas_apps[@]}"; do
-	app_id="${entry%% *}"
-	app_name="${entry#* }"
-	# Trim leading whitespace from name
-	app_name="${app_name#"${app_name%%[![:space:]]*}"}"
-	if mas list | grep -q "^${app_id} "; then
-		skip "${app_name} already installed"
-	else
-		info "Installing ${app_name}..."
-		if mas install "${app_id}" &>/dev/null; then
-			ok "${app_name}"
-		else
-			fail "${app_name} (id: ${app_id})"
-			mas_failed=$((mas_failed + 1))
-		fi
-	fi
-done
-
-if [ "${mas_failed}" -gt 0 ]; then
-	warn "${mas_failed} app(s) failed to install — retry later with: mas install <id>"
-else
-	ok "All Mac App Store apps installed"
-fi
+ok "Brewfile packages and Mac App Store apps installed"
 
 # =========================================================
 # Services

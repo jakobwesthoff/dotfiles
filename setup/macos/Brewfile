@@ -266,3 +266,23 @@ cask "font-jetbrains-mono"
 cask "font-jetbrains-mono-nerd-font"
 cask "font-sf-mono"
 cask "font-victor-mono-nerd-font"
+
+# =========================================================
+# Mac App Store
+# =========================================================
+
+# Installed through mas, which needs an App Store sign-in.
+mas "Amphetamine", id: 937984704
+mas "CopyQueue", id: 711074010
+mas "Creator's Best Friend", id: 1524172135
+mas "Disk Speed Test", id: 425264550
+mas "Fantastical", id: 975937182
+mas "GarageBand", id: 682658836
+mas "Keynote", id: 409183694
+mas "Numbers", id: 409203825
+mas "Pages", id: 409201541
+mas "The Unarchiver", id: 425424353
+mas "Webcam Settings", id: 533696630
+mas "Windows App", id: 1295203466
+mas "Xcode", id: 497799835
+mas "Yoink", id: 457622435
