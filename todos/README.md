@@ -78,17 +78,24 @@ those citations change with it (`rg -i <ulid>` finds them).
 
 ## Components
 
+The dotfiles live in `home/<layer>/`; the paths below are relative to
+those layer directories.
+
 - `zsh`: `.zshrc`, `.zshrc.d/`, `.zprofile`, `.zprofile.d/`, `.zshenv`,
   `.zsh/` and the powerlevel10k config
 - `bin`: the scripts in `bin/`
 - `claude`: `.claude/` (global instructions, settings, statusline,
-  commands)
+  commands) and `.claude-jakob/` on imperius
 - `config`: `.config/` (ghostty, nvim, sesh, worktrunk, asimeow), tmux,
   `.gitconfig` and `.inputrc`
 - `window-manager`: `.yabairc` and `.skhdrc`
-- `macos-setup`: `setup/checkout_dependencies.sh`, everything in
-  `setup/macos/` (`initial_macos_setup.sh`, the `Brewfile`,
-  `update-brewfile-from-system`) and the stow ignore list
+- `setup`: `setup.sh`, `link.sh`, `layers/`, `setup/lib.sh`,
+  `setup/checkout_dependencies.sh`, `setup/base/` and the stow ignore
+  list
+- `macos-setup`: everything in `setup/macos/` (presetup, steps, the
+  `Brewfile`, `update-brewfile-from-system`)
+- `fedora-setup`: everything in `setup/fedora/` (presetup, steps,
+  `packages.txt`, `tools.txt`)
 - `project`: repository-wide docs and decisions; only when no other
   component fits
 

@@ -26,14 +26,18 @@ A file may come from one layer only; a file that differs between
 machines lives in each layer that needs it, not in `base`.
 
 In order to configure a completely new machine including installing software
-(highly opinionated and tailored to my needs), run the script for its
-platform after checkout:
+(highly opinionated and tailored to my needs), run `setup.sh` after
+checkout. It works with the same layers as `link.sh`, lets me pick the
+setup steps of all of them in a checklist and links the dotfiles as its
+last step:
 
 ```sh
 cd dotfiles
-setup/macos/initial_macos_setup.sh    # on a Mac
-setup/fedora/initial_fedora_setup.sh  # on Fedora
+./setup.sh
 ```
 
-Everything used for setting up a machine lives in `setup/`, which stow
-ignores. See [setup/README.md](setup/README.md).
+A new machine needs its own layer first: `layers/<short hostname>`
+holding the name of its parent, such as `macos` or `fedora`.
+
+Everything used for setting up a machine lives in `setup/`. See
+[setup/README.md](setup/README.md).

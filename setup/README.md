@@ -1,81 +1,88 @@
 Setup
 =====
 
-Scripts and package lists for setting up a machine. Stow ignores this
-directory (see `.stow-local-ignore`), so none of it gets linked into
-`$HOME`.
+Everything `setup.sh` and `link.sh` in the repository root run. Each
+layer from `layers/` may have a directory here; a layer without one has
+nothing to set up.
 
 ```
 setup/
-├── checkout_dependencies.sh     shared by all platforms
+├── lib.sh                      helpers for setup.sh, link.sh, presetups and steps
+├── checkout_dependencies.sh    repositories the dotfiles rely on (run by link.sh)
+├── base/
+│   └── setup.d/                steps for every machine
 ├── macos/
-│   ├── initial_macos_setup.sh   full setup of a new Mac
-│   ├── Brewfile                 Homebrew packages, casks and fonts
+│   ├── presetup.sh             Xcode tools, Homebrew, bash, dialog, git, stow
+│   ├── setup.d/
+│   ├── Brewfile                Homebrew packages, casks, fonts, App Store apps
 │   └── update-brewfile-from-system
 └── fedora/
-    ├── initial_fedora_setup.sh  full setup of a Fedora machine
-    ├── packages.txt             dnf packages
-    └── tools.txt                tools Fedora does not package
+    ├── presetup.sh             dialog, git, stow
+    ├── setup.d/
+    ├── packages.txt            dnf packages
+    ├── tools.txt               tools Fedora does not package
+    └── xterm-ghostty.terminfo
 ```
 
-checkout_dependencies.sh
-------------------------
+How setup.sh runs
+-----------------
 
-Clones or updates the repositories the dotfiles rely on into `$HOME`
-(colorizer, prettytable, zgenom, and on macOS yabai-center-single). It
-has to run before `stow`, because it creates `~/bin` as a real
-directory. Without that, stow would link `~/bin` as a whole to
-`dotfiles/bin`, and anything else placed in `~/bin` would end up in the
-repository.
+1. It finds the machine's layer (the argument, otherwise the one named
+   like the short hostname) and the chain of parents down to `base`.
+2. It runs the `presetup.sh` of every layer in the chain, `base` first.
+   A presetup installs what the rest needs before anything can be
+   chosen: a current bash and `dialog`. This part runs on the system's
+   own bash, which on a fresh Mac is bash 3.2, so `setup.sh`, `lib.sh`
+   and the presetups avoid newer bash features.
+3. It starts itself again in the current bash and shows all steps of all
+   layers in a `dialog` checklist, everything preselected.
+4. It runs the chosen steps in order of their number; for the same
+   number, `base` before the OS layer before the host layer. A failing
+   step stops the run.
 
-```sh
-~/dotfiles/setup/checkout_dependencies.sh
+The last step, `base/setup.d/900-link.sh`, links the dotfiles with
+`link.sh`.
+
+Writing a step
+--------------
+
+A step is a file `setup.d/NNN-name.sh` in a layer's directory. `setup.sh`
+sources it in a subshell with `set -euo pipefail`, working directory
+`setup/<layer>/` and the helpers from `lib.sh` (`section`, `info`, `ok`,
+`skip`, `warn`, `fail`, `ask`, `list_entries`). Steps may use bash 4 and
+newer.
+
+```bash
+# shellcheck shell=bash
+# description: Install the dnf packages from packages.txt
+
+mapfile -t packages < <(list_entries packages.txt)
+sudo dnf install -y "${packages[@]}"
+ok "${#packages[@]} packages installed"
 ```
 
-macOS
------
+- The `# description:` line is what the checklist shows.
+- A step checks before it acts, so running `setup.sh` again is safe and
+  is the way to bring a machine up to date.
+- Numbers group the steps: 0xx checks and updates, 1xx packages, 2xx
+  languages and toolchains, 3xx tools, 5xx services and security, 6xx
+  manual settings, 7xx shell, 8xx OS settings, 9xx linking.
 
-`initial_macos_setup.sh` sets up a new Mac from scratch: checks
-prerequisites, installs Homebrew, clones and stows the dotfiles,
-installs the `Brewfile` (which also lists the Mac App Store apps), sets
-up Rust with rustup, kache and Claude Code, starts the services and
-writes the macOS defaults. It is opinionated and tailored to my
-machines.
+Package lists
+-------------
 
-```sh
-~/dotfiles/setup/macos/initial_macos_setup.sh
-```
-
-`update-brewfile-from-system` reconciles the `Brewfile` with what is
-installed on the running Mac. It shows a checklist of all packages
-installed on request, removes unchecked entries from the `Brewfile`
-and appends newly checked ones under an "Unsorted" section. It reads
-the `Brewfile` from the current directory:
+`macos/Brewfile` is installed with `brew bundle`.
+`macos/update-brewfile-from-system` reconciles it with what is installed
+on the running Mac: it shows a checklist of all packages installed on
+request, removes unchecked entries and appends newly checked ones under
+an "Unsorted" section. It reads the `Brewfile` from the current
+directory:
 
 ```sh
 cd ~/dotfiles/setup/macos
 ./update-brewfile-from-system
 ```
 
-Fedora
-------
-
-`initial_fedora_setup.sh` sets up a Fedora machine I work on over SSH,
-such as a headless server: upgrades the system, enables RPM Fusion,
-installs the development tools group and `packages.txt`, sets up Rust
-with rustup and kache, installs the tools from `tools.txt`, nvm and
-Claude Code,
-makes zsh the login shell, limits sshd to keys, creates an SSH key for
-GitHub, turns on automatic security updates and clones the dotfiles.
-It does not stow them; it prints how to do that at the end. Run it from
-a checkout of this repository, since it reads its lists from its own
-directory:
-
-```sh
-git clone https://github.com/jakobwesthoff/dotfiles.git ~/dotfiles
-~/dotfiles/setup/fedora/initial_fedora_setup.sh
-```
-
-`packages.txt` lists dnf packages, one per line. `tools.txt` lists the
-tools Fedora does not package, each line naming the installer to use
-(`cargo`, `go` or `npm`) followed by its arguments.
+`fedora/packages.txt` lists dnf packages, one per line. `fedora/tools.txt`
+lists the tools Fedora does not package, each line naming the installer
+to use (`cargo`, `go` or `npm`) followed by its arguments.
