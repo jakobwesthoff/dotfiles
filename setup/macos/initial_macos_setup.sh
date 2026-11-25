@@ -342,10 +342,9 @@ ok "Auto-capitalization, smart dashes/quotes/periods disabled"
 section "Finder"
 
 defaults write com.apple.finder AppleShowAllFiles -bool true
-defaults write NSGlobalDomain AppleShowAllExtensions -bool true
-defaults write com.apple.finder ShowStatusBar -bool true
+defaults write com.apple.finder ShowStatusBar -bool false
 defaults write com.apple.finder ShowPathbar -bool true
-ok "Show hidden files, extensions, status bar, path bar"
+ok "Show hidden files and path bar, hide status bar"
 
 defaults write com.apple.finder _FXSortFoldersFirst -bool true
 ok "Folders on top when sorting by name"
@@ -384,9 +383,10 @@ ok "Show /Volumes folder"
 
 defaults write com.apple.finder FXInfoPanesExpanded -dict \
 	General -bool true \
+	MetaData -bool true \
 	OpenWith -bool true \
 	Privileges -bool true
-ok "Expanded Get Info panes: General, Open With, Permissions"
+ok "Expanded Get Info panes: General, More Info, Open With, Permissions"
 
 # =========================================================
 # macOS defaults — Dock
@@ -459,12 +459,10 @@ ok "Don't prompt for new backup volumes"
 
 section "Activity Monitor"
 
-defaults write com.apple.ActivityMonitor OpenMainWindow -bool true
 defaults write com.apple.ActivityMonitor IconType -int 5
-defaults write com.apple.ActivityMonitor ShowCategory -int 0
 defaults write com.apple.ActivityMonitor SortColumn -string "CPUUsage"
 defaults write com.apple.ActivityMonitor SortDirection -int 0
-ok "Show all processes, sort by CPU, CPU icon in Dock"
+ok "Sort by CPU, CPU icon in Dock"
 
 # =========================================================
 # Apply changes
