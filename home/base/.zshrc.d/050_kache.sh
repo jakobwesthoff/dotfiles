@@ -5,19 +5,13 @@
 # into ~/.zshrc, which it refuses to edit because the file is a stow
 # symlink. Machines without kache skip the whole module silently.
 #
-# Install and set up on a new machine:
-#   cargo install kache --locked    # or a pinned version: --version 2.1.1
-#   kache init                      # ~/.cargo/config.toml and the login service
-#   kache init --shims              # compiler-name links in ~/.local/lib/kache/shims
-#   mkdir -p ~/.local/share/kache/completions
-#   kache completions zsh > ~/.local/share/kache/completions/kache.zsh
+# Install and set up on a new machine: setup/base/setup.d/210-kache.sh
+# in this repository, run by setup.sh.
+#
+# The test runner variable names the target triple, so each platform
+# layer sets it in its own .zshrc.d/051_kache-runner.sh.
 
 if (( $+commands[kache] )); then
-
-    # Test pacing: test binaries started by `cargo test` run through kache,
-    # which holds them back until builds free their CPU slots. A runner set
-    # elsewhere wins.
-    [ -n "${CARGO_TARGET_AARCH64_APPLE_DARWIN_RUNNER-}" ] || CARGO_TARGET_AARCH64_APPLE_DARWIN_RUNNER='kache test-runner'; export CARGO_TARGET_AARCH64_APPLE_DARWIN_RUNNER
 
     # Completions. 000_compinit.sh has run compinit already, so the guard
     # below normally finds compdef and skips the second compinit.

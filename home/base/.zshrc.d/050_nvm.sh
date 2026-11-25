@@ -1,4 +1,6 @@
-export NVM_DIR="/opt/homebrew/opt/nvm"
+# nvm's own default location; a platform that installs nvm elsewhere
+# sets NVM_DIR in its .zprofile.d.
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 # Lazy load nvm
 _nvm_lazy_load_unset() {
     unset -f nvm

@@ -49,6 +49,3 @@ alias no-title="tail -n+2"
 # Watson timetracking related
 alias wa=watson
 alias wat="wad worktime:today"
-
-# macOS quarantine
-alias unquarantine="sudo xattr -rd com.apple.quarantine"

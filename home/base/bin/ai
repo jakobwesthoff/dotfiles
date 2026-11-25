@@ -215,8 +215,11 @@ main() {
     if [[ "$answer" =~ ---COMMAND\ START---(.+)---COMMAND\ END--- ]]; then
       trimmed_answer="$(trim "${BASH_REMATCH[1]}")"
       echo "${trimmed_answer}"
-      # Copy to clipboard
-      echo -n "${trimmed_answer}" | pbcopy
+      # Copy to clipboard: pbcopy where it exists (macOS), and OSC 52 for
+      # the terminal's clipboard, which also works over SSH.
+      if command -v pbcopy >/dev/null 2>&1; then
+        echo -n "${trimmed_answer}" | pbcopy
+      fi
       printf '\033]52;c;%s\a' "$(printf '%s' "${trimmed_answer}" | base64)" >/dev/tty
     fi
   fi
