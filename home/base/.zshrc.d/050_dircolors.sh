@@ -1,5 +1,5 @@
 # enable color support of ls and also add handy aliases
-if which -s dircolors 2>&1 >/dev/null; then
+if (( $+commands[dircolors] )); then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
 
