@@ -5,10 +5,15 @@ function checkout_or_update() {
     local repository="${1}"
     local target="${2}"
 
+    # The clones carry no work of their own, so an update simply moves them
+    # to the upstream's default branch. Asking the remote which branch that
+    # is, instead of pulling the branch the clone was made from, keeps the
+    # update working when a dependency renames its default branch.
     if [ -d "${target}" ]; then
         pushd "${target}" &>/dev/null
-        git reset --hard
-        git pull -f
+        git fetch --quiet origin
+        git remote set-head origin --auto >/dev/null
+        git reset --hard origin/HEAD
         popd &>/dev/null
     else
         git clone "${repository}" "${target}"
