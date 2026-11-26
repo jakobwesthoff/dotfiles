@@ -16,3 +16,13 @@ cargo antiq
 cargo ntropy
 cargo asqr
 cargo patine
+
+# =========================================================
+# Rust development
+# =========================================================
+
+# Runs the tests of a Cargo workspace side by side; Torchsnap's
+# `just test` needs it.
+cargo cargo-nextest
+# Creates and links architecture decision records (`adrs new`).
+cargo adrs
