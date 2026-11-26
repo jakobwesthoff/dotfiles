@@ -91,6 +91,12 @@ quit-after-last-window-closed = true
 keybind = cmd+left=esc:OH
 keybind = cmd+right=esc:OF
 
+# Ctrl+Esc switches a local tmux off and on for a tmux nested inside it
+# (~/.tmux/conf.d/200_nested.conf). Terminals have no encoding of their
+# own for Ctrl+Esc, so Ghostty sends a sequence no program uses, which
+# tmux maps to its spare key User0.
+keybind = ctrl+escape=esc:[99~
+
 # Fix problems with cmd+plus and cmd+minus not properly working any more. Not idea why but the mapping helps
 keybind = super+bracket_right=increase_font_size:1
 keybind = super+slash=decrease_font_size:1
