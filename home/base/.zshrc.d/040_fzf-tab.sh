@@ -19,7 +19,7 @@ zstyle ':completion:*' menu no
 # to a light cream, which fzf's own 16-colour scheme would paint behind
 # the current line and as a bar on every row. The current line is a
 # yellow bar with dark text and a red marker, the pairing of the tmux
-# current-window tab (.tmux/my-theme.conf). The gutter of the other rows
+# current-window tab (.tmux/conf.d/100_theme.conf). The gutter of the other rows
 # stays blank.
 zstyle ':fzf-tab:*' fzf-flags \
   --color=16,bg+:3,fg+:0:bold,hl+:0:bold:underline,pointer:1:bold,gutter:-1,hl:2,info:4,prompt:3,marker:6,spinner:4 \
